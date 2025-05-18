@@ -1,19 +1,24 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { firebaseConfig } from './env';
+import { env } from './env';
+console.log('FIREBASE API KEY:', env.firebase.apiKey);
+console.log('FIREBASE CONFIG:', env.firebase);
 
-console.log('Firebase initialization:', {
-  hasConfig: !!firebaseConfig.apiKey,
-  existingApps: getApps().length,
-  configKeys: Object.keys(firebaseConfig),
-});
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-// Only initialize Firebase if config is available and all required fields are present
-const app = firebaseConfig.apiKey
-  ? (getApps().length ? getApp() : initializeApp(firebaseConfig))
-  : null;
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: env.firebase.apiKey,
+  authDomain: env.firebase.authDomain,
+  projectId: env.firebase.projectId,
+  storageBucket: env.firebase.storageBucket,
+  messagingSenderId: env.firebase.messagingSenderId,
+  appId: env.firebase.appId,
+};
 
-console.log('Firebase app initialized:', !!app);
+// Initialize Firebase
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-export const auth = app ? getAuth(app) : null;
-export const googleProvider = new GoogleAuthProvider();
+export { app, auth, db };

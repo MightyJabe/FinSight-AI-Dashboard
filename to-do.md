@@ -21,7 +21,7 @@
   - Add `.env.local` keys for Firebase
   - Commit "feat(config): add environment validation and Firebase setup"
 
-- [🔄] **Build auth pages**
+- [✅] **Build auth pages**
 
   - `/src/app/(auth)/login/page.tsx` → scaffold layout + import `<LoginForm />`
   - `/src/app/(auth)/signup/page.tsx` → scaffold layout + import `<SignupForm />`
@@ -29,7 +29,7 @@
   - `/src/app/(auth)/verify-email/page.tsx` → email verification page
   - Commit "feat(auth): scaffold auth pages"
 
-- [ ] **Create form components**
+- [✅] **Create form components**
 
   - `src/components/auth/LoginForm.tsx`
     - React‐Hook‐Form + Zod schema for `{ email, password }`
@@ -42,20 +42,20 @@
     - Show verification status and resend option
   - Commit "feat(auth): add auth form components"
 
-- [ ] **Wire up Firebase Auth**
+- [✅] **Wire up Firebase Auth**
 
   - In form `onSubmit`, call Firebase `signInWithEmailAndPassword` / `createUserWithEmailAndPassword`
   - Handle success (redirect to `/dashboard`) and errors (toast or inline)
   - Commit "feat(auth): integrate Firebase Auth in forms"
 
-- [ ] **Add social authentication**
+- [✅] **Add social authentication**
 
   - Configure Google OAuth provider in Firebase
   - Add "Sign in with Google" button to LoginForm
   - Handle OAuth callbacks and user creation
   - Commit "feat(auth): add Google OAuth support"
 
-- [ ] **Implement security measures**
+- [✅] **Implement security measures**
 
   - Add rate-limiting middleware to API routes
   - Set up input sanitization with Zod
@@ -63,7 +63,7 @@
   - Add Error Boundary component
   - Commit "feat(security): add rate limiting and input validation"
 
-- [ ] **Protect routes**
+- [✅] **Protect routes**
   - Create a simple `AuthGuard` in `/src/components/`
   - Wrap `/dashboard` route so unauthenticated users redirect to `/login`
   - Add middleware for protected API routes
@@ -71,24 +71,24 @@
 
 ## Sprint 2 (1 week): Financial & Plaid Integration
 
-- [ ] **Initialize Plaid client**
+- [✅] **Initialize Plaid client**
 
   - Create `/src/lib/plaid.ts` with `PlaidApi` init
   - Add `.env.local` keys for `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV`
 
-- [ ] **API routes for Plaid**
+- [✅] **API routes for Plaid**
 
   - `/src/app/api/plaid/create-link-token/route.ts`
   - `/src/app/api/plaid/exchange-public-token/route.ts`
   - Commit "feat: add Plaid link-token and exchange endpoints"
 
-- [ ] **PlaidLinkButton component**
+- [✅] **PlaidLinkButton component**
 
   - Create `src/components/PlaidLinkButton.tsx`
   - Fetch link token, open widget, call exchange endpoint on success
   - Commit "feat: add PlaidLinkButton"
 
-- [ ] **Save tokens in Firestore**
+- [✅] **Save tokens in Firestore**
 
   - Update exchange endpoint to write `access_token` → `plaidTokens/{uid}`
   - Commit "feat: persist Plaid tokens"

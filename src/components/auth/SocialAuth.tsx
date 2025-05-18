@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, GithubAuthProvider, signInWithRedirect } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -16,10 +16,9 @@ export function SocialAuth() {
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Successfully signed in with Google!');
-      router.push('/dashboard');
-    } catch {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error('Google sign in error:', error);
       toast.error('Failed to sign in with Google');
     }
   };
@@ -32,10 +31,9 @@ export function SocialAuth() {
 
     try {
       const provider = new GithubAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Successfully signed in with GitHub!');
-      router.push('/dashboard');
-    } catch {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error('GitHub sign in error:', error);
       toast.error('Failed to sign in with GitHub');
     }
   };

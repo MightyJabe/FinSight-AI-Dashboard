@@ -43,4 +43,4 @@ export function AuthGuard({ children, requireEmailVerification = false }: AuthGu
   }
 
   return <>{children}</>;
-} 
+}

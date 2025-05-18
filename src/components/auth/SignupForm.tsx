@@ -37,8 +37,8 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
   }
 
   return (
-    <form 
-      className="space-y-4" 
+    <form
+      className="space-y-4"
       onSubmit={handleSubmit(onSubmit || (() => {}))}
       suppressHydrationWarning
     >

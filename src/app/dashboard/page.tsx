@@ -2,118 +2,220 @@
 
 import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
-import { sendEmailVerification, reload } from 'firebase/auth';
+import { sendEmailVerification, reload, onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { PlaidLinkButton } from '@/components/PlaidLinkButton';
 
 export default function DashboardPage() {
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [overview, setOverview] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [liabilityForm, setLiabilityForm] = useState({ name: '', amount: '', type: 'loan' });
+  const [liabilityLoading, setLiabilityLoading] = useState(false);
 
   useEffect(() => {
-    if (!auth) {
-      console.error('Firebase auth is not initialized');
-      return;
-    }
-
-    const user = auth.currentUser;
-    if (user) {
-      setIsEmailVerified(user.emailVerified);
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthLoading(false);
+      if (user) {
+        fetchOverview(user);
+      }
+    });
+    return () => unsubscribe();
+    // eslint-disable-next-line
   }, []);
 
-  const handleResendVerification = async () => {
-    if (!auth) {
-      console.error('Firebase auth is not initialized');
-      return;
-    }
-
-    const user = auth.currentUser;
-    if (user) {
-      try {
-        await sendEmailVerification(user);
-        toast.success('Verification email sent! Please check your inbox.');
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error('Failed to send verification email');
-        }
+  const fetchOverview = async (user: any) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/accounts/overview", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to fetch account overview");
+      } else {
+        setOverview(data);
       }
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCheckVerification = async () => {
-    if (!auth) {
-      console.error('Firebase auth is not initialized');
-      return;
-    }
+  const handleLiabilityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setLiabilityForm({ ...liabilityForm, [e.target.name]: e.target.value });
+  };
 
-    const user = auth.currentUser;
-    if (user) {
-      try {
-        await reload(user);
-        setIsEmailVerified(user.emailVerified);
-        if (user.emailVerified) {
-          toast.success('Email verified!');
-        } else {
-          toast.error('Email not verified yet. Please check your inbox and click the verification link.');
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error('Failed to check verification status');
-        }
+  const handleAddLiability = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLiabilityLoading(true);
+    setError(null);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setError('User not authenticated');
+        setLiabilityLoading(false);
+        return;
       }
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/manual-liabilities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          name: liabilityForm.name,
+          amount: parseFloat(liabilityForm.amount),
+          type: liabilityForm.type,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to add liability');
+      } else {
+        toast.success('Liability added!');
+        setLiabilityForm({ name: '', amount: '', type: 'loan' });
+        fetchOverview(user);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+    } finally {
+      setLiabilityLoading(false);
     }
   };
+
+  if (authLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50">
-        {!isEmailVerified && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  Please verify your email address to access all features.
-                  <button
-                    type="button"
-                    onClick={handleResendVerification}
-                    className="ml-2 font-medium text-yellow-700 underline hover:text-yellow-600"
-                  >
-                    Resend verification email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCheckVerification}
-                    className="ml-2 font-medium text-yellow-700 underline hover:text-yellow-600"
-                  >
-                    I&apos;ve verified my email
-                  </button>
-                </p>
-              </div>
-            </div>
+        <div className="max-w-2xl mx-auto py-8">
+          <h1 className="text-2xl font-bold mb-4">Account Overview</h1>
+          {loading && <div>Loading...</div>}
+          {error && <div className="text-red-500 mb-4">{error}</div>}
+          <div className="mb-6">
+            <span className="text-lg font-semibold">Total Balance: </span>
+            <span className="font-mono text-green-600">
+              ${overview?.totalBalance?.toFixed(2) ?? '0.00'}
+            </span>
           </div>
-        )}
-
-        <main className="py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Add your dashboard content here */}
-            </div>
+          <div className="mb-6">
+            <span className="text-lg font-semibold">Total Liabilities: </span>
+            <span className="font-mono text-red-600">
+              ${overview?.totalLiabilities?.toFixed(2) ?? '0.00'}
+            </span>
           </div>
-        </main>
+          <div className="mb-6">
+            <span className="text-lg font-semibold">Net Worth: </span>
+            <span className="font-mono text-blue-600">
+              ${overview?.netWorth?.toFixed(2) ?? '0.00'}
+            </span>
+          </div>
+          <h2 className="text-lg font-semibold mb-2">Accounts</h2>
+          {overview?.accounts?.length > 0 ? (
+            <ul className="divide-y divide-gray-200 mb-6">
+              {overview.accounts.map((acc: any, idx: number) => (
+                <li key={acc.account_id || idx} className="py-2">
+                  <div className="flex justify-between">
+                    <span>{acc.name} <span className="text-xs text-gray-500">({acc.type})</span></span>
+                    <span className="font-mono">${acc.balances?.current?.toFixed(2) ?? '0.00'}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">{acc.official_name || acc.subtype}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500 mb-6">No accounts connected.</div>
+          )}
+          <h2 className="text-lg font-semibold mb-2">Liabilities</h2>
+          <form onSubmit={handleAddLiability} className="mb-4 flex flex-col gap-2 bg-white p-4 rounded shadow">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="name"
+                placeholder="Liability Name"
+                value={liabilityForm.name}
+                onChange={handleLiabilityChange}
+                className="flex-1 border rounded px-2 py-1"
+                required
+              />
+              <input
+                type="number"
+                name="amount"
+                placeholder="Amount"
+                value={liabilityForm.amount}
+                onChange={handleLiabilityChange}
+                className="w-32 border rounded px-2 py-1"
+                required
+                min="0"
+                step="0.01"
+              />
+              <select
+                name="type"
+                value={liabilityForm.type}
+                onChange={handleLiabilityChange}
+                className="border rounded px-2 py-1"
+              >
+                <option value="loan">Loan</option>
+                <option value="credit card">Credit Card</option>
+                <option value="mortgage">Mortgage</option>
+                <option value="other">Other</option>
+              </select>
+              <button
+                type="submit"
+                className="bg-indigo-600 text-white px-4 py-1 rounded disabled:opacity-50"
+                disabled={liabilityLoading}
+              >
+                {liabilityLoading ? 'Adding...' : 'Add'}
+              </button>
+            </div>
+          </form>
+          {overview?.liabilities?.length > 0 ? (
+            <ul className="divide-y divide-gray-200 mb-6">
+              {overview.liabilities.map((l: any, idx: number) => (
+                <li key={l.id || idx} className="py-2">
+                  <div className="flex justify-between">
+                    <span>{l.name} <span className="text-xs text-gray-500">({l.type})</span></span>
+                    <span className="font-mono text-red-600">${l.amount?.toFixed(2) ?? '0.00'}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500 mb-6">No manual liabilities added.</div>
+          )}
+          <h2 className="text-lg font-semibold mb-2">Transaction History</h2>
+          {overview?.transactions?.length > 0 ? (
+            <ul className="divide-y divide-gray-200">
+              {overview.transactions.map((txn: any, idx: number) => (
+                <li key={txn.transaction_id || idx} className="py-2">
+                  <div className="flex justify-between">
+                    <span>{txn.name}</span>
+                    <span className="font-mono">${txn.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">{txn.date}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500">No transactions yet.</div>
+          )}
+          {overview?.accounts?.length === 0 && (
+            <div className="mt-8">
+              <PlaidLinkButton onSuccess={() => window.location.reload()} />
+            </div>
+          )}
+        </div>
       </div>
     </AuthGuard>
   );

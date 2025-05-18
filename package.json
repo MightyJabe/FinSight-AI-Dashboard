@@ -16,13 +16,17 @@
     "@hookform/resolvers": "^5.0.1",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "date-fns": "^4.1.0",
     "firebase": "^11.7.3",
+    "firebase-admin": "^13.4.0",
     "lucide-react": "^0.511.0",
     "next": "^14.2.28",
+    "plaid": "^33.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.56.4",
     "react-hot-toast": "^2.5.2",
+    "react-plaid-link": "^4.0.1",
     "zod": "^3.24.4"
   },
   "devDependencies": {

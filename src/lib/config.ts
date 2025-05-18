@@ -1,22 +1,27 @@
 import { z } from 'zod';
 import { firebaseConfig, plaidConfig, openaiConfig } from './env';
 
-// Only validate Firebase config for now, make other services optional
-const envSchema = z.object({
-  // Firebase (required)
-  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1).optional(),
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1).optional(),
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1).optional(),
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1).optional(),
-  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1).optional(),
+// Environment variables validation schema
+const configSchema = z.object({
+  // Firebase
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
 
-  // Optional services (for later)
-  PLAID_CLIENT_ID: z.string().optional(),
-  PLAID_SECRET: z.string().optional(),
-  PLAID_ENV: z.enum(['sandbox', 'development', 'production']).optional(),
-  OPENAI_API_KEY: z.string().optional(),
+  // Plaid
+  PLAID_CLIENT_ID: z.string().min(1),
+  PLAID_SECRET: z.string().min(1),
+  PLAID_ENV: z.enum(['sandbox', 'development', 'production']).default('sandbox'),
+
+  // OpenAI
+  OPENAI_API_KEY: z.string().min(1),
 });
+
+// Validate environment variables
+const config = configSchema.parse(process.env);
 
 // Debug: Log available environment variables (without values)
 console.log(

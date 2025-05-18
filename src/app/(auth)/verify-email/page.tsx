@@ -74,7 +74,9 @@ export default function VerifyEmailPage() {
         toast.success('Email verified! Redirecting to dashboard...');
         router.push('/dashboard');
       } else {
-        toast.error('Email not verified yet. Please check your inbox and click the verification link.');
+        toast.error(
+          'Email not verified yet. Please check your inbox and click the verification link.'
+        );
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -94,8 +96,8 @@ export default function VerifyEmailPage() {
             Verify your email
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            We&apos;ve sent you a verification email. Please check your inbox and click the verification
-            link.
+            We&apos;ve sent you a verification email. Please check your inbox and click the
+            verification link.
           </p>
         </div>
 
@@ -128,4 +130,4 @@ export default function VerifyEmailPage() {
       </div>
     </div>
   );
-} 
+}

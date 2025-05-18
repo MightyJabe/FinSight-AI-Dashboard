@@ -4,6 +4,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import './globals.css';
 import { SessionProvider } from '@/components/providers/SessionProvider';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,11 +19,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={inter.className}>
         <SessionProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
+          <ErrorBoundary>
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+            <Toaster position="top-right" />
+          </ErrorBoundary>
         </SessionProvider>
       </body>
     </html>
