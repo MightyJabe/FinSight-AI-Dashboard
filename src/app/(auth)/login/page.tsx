@@ -1,94 +1,93 @@
 'use client';
 
-import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import toast, { Toaster } from 'react-hot-toast';
+import { LoginForm } from '@/components/auth/LoginForm';
 import { SocialAuth } from '@/components/auth/SocialAuth';
+import { toast, Toaster } from 'react-hot-toast';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  const handleEmailLogin = async (data: { email: string; password: string }) => {
+    console.log('Attempting to log in with:', data.email);
+    
+    if (!auth) {
+      console.error('Firebase auth is not initialized');
+      toast.error('Authentication service is not available');
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      console.log('Firebase auth state:', {
+        isInitialized: !!auth,
+        currentUser: auth.currentUser?.email,
+        config: auth.app.options
+      });
+
+      console.log('Calling Firebase signInWithEmailAndPassword...');
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      console.log('Login successful:', {
+        email: userCredential.user.email,
+        isEmailVerified: userCredential.user.emailVerified,
+        uid: userCredential.user.uid
+      });
+      
       toast.success('Successfully logged in!');
       router.push('/dashboard');
-    } catch (err) {
-      toast.error('Failed to log in. Please check your credentials.');
+    } catch (error) {
+      console.error('Login error details:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error instanceof Error ? (error as any).code : 'No error code'
+      });
+      
+      if (error instanceof Error) {
+        // Handle specific Firebase auth errors
+        const errorMessage = error.message.includes('auth/invalid-credential')
+          ? 'Invalid email or password'
+          : error.message.includes('auth/too-many-requests')
+          ? 'Too many failed attempts. Please try again later.'
+          : error.message.includes('auth/user-not-found')
+          ? 'No account found with this email'
+          : error.message.includes('auth/wrong-password')
+          ? 'Incorrect password'
+          : error.message.includes('auth/user-disabled')
+          ? 'This account has been disabled'
+          : error.message.includes('auth/network-request-failed')
+          ? 'Network error. Please check your connection'
+          : `Login failed: ${error.message}`;
+        toast.error(errorMessage);
+      } else {
+        toast.error('An unexpected error occurred during login');
+      }
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background dark:bg-background-dark">
+    <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8">
       <Toaster position="top-center" />
-      <div className="w-full max-w-md p-8 bg-card dark:bg-card-dark rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full form-input"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full form-input"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-md bg-primary text-primary-foreground py-2 font-semibold hover:bg-primary/90 transition"
-          >
-            Login
-          </button>
-        </form>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          Sign in to your account
+        </h2>
+      </div>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-card dark:bg-card-dark text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+          <LoginForm onSubmit={handleEmailLogin} />
           <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
             <SocialAuth />
           </div>
-        </div>
-
-        <div className="mt-6 text-center text-sm">
-          <Link href="/reset" className="text-primary hover:underline">
-            Forgot your password?
-          </Link>
-          <p className="mt-2">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
         </div>
       </div>
     </div>

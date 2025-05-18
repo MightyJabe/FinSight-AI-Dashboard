@@ -12,11 +12,16 @@ export function Header() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    if (!auth) {
+      console.error('Firebase auth is not initialized');
+      return;
+    }
+
     try {
       await signOut(auth);
       toast.success('Successfully logged out!');
       router.push('/login');
-    } catch (error) {
+    } catch {
       toast.error('Failed to log out');
     }
   };
@@ -67,10 +72,9 @@ export function Header() {
                 </Link>
               </nav>
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">
-                  {user.email}
-                </span>
+                <span className="text-sm text-muted-foreground">{user.email}</span>
                 <button
+                  type="button"
                   onClick={handleLogout}
                   className="px-4 py-1.5 rounded-md border border-destructive text-destructive font-semibold hover:bg-destructive hover:text-destructive-foreground transition"
                 >
@@ -81,12 +85,18 @@ export function Header() {
           ) : (
             <div className="flex items-center space-x-2">
               <Link href="/login">
-                <button className="px-4 py-1.5 rounded-md border border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition">
+                <button
+                  type="button"
+                  className="px-4 py-1.5 rounded-md border border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition"
+                >
                   Login
                 </button>
               </Link>
               <Link href="/signup">
-                <button className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition">
+                <button
+                  type="button"
+                  className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition"
+                >
                   Sign Up
                 </button>
               </Link>

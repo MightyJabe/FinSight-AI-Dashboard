@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) => void }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const {
     register,
     handleSubmit,
@@ -26,8 +27,21 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
     resolver: zodResolver(signupSchema),
   });
 
+  // Only render the form on the client side to avoid hydration mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Return null on server-side and first render
+  }
+
   return (
-    <form className="space-y-4" onSubmit={handleSubmit(onSubmit || (() => {}))}>
+    <form 
+      className="space-y-4" 
+      onSubmit={handleSubmit(onSubmit || (() => {}))}
+      suppressHydrationWarning
+    >
       <div>
         <label htmlFor="email" className="block text-sm font-medium mb-1">
           Email address
@@ -38,6 +52,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           autoComplete="email"
           className="block w-full form-input"
           aria-invalid={!!errors.email}
+          suppressHydrationWarning
           {...register('email')}
         />
         {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
@@ -53,6 +68,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
             autoComplete="new-password"
             className="block w-full form-input pr-10"
             aria-invalid={!!errors.password}
+            suppressHydrationWarning
             {...register('password')}
           />
           <button
@@ -77,6 +93,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           autoComplete="new-password"
           className="block w-full form-input"
           aria-invalid={!!errors.confirmPassword}
+          suppressHydrationWarning
           {...register('confirmPassword')}
         />
         {errors.confirmPassword && (
