@@ -1,21 +1,29 @@
 'use client';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
+import { useSession } from '@/components/providers/SessionProvider';
+import toast from 'react-hot-toast';
 
 export function Header() {
-  const [user, setUser] = useState<User | null>(null);
+  const user = useSession();
+  const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success('Successfully logged out!');
+      router.push('/login');
+    } catch (error) {
+      toast.error('Failed to log out');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container flex h-16 items-center">
+      <div className="container flex h-16 items-center justify-between">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center gap-3">
             <Logo width={32} height={32} className="h-8 w-8" />
@@ -34,29 +42,44 @@ export function Header() {
             </div>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center space-x-6">
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/analytics"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Analytics
-            </Link>
-            <Link
-              href="/insights"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Insights
-            </Link>
-          </nav>
-          {!user && (
-            <div className="flex items-center space-x-2 ml-4">
+
+        <div className="flex items-center gap-6">
+          {user ? (
+            <>
+              <nav className="flex items-center space-x-6">
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/analytics"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Analytics
+                </Link>
+                <Link
+                  href="/insights"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Insights
+                </Link>
+              </nav>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-1.5 rounded-md border border-destructive text-destructive font-semibold hover:bg-destructive hover:text-destructive-foreground transition"
+                >
+                  Logout
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center space-x-2">
               <Link href="/login">
                 <button className="px-4 py-1.5 rounded-md border border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition">
                   Login

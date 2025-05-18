@@ -11,32 +11,21 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
 - 📋 Next Up
 - ⏳ Pending
 
-## Phase 1: Foundation (Q2 2024)
+## Phase 1: Project Setup and Authentication
 
 ### Core Infrastructure
 
-- [🚧] Project Setup
-
-  - [✅] Initialize Next.js 14 project
-  - [✅] Configure TypeScript
-  - [✅] Set up Tailwind CSS
-  - [✅] Configure ESLint and Prettier
-  - [✅] Set up Git hooks
-
-- [📋] Authentication System
-
-  - [✅] Implement Firebase Auth
-  - [✅] Create login/register flows
-  - [📋] Set up password reset
-  - [📋] Implement session management
-  - [⏳] Add social authentication
-
-- [📋] Database Setup
-  - [📋] Configure Firestore
-  - [📋] Set up security rules
-  - [📋] Create initial schemas
-  - [📋] Implement data validation
-  - [⏳] Set up backup system
+- [✅] Initialize Next.js project with TypeScript
+- [✅] Set up Tailwind CSS and shadcn/ui
+- [✅] Configure ESLint and Prettier
+- [✅] Set up Git hooks
+- [✅] Implement Firebase Auth
+- [✅] Create login/register flows
+- [✅] Set up password reset
+- [✅] Implement session management
+- [✅] Add social authentication (Google, GitHub)
+- [📋] Create protected routes
+- [📋] Implement user profile management
 
 ### Financial Integration
 
@@ -64,7 +53,7 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
   - [⏳] Set up caching
   - [⏳] Add rate limiting
 
-## Phase 2: Enhancement (Q3 2024)
+## Phase 2: Core Dashboard Features
 
 ### Advanced Financial Features
 
@@ -101,36 +90,7 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
   - [⏳] Add usage tracking
   - [⏳] Create billing portal
 
-## Phase 3: Optimization (Q4 2024)
-
-### Tax Features
-
-- [⏳] Tax Optimization
-  - [⏳] Tax loss harvesting
-  - [⏳] Tax-efficient investing
-  - [⏳] Tax reporting
-  - [⏳] Tax document generation
-  - [⏳] Tax planning tools
-
-### Goal Tracking
-
-- [⏳] Financial Goals
-  - [⏳] Goal setting interface
-  - [⏳] Progress tracking
-  - [⏳] Milestone system
-  - [⏳] Goal recommendations
-  - [⏳] Achievement celebrations
-
-### Social Features
-
-- [⏳] Community Integration
-  - [⏳] Portfolio sharing
-  - [⏳] Investment insights
-  - [⏳] Community forums
-  - [⏳] Expert connections
-  - [⏳] Social learning
-
-## Phase 4: Enterprise (Q1 2025)
+## Phase 3: AI Integration
 
 ### Advanced AI Features
 
@@ -159,7 +119,65 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
   - [⏳] Scheduled reports
   - [⏳] Custom metrics
 
-## Technical Debt & Maintenance
+## Phase 4: Data Management
+
+### Tax Features
+
+- [⏳] Tax Optimization
+  - [⏳] Tax loss harvesting
+  - [⏳] Tax-efficient investing
+  - [⏳] Tax reporting
+  - [⏳] Tax document generation
+  - [⏳] Tax planning tools
+
+### Goal Tracking
+
+- [⏳] Financial Goals
+  - [⏳] Goal setting interface
+  - [⏳] Progress tracking
+  - [⏳] Milestone system
+  - [⏳] Goal recommendations
+  - [⏳] Achievement celebrations
+
+### Social Features
+
+- [⏳] Community Integration
+  - [⏳] Portfolio sharing
+  - [⏳] Investment insights
+  - [⏳] Community forums
+  - [⏳] Expert connections
+  - [⏳] Social learning
+
+## Phase 5: Advanced Features
+
+### Advanced AI Features
+
+- [⏳] AI Financial Advisor
+  - [⏳] Personalized advice
+  - [⏳] Risk assessment
+  - [⏳] Investment strategies
+  - [⏳] Market analysis
+  - [⏳] Portfolio optimization
+
+### Enterprise Features
+
+- [⏳] API Access
+  - [⏳] API documentation
+  - [⏳] Rate limiting
+  - [⏳] Authentication
+  - [⏳] Usage tracking
+  - [⏳] Support system
+
+### Advanced Reporting
+
+- [⏳] Custom Reports
+  - [⏳] Report builder
+  - [⏳] Data visualization
+  - [⏳] Export capabilities
+  - [⏳] Scheduled reports
+  - [⏳] Custom metrics
+
+## Phase 6: Testing and Optimization
 
 ### Performance Optimization
 
@@ -196,7 +214,7 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
   - [📋] Security protocols
   - [📋] Maintenance procedures
 
-## Success Metrics
+## Phase 7: Deployment and Monitoring
 
 ### Performance Metrics
 
