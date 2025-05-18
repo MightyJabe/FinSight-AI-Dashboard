@@ -20,13 +20,13 @@ This roadmap outlines the development plan for FinSight AI Dashboard, breaking d
   - [✅] Initialize Next.js 14 project
   - [✅] Configure TypeScript
   - [✅] Set up Tailwind CSS
-  - [📋] Configure ESLint and Prettier
-  - [📋] Set up Git hooks
+  - [✅] Configure ESLint and Prettier
+  - [✅] Set up Git hooks
 
 - [📋] Authentication System
 
-  - [📋] Implement Firebase Auth
-  - [📋] Create login/register flows
+  - [✅] Implement Firebase Auth
+  - [✅] Create login/register flows
   - [📋] Set up password reset
   - [📋] Implement session management
   - [⏳] Add social authentication
