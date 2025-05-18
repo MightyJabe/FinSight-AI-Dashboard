@@ -93,10 +93,17 @@
   - Update exchange endpoint to write `access_token` → `plaidTokens/{uid}`
   - Commit "feat: persist Plaid tokens"
 
-- [ ] **Basic account overview**
+- [✅] **Basic account overview**
+
   - `/src/app/dashboard/page.tsx` → after auth, show "Link Account" or display fetched account balances
   - Fetch transaction data via a new API route `/api/plaid/transactions`
   - Commit "feat: basic account overview"
+
+- [✅] **Manual liabilities support**
+  - Add `/api/manual-liabilities` endpoints (GET, POST)
+  - Update `/api/accounts/overview` to include manual liabilities and net worth calculation
+  - Add dashboard UI for adding, listing, and displaying manual liabilities
+  - Commit "feat: add manual liabilities support"
 
 ## Sprint 3 (1 week): AI Insights
 
