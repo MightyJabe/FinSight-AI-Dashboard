@@ -1,4 +1,11 @@
-import { ArrowUpRight, BarChart3, LineChart, PieChart, TrendingUp, ChevronRight } from "lucide-react";
+import {
+  ArrowUpRight,
+  BarChart3,
+  LineChart,
+  PieChart,
+  TrendingUp,
+  ChevronRight,
+} from 'lucide-react';
 
 export default function Home() {
   return (

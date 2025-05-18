@@ -1,34 +1,32 @@
-import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import { Header } from "@/components/Header";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import './globals.css';
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+  subsets: ['latin'],
+  variable: '--font-inter',
 });
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: '#2563eb',
 };
 
 export const metadata: Metadata = {
-  title: "FinSight AI Dashboard",
-  description: "AI-powered financial insights and analytics dashboard",
-  keywords: ["finance", "dashboard", "analytics", "AI", "financial insights"],
+  title: 'FinSight AI Dashboard',
+  description: 'AI-powered financial insights and analytics dashboard',
+  keywords: ['finance', 'dashboard', 'analytics', 'AI', 'financial insights'],
   icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/icon-16.png", type: "image/png", sizes: "16x16" },
-      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
-    ],
-    apple: [
-      { url: "/apple-icon.png", sizes: "180x180" },
-    ],
+    icon: '/favicon.svg',
   },
-  manifest: "/manifest.json",
 };
+
+// Placeholder theme logic (replace with your theme provider or logic)
+const theme =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : '';
 
 export default function RootLayout({
   children,
@@ -36,15 +34,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={theme === 'dark' ? 'dark' : ''}>
       <body
-        className={`${inter.variable} min-h-screen bg-background font-sans antialiased`}
+        className={`${inter.variable} min-h-screen bg-page dark:bg-page-dark text-text dark:text-text-dark font-sans antialiased`}
       >
         <div className="relative flex min-h-screen flex-col">
           <Header />
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
+          <Footer />
         </div>
       </body>
     </html>

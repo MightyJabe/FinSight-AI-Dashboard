@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#2563eb" />
+      <stop offset="100%" stopColor="#0ea5e9" />
+    </linearGradient>
+  </defs>
+  {/* Background */}
+  <rect width="32" height="32" rx="8" fill="url(#faviconGradient)" />
+  {/* Chart Line */}
+  <path d="M4 24 L10 18 L18 20 L28 10" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  {/* Nodes */}
+  <circle cx="10" cy="18" r="2" fill="#38bdf8" stroke="#fff" strokeWidth={1} />
+  <circle cx="18" cy="20" r="2" fill="#38bdf8" stroke="#fff" strokeWidth={1} />
+  <circle cx="28" cy="10" r="2" fill="#38bdf8" stroke="#fff" strokeWidth={1} />
+  {/* Upward Arrow */}
+  <path d="M22 6 L28 2 L32 6" stroke="#0ea5e9" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+</svg> 
