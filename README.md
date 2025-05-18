@@ -26,6 +26,8 @@
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Contact](#contact)
+- [Directory Structure & Best Practices](#directory-structure-&-best-practices)
+- [Guidelines](#guidelines)
 
 ## Description
 
@@ -290,3 +292,44 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Maintainer: [Your Name](mailto:your.email@example.com)
 
 Project Link: [https://github.com/MightyJade/finsight-ai-dashboard](https://github.com/MightyJade/finsight-ai-dashboard)
+
+## Directory Structure & Best Practices
+
+```
+src/
+  app/                # Next.js app directory (routes, pages, API)
+    dashboard/        # Dashboard page and related routes
+    api/              # API routes
+    (auth)/           # Auth-related pages
+    layout.tsx        # App layout
+    globals.css       # Global styles
+  components/
+    common/           # Reusable UI components (Header, Footer, Logo, ErrorMessage, LoadingSpinner, etc.)
+    dashboard/        # Dashboard widgets and sections
+    auth/             # Auth forms and guards
+    providers/        # Context providers (e.g., SessionProvider)
+    PlaidLinkButton.tsx # Plaid integration button
+  services/           # API/data-fetching logic (e.g., finance.ts)
+  types/              # TypeScript types/interfaces (e.g., finance.ts)
+  utils/              # Utility functions (e.g., format.ts, chartData.ts)
+  lib/                # Library initializations (Firebase, Plaid, config)
+```
+
+## Guidelines
+
+- **Types**: All types/interfaces go in `src/types/` and are imported everywhere.
+- **Services**: All API/data-fetching logic goes in `src/services/` and is used by SWR or other hooks.
+- **Utils**: All utility functions go in `src/utils/`.
+- **Components**: Grouped by feature or use-case. Use `common/` for global UI, `dashboard/` for dashboard widgets, `auth/` for authentication, etc.
+- **Presentational Components**: For repeated UI (e.g., NetWorthDisplay, ErrorMessage, LoadingSpinner).
+- **Data Fetching**: Use SWR for all server data, with descriptive keys and typed fetchers.
+- **Error/Loading Handling**: Use shared components for consistent UI.
+- **No inline types, no duplicated logic.**
+- **Environment Variables**: All secrets in `.env.local` (never committed).
+- **Linting/Formatting**: Use ESLint and Prettier. Fix all warnings and errors.
+- **Testing**: Add unit and integration tests for utilities and components.
+- **Documentation**: Keep this README up to date with structure and conventions.
+
+---
+
+**Contributions should follow this structure and best practices for maintainability and scalability.**

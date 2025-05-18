@@ -35,9 +35,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error exchanging public token:', error);
-    return NextResponse.json({ 
-      error: 'Failed to exchange public token',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to exchange public token',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

@@ -2,12 +2,9 @@
 
 import { GoogleAuthProvider, GithubAuthProvider, signInWithRedirect } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export function SocialAuth() {
-  const router = useRouter();
-
   const handleGoogleSignIn = async () => {
     if (!auth) {
       console.error('Firebase auth is not initialized');

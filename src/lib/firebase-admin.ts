@@ -5,7 +5,11 @@ import { env } from './env';
 
 // Initialize Firebase Admin
 if (!getApps().length) {
-  if (!env.firebaseAdmin.projectId || !env.firebaseAdmin.clientEmail || !env.firebaseAdmin.privateKey) {
+  if (
+    !env.firebaseAdmin.projectId ||
+    !env.firebaseAdmin.clientEmail ||
+    !env.firebaseAdmin.privateKey
+  ) {
     throw new Error('Missing Firebase Admin credentials');
   }
 
@@ -19,4 +23,4 @@ if (!getApps().length) {
 }
 
 export const auth = getAuth();
-export const db = getFirestore(); 
+export const db = getFirestore();

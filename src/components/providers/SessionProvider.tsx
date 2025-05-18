@@ -25,7 +25,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
       setUser(user);
       setLoading(false);
     });
@@ -33,11 +33,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  return (
-    <SessionContext.Provider value={{ user, loading }}>
-      {children}
-    </SessionContext.Provider>
-  );
+  return <SessionContext.Provider value={{ user, loading }}>{children}</SessionContext.Provider>;
 }
 
 export const useSession = () => useContext(SessionContext);

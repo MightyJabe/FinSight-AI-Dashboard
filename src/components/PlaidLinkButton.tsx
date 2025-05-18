@@ -19,20 +19,20 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
       try {
         setLoading(true);
         console.log('Plaid Link success:', { public_token, metadata });
-        
+
         // Get the current user's ID token
         const user = auth.currentUser;
         if (!user) {
           throw new Error('User not authenticated');
         }
         const idToken = await user.getIdToken();
-        
+
         // Exchange the public token for an access token
         const response = await fetch('/api/plaid/exchange-public-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
+            Authorization: `Bearer ${idToken}`,
           },
           body: JSON.stringify({ publicToken: public_token }),
         });
@@ -79,7 +79,7 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
       const response = await fetch('/api/plaid/create-link-token', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
       if (!response.ok) {

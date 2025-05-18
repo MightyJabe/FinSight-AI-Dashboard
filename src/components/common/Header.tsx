@@ -1,10 +1,10 @@
 'use client';
-import { Logo } from '@/components/Logo';
+import { Logo } from '@/components/common/Logo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { useSession } from './providers/SessionProvider';
+import { useSession } from '@/components/providers/SessionProvider';
 import toast from 'react-hot-toast';
 
 export function Header() {

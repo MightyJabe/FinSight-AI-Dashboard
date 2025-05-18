@@ -48,4 +48,46 @@ export async function POST(request: Request) {
     console.error('Error adding manual liability:', error);
     return NextResponse.json({ error: 'Failed to add manual liability' }, { status: 500 });
   }
-} 
+}
+
+export async function PUT(request: Request) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const userId = decodedToken.uid;
+
+    const { searchParams } = new URL(request.url);
+    const liabilityId = searchParams.get('id');
+    if (!liabilityId) {
+      return NextResponse.json({ error: 'Liability ID is required' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { name, amount, type } = body;
+    if (!name || !amount || !type) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const liabilityData = {
+      name,
+      amount: parseFloat(amount),
+      type,
+    };
+
+    await db
+      .collection('users')
+      .doc(userId)
+      .collection('manualLiabilities')
+      .doc(liabilityId)
+      .update(liabilityData);
+
+    return NextResponse.json({ id: liabilityId, ...liabilityData });
+  } catch (error) {
+    console.error('Error updating manual liability:', error);
+    return NextResponse.json({ error: 'Failed to update manual liability' }, { status: 500 });
+  }
+}
