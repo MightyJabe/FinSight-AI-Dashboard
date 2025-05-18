@@ -116,7 +116,7 @@ graph TD
 ## Folder Structure & Conventions
 
 ```
-finsight-ai/
+finsight-ai-dashboard/
 ├── app/                    # Next.js app router pages
 │   ├── api/               # API routes
 │   ├── (auth)/           # Authentication routes

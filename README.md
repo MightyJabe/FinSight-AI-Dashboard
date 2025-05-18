@@ -1,6 +1,6 @@
 # FinSight AI Dashboard
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/MightyJade/finsight-ai/ci.yml?branch=main)](https://github.com/MightyJade/finsight-ai/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/MightyJade/finsight-ai-dashboard/ci.yml?branch=main)](https://github.com/MightyJade/finsight-ai-dashboard/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.2-black)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-blue)](https://react.dev)
@@ -66,8 +66,8 @@ FinSight AI Dashboard is an intelligent financial management platform that bring
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/MightyJade/finsight-ai.git
-cd finsight-ai
+git clone https://github.com/MightyJade/finsight-ai-dashboard.git
+cd finsight-ai-dashboard
 ```
 
 2. Install dependencies:
@@ -151,7 +151,7 @@ npm run type-check
 
 Deploy to Vercel with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/MightyJade/finsight-ai)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/MightyJade/finsight-ai-dashboard)
 
 ### Deployment Environments
 - Development: `dev.finsight.ai`
@@ -227,4 +227,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Maintainer: [Your Name](mailto:your.email@example.com)
 
-Project Link: [https://github.com/MightyJade/finsight-ai](https://github.com/MightyJade/finsight-ai) 
+Project Link: [https://github.com/MightyJade/finsight-ai-dashboard](https://github.com/MightyJade/finsight-ai-dashboard) 
