@@ -23,7 +23,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased`}>
+      <body
+        className={`${inter.className} min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased`}
+      >
         <SessionProvider>
           <SWRProvider>
             <ErrorBoundary>

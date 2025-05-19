@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+
 import { Overview } from '@/lib/finance';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 
@@ -15,7 +16,11 @@ export function BudgetSection({ overview = { budgetCategories: [] } }: BudgetSec
 
   const cardVariants = {
     hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, type: 'spring', stiffness: 80 } }),
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.08, type: 'spring', stiffness: 80 },
+    }),
   };
 
   return (
@@ -65,11 +70,13 @@ export function BudgetSection({ overview = { budgetCategories: [] } }: BudgetSec
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{formatPercentage(utilization)} utilized</span>
                   <span>
-                    {category.spent >= category.amount
-                      ? <span className="text-rose-600 font-semibold">Over budget</span>
-                      : category.spent >= category.amount * 0.75
-                        ? <span className="text-amber-600 font-semibold">Near limit</span>
-                        : <span className="text-green-600 font-semibold">On track</span>}
+                    {category.spent >= category.amount ? (
+                      <span className="text-rose-600 font-semibold">Over budget</span>
+                    ) : category.spent >= category.amount * 0.75 ? (
+                      <span className="text-amber-600 font-semibold">Near limit</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold">On track</span>
+                    )}
                   </span>
                 </div>
               </motion.div>

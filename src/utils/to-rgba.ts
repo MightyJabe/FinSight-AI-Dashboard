@@ -1,3 +1,6 @@
+/**
+ *
+ */
 export function toRgba(color: string, alpha: number): string {
   if (color.startsWith('#')) {
     // Convert hex to rgba
@@ -20,4 +23,4 @@ export function toRgba(color: string, alpha: number): string {
     return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha})`;
   }
   return color;
-} 
+}

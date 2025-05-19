@@ -58,26 +58,26 @@ export function InvestmentPerformance({
 
   // Dynamic theme colors for charts
   const [chartColors, setChartColors] = useState({
-    blue: '#2563eb',
-    green: '#22c55e',
-    amber: '#f59e0b',
-    purple: '#a855f7',
-    rose: '#f43f5e',
-    yellow: '#eab308',
-    teal: '#14b8a6',
-    slate: '#64748b',
+    blue: getCssVarColor('--blue-600'),
+    green: getCssVarColor('--green-500'),
+    amber: getCssVarColor('--amber-500'),
+    purple: getCssVarColor('--purple-500'),
+    rose: getCssVarColor('--rose-500'),
+    yellow: getCssVarColor('--yellow-500'),
+    teal: getCssVarColor('--teal-500'),
+    slate: getCssVarColor('--slate-500'),
   });
 
   useEffect(() => {
     setChartColors({
-      blue: getCssVarColor('--blue-600') || '#2563eb',
-      green: getCssVarColor('--green-500') || '#22c55e',
-      amber: getCssVarColor('--amber-500') || '#f59e0b',
-      purple: getCssVarColor('--purple-500') || '#a855f7',
-      rose: getCssVarColor('--rose-500') || '#f43f5e',
-      yellow: getCssVarColor('--yellow-500') || '#eab308',
-      teal: getCssVarColor('--teal-500') || '#14b8a6',
-      slate: getCssVarColor('--slate-500') || '#64748b',
+      blue: getCssVarColor('--blue-600'),
+      green: getCssVarColor('--green-500'),
+      amber: getCssVarColor('--amber-500'),
+      purple: getCssVarColor('--purple-500'),
+      rose: getCssVarColor('--rose-500'),
+      yellow: getCssVarColor('--yellow-500'),
+      teal: getCssVarColor('--teal-500'),
+      slate: getCssVarColor('--slate-500'),
     });
   }, []);
 

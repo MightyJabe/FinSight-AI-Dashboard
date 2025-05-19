@@ -2,17 +2,17 @@ import {
   ArcElement,
   CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
   LinearScale,
   LineElement,
   PointElement,
   Title,
   Tooltip,
-  Filler,
 } from 'chart.js';
+import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
-import { motion } from 'framer-motion';
 
 import { Overview } from '@/lib/finance';
 import { getCssVarColor } from '@/utils/get-css-var-color';
@@ -55,22 +55,22 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
   const liabilityBreakdownChartRef = useRef<ChartJS<'pie'>>(null);
 
   const [chartColors, setChartColors] = useState({
-    primary: '#6366f1',
-    green: '#22c55e',
-    rose: '#f43f5e',
-    blue: '#2563eb',
-    amber: '#f59e0b',
-    purple: '#a855f7',
+    primary: getCssVarColor('--primary'),
+    green: getCssVarColor('--green-500'),
+    rose: getCssVarColor('--rose-500'),
+    blue: getCssVarColor('--blue-600'),
+    amber: getCssVarColor('--amber-500'),
+    purple: getCssVarColor('--purple-500'),
   });
 
   useEffect(() => {
     setChartColors({
-      primary: getCssVarColor('--primary') || '#6366f1',
-      green: getCssVarColor('--green-500') || '#22c55e',
-      rose: getCssVarColor('--rose-500') || '#f43f5e',
-      blue: getCssVarColor('--blue-600') || '#2563eb',
-      amber: getCssVarColor('--amber-500') || '#f59e0b',
-      purple: getCssVarColor('--purple-500') || '#a855f7',
+      primary: getCssVarColor('--primary'),
+      green: getCssVarColor('--green-500'),
+      rose: getCssVarColor('--rose-500'),
+      blue: getCssVarColor('--blue-600'),
+      amber: getCssVarColor('--amber-500'),
+      purple: getCssVarColor('--purple-500'),
     });
   }, []);
 
@@ -206,7 +206,11 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, type: 'spring', stiffness: 80 } }),
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.08, type: 'spring', stiffness: 80 },
+    }),
   };
 
   return (
@@ -280,7 +284,11 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
             <span className="text-xs text-muted-foreground font-normal">(debts & obligations)</span>
           </h3>
           <div className="h-[300px]">
-            <Pie data={liabilityBreakdownData} options={chartOptions} ref={liabilityBreakdownChartRef} />
+            <Pie
+              data={liabilityBreakdownData}
+              options={chartOptions}
+              ref={liabilityBreakdownChartRef}
+            />
           </div>
         </motion.div>
       </div>

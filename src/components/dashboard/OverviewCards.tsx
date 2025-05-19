@@ -1,5 +1,5 @@
-import { AlertCircle, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AlertCircle, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
 
 import { Overview } from '@/lib/finance';
 import { formatCurrency } from '@/utils/format';
@@ -19,7 +19,11 @@ export function OverviewCards({ overview }: OverviewCardsProps) {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, type: 'spring', stiffness: 80 } }),
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.08, type: 'spring', stiffness: 80 },
+    }),
   };
 
   return (
@@ -28,30 +32,46 @@ export function OverviewCards({ overview }: OverviewCardsProps) {
         {
           label: 'Monthly Income',
           value: formatCurrency(monthlyIncome),
-          icon: <TrendingUp className="h-6 w-6 text-green-500" />, 
+          icon: <TrendingUp className="h-6 w-6 text-green-500" />,
           iconBg: 'bg-green-500/10',
-          badge: <span className="ml-2 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">+ Income</span>,
+          badge: (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">
+              + Income
+            </span>
+          ),
         },
         {
           label: 'Monthly Expenses',
           value: formatCurrency(monthlyExpenses),
-          icon: <TrendingDown className="h-6 w-6 text-rose-500" />, 
+          icon: <TrendingDown className="h-6 w-6 text-rose-500" />,
           iconBg: 'bg-rose-500/10',
-          badge: <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs">- Expense</span>,
+          badge: (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs">
+              - Expense
+            </span>
+          ),
         },
         {
           label: 'Savings Rate',
           value: `${savingsRatePercentage}%`,
-          icon: <PiggyBank className="h-6 w-6 text-blue-500" />, 
+          icon: <PiggyBank className="h-6 w-6 text-blue-500" />,
           iconBg: 'bg-blue-500/10',
-          badge: <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs">{savingsRatePercentage}%</span>,
+          badge: (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs">
+              {savingsRatePercentage}%
+            </span>
+          ),
         },
         {
           label: 'Emergency Fund',
           value: `${emergencyFundPercentage}%`,
-          icon: <AlertCircle className="h-6 w-6 text-amber-500" />, 
+          icon: <AlertCircle className="h-6 w-6 text-amber-500" />,
           iconBg: 'bg-amber-500/10',
-          badge: <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">{emergencyFundPercentage}%</span>,
+          badge: (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">
+              {emergencyFundPercentage}%
+            </span>
+          ),
         },
       ].map((card, i) => (
         <motion.div
@@ -68,11 +88,15 @@ export function OverviewCards({ overview }: OverviewCardsProps) {
               {card.label}
               {card.badge}
             </span>
-            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${card.iconBg} group-hover:scale-105 transition-transform`}>
+            <div
+              className={`h-12 w-12 rounded-full flex items-center justify-center ${card.iconBg} group-hover:scale-105 transition-transform`}
+            >
               {card.icon}
             </div>
           </div>
-          <h3 className="text-3xl font-extrabold tracking-tight text-foreground mt-2">{card.value}</h3>
+          <h3 className="text-3xl font-extrabold tracking-tight text-foreground mt-2">
+            {card.value}
+          </h3>
         </motion.div>
       ))}
     </div>

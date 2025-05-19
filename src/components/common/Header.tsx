@@ -48,12 +48,26 @@ export function Header() {
           </Link>
         </div>
         <div className="flex items-center gap-6">
-          <button className="rounded-full p-2 bg-card/70 hover:bg-card transition shadow border border-border" aria-label="Toggle dark mode">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m8.66-13.66-.71.71M4.05 19.95l-.71.71m16.97 0-.71-.71M4.05 4.05l-.71-.71M21 12h1M3 12H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/></svg>
+          <button
+            className="rounded-full p-2 bg-card/70 hover:bg-card transition shadow border border-border"
+            aria-label="Toggle dark mode"
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <path
+                d="M12 3v1m0 16v1m8.66-13.66-.71.71M4.05 19.95l-.71.71m16.97 0-.71-.71M4.05 4.05l-.71-.71M21 12h1M3 12H2"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" />
+            </svg>
           </button>
           {user && (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground font-medium hidden md:block">{user.email}</span>
+              <span className="text-sm text-muted-foreground font-medium hidden md:block">
+                {user.email}
+              </span>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary via-accent to-logoNode flex items-center justify-center text-white font-bold shadow">
                 {user.email?.[0]?.toUpperCase()}
               </div>
