@@ -1,4 +1,5 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
+
 import { env } from './env';
 
 // Initialize Plaid client
@@ -15,6 +16,9 @@ const configuration = new Configuration({
 export const plaidClient = new PlaidApi(configuration);
 
 // Helper function to create a link token
+/**
+ *
+ */
 export async function createLinkToken(userId: string) {
   try {
     const request = {
@@ -34,6 +38,9 @@ export async function createLinkToken(userId: string) {
 }
 
 // Helper function to exchange public token for access token
+/**
+ *
+ */
 export async function exchangePublicToken(publicToken: string) {
   try {
     const response = await plaidClient.itemPublicTokenExchange({
@@ -47,6 +54,9 @@ export async function exchangePublicToken(publicToken: string) {
 }
 
 // Helper function to get account balances
+/**
+ *
+ */
 export async function getAccountBalances(accessToken: string) {
   try {
     const response = await plaidClient.accountsBalanceGet({
@@ -60,6 +70,9 @@ export async function getAccountBalances(accessToken: string) {
 }
 
 // Helper function to get transactions
+/**
+ *
+ */
 export async function getTransactions(accessToken: string, startDate: string, endDate: string) {
   try {
     const response = await plaidClient.transactionsGet({

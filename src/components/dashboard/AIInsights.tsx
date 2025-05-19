@@ -1,11 +1,14 @@
-import { Insight } from '@/types/finance';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Insight } from '@/types/finance';
 
 interface AIInsightsProps {
   insights: Insight[] | undefined;
   insightsLoading: boolean;
 }
 
+/**
+ *
+ */
 export function AIInsights({ insights, insightsLoading }: AIInsightsProps) {
   if (insightsLoading) {
     return <LoadingSpinner message="Loading insights..." />;

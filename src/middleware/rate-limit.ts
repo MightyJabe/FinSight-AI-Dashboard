@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Simple in-memory store for rate limiting
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
@@ -8,6 +8,9 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 60; // 60 requests per minute
 
+/**
+ *
+ */
 export function rateLimitMiddleware(request: NextRequest) {
   const ip = request.ip ?? 'anonymous';
   const now = Date.now();

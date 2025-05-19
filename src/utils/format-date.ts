@@ -1,5 +1,8 @@
 // Utility for formatting dates
 
+/**
+ *
+ */
 export function formatDate(
   date: string | Date,
   options?: Intl.DateTimeFormatOptions,

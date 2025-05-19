@@ -1,11 +1,15 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
-import { formatCurrency } from '@/utils/format';
+import { TrendingDown, TrendingUp } from 'lucide-react';
+
 import type { Overview } from '@/types/finance';
+import { formatCurrency } from '@/utils/format';
 
 interface NetWorthWidgetProps {
   data: Overview;
 }
 
+/**
+ *
+ */
 export function NetWorthWidget({ data }: NetWorthWidgetProps) {
   const { netWorth, netWorthHistory } = data;
 

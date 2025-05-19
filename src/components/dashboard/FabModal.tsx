@@ -39,6 +39,9 @@ interface FabModalProps {
   modalLiabilityLoading: boolean;
 }
 
+/**
+ *
+ */
 export function FabModal({
   isOpen,
   onClose,

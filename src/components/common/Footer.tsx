@@ -1,3 +1,6 @@
+/**
+ *
+ */
 export function Footer() {
   return (
     <footer className="w-full border-t bg-background py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">

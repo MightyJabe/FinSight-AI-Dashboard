@@ -34,15 +34,30 @@ export interface Liability {
   amount: number;
 }
 
+export interface BudgetCategory {
+  category: string;
+  budget: number;
+  spent: number;
+}
+
+export interface SpendingCategory {
+  category: string;
+  amount: number;
+}
+
 export interface Overview {
   netWorth: number;
   totalAssets: number;
   totalLiabilities: number;
   monthlySavings: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
   accounts: Account[];
   manualAssets: ManualAsset[];
   liabilities: Liability[];
   netWorthHistory: Array<{ date: string; value: number }>;
+  budgetCategories: BudgetCategory[];
+  spendingByCategory: SpendingCategory[];
 }
 
 export interface Insight {

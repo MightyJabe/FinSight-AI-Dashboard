@@ -2,7 +2,7 @@ import { env } from './env';
 console.log('FIREBASE API KEY:', env.firebase.apiKey);
 console.log('FIREBASE CONFIG:', env.firebase);
 
-import { initializeApp, getApps } from 'firebase/app';
+import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 

@@ -1,13 +1,17 @@
 'use client';
 
-import { LoginForm } from '@/components/auth/LoginForm';
-import { useSession } from '@/components/providers/SessionProvider';
+import { getRedirectResult } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { getRedirectResult } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { toast } from 'react-hot-toast';
 
+import { LoginForm } from '@/components/auth/LoginForm';
+import { useSession } from '@/components/providers/SessionProvider';
+import { auth } from '@/lib/firebase';
+
+/**
+ *
+ */
 export default function LoginPage() {
   const { user, loading } = useSession();
   const router = useRouter();

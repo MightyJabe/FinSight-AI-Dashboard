@@ -1,11 +1,15 @@
+import { formatISO, subDays } from 'date-fns';
 import { NextResponse } from 'next/server';
+
 import { auth, db } from '@/lib/firebase-admin';
 import { getTransactions } from '@/lib/plaid';
-import { subDays, formatISO } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ *
+ */
 export async function GET(request: Request) {
   try {
     // Get the Firebase ID token from the Authorization header

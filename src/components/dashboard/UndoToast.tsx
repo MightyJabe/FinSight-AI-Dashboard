@@ -3,6 +3,9 @@ interface UndoToastProps {
   onUndo: () => void;
 }
 
+/**
+ *
+ */
 export function UndoToast({ message, onUndo }: UndoToastProps) {
   return (
     <div className="flex items-center gap-4">

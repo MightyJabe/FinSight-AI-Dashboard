@@ -12,22 +12,37 @@ interface State {
   error: Error | null;
 }
 
+/**
+ *
+ */
 export class ErrorBoundary extends React.Component<Props, State> {
+  /**
+   *
+   */
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
+  /**
+   *
+   */
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
+  /**
+   *
+   */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to your error reporting service
     console.error('Error caught by boundary:', error, errorInfo);
     toast.error('Something went wrong. Please try again.');
   }
 
+  /**
+   *
+   */
   render() {
     if (this.state.hasError) {
       return (

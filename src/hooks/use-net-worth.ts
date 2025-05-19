@@ -1,6 +1,10 @@
 import useSWR from 'swr';
-import { useUser } from './useUser';
 
+import { useUser } from './use-user';
+
+/**
+ *
+ */
 export function useNetWorth() {
   const { user, loading: userLoading } = useUser();
   const {

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { SocialAuth } from './SocialAuth';
 
 export const loginSchema = z.object({
@@ -12,6 +13,9 @@ export const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/**
+ *
+ */
 export function LoginForm({ onSubmit }: { onSubmit?: (data: LoginFormValues) => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

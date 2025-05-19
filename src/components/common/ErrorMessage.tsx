@@ -3,6 +3,9 @@ interface ErrorMessageProps {
   className?: string;
 }
 
+/**
+ *
+ */
 export function ErrorMessage({ message, className = '' }: ErrorMessageProps) {
   return (
     <div

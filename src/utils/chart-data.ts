@@ -7,6 +7,9 @@ interface ChartDataPoint {
   value: number;
 }
 
+/**
+ *
+ */
 export function getPieChartData<T extends Record<string, unknown>>(
   items: T[],
   labelKey: keyof T,
@@ -33,6 +36,9 @@ export function getPieChartData<T extends Record<string, unknown>>(
   };
 }
 
+/**
+ *
+ */
 export function prepareNetWorthData(transactions: Transaction[]): ChartDataPoint[] {
   return transactions.map(txn => ({
     date: txn.date,

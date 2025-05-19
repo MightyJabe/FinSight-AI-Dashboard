@@ -1,17 +1,18 @@
 import {
-  Wallet,
-  CreditCard,
-  Coins,
-  Home,
   Car,
-  TrendingUp,
-  PiggyBank,
+  Coins,
+  CreditCard,
+  Home,
   Pencil,
+  PiggyBank,
   Trash2,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
-import { formatCurrency } from '@/utils/format';
-import { formatDate } from '@/utils/formatDate';
+
 import type { Account, ManualAsset } from '@/types/finance';
+import { formatCurrency } from '@/utils/format';
+import { formatDate } from '@/utils/format-date';
 
 interface AssetsSectionProps {
   accounts: Account[];
@@ -20,6 +21,9 @@ interface AssetsSectionProps {
   onDeleteAsset: (assetId: string) => void;
 }
 
+/**
+ *
+ */
 export function AssetsSection({
   accounts,
   manualAssets,

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { auth, db } from '@/lib/firebase-admin';
 
+/**
+ *
+ */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -25,6 +29,9 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ *
+ */
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -61,6 +68,9 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ *
+ */
 export async function PUT(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');

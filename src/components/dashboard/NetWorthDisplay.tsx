@@ -1,4 +1,5 @@
 import { TrendingUp } from 'lucide-react';
+
 import { formatCurrency } from '@/utils/format';
 
 interface NetWorthDisplayProps {
@@ -6,6 +7,9 @@ interface NetWorthDisplayProps {
   className?: string;
 }
 
+/**
+ *
+ */
 export function NetWorthDisplay({ netWorth, className = '' }: NetWorthDisplayProps) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>

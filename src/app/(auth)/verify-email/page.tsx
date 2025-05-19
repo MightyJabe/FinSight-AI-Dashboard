@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { sendEmailVerification, reload } from 'firebase/auth';
-import { toast, Toaster } from 'react-hot-toast';
+import { reload, sendEmailVerification } from 'firebase/auth';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast, Toaster } from 'react-hot-toast';
 
+import { auth } from '@/lib/firebase';
+
+/**
+ *
+ */
 export default function VerifyEmailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();

@@ -1,7 +1,12 @@
 import useSWR from 'swr';
-import { useUser } from './useUser';
+
 import type { Transaction } from '@/types/finance';
 
+import { useUser } from './use-user';
+
+/**
+ *
+ */
 export function useTransactions() {
   const { user, loading: userLoading } = useUser();
   const {

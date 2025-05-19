@@ -1,13 +1,17 @@
 'use client';
 
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
-import { SocialAuth } from '@/components/auth/SocialAuth';
-import { SignupForm } from '@/components/auth/SignupForm';
 
+import { SignupForm } from '@/components/auth/SignupForm';
+import { SocialAuth } from '@/components/auth/SocialAuth';
+import { auth } from '@/lib/firebase';
+
+/**
+ *
+ */
 export default function SignupPage() {
   const router = useRouter();
 

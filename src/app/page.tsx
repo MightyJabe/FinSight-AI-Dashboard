@@ -1,12 +1,15 @@
 import {
   ArrowUpRight,
   BarChart3,
+  ChevronRight,
   LineChart,
   PieChart,
   TrendingUp,
-  ChevronRight,
 } from 'lucide-react';
 
+/**
+ *
+ */
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-background/95">

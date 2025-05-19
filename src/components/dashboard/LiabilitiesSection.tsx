@@ -1,7 +1,8 @@
-import { Home, CreditCard, AlertCircle, Pencil, Trash2 } from 'lucide-react';
-import { formatCurrency } from '@/utils/format';
-import { formatDate } from '@/utils/formatDate';
+import { AlertCircle, CreditCard, Home, Pencil, Trash2 } from 'lucide-react';
+
 import type { Liability } from '@/types/finance';
+import { formatCurrency } from '@/utils/format';
+import { formatDate } from '@/utils/format-date';
 
 interface LiabilitiesSectionProps {
   liabilities: Liability[];
@@ -9,6 +10,9 @@ interface LiabilitiesSectionProps {
   onDeleteLiability: (liabilityId: string) => void;
 }
 
+/**
+ *
+ */
 export function LiabilitiesSection({
   liabilities,
   onEditLiability,

@@ -1,7 +1,8 @@
 'use client';
 
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+
 import { auth } from '@/lib/firebase';
 
 interface SessionContextType {
@@ -14,6 +15,9 @@ const SessionContext = createContext<SessionContextType>({
   loading: true,
 });
 
+/**
+ *
+ */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

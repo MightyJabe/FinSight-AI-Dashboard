@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createLinkToken } from '@/lib/plaid';
+
 import { auth } from '@/lib/firebase-admin';
+import { createLinkToken } from '@/lib/plaid';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ *
+ */
 export async function POST(request: Request) {
   try {
     console.log('Creating link token...');

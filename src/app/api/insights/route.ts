@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { auth } from '@/lib/firebase-admin';
 
+/**
+ *
+ */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('Authorization');

@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { exchangePublicToken } from '@/lib/plaid';
+
 import { auth, db } from '@/lib/firebase-admin';
+import { exchangePublicToken } from '@/lib/plaid';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ *
+ */
 export async function POST(request: Request) {
   try {
     // Get the Firebase ID token from the Authorization header

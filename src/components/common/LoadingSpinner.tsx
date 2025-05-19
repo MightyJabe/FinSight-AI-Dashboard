@@ -3,6 +3,9 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
+/**
+ *
+ */
 export function LoadingSpinner({ message = 'Loading...', className = '' }: LoadingSpinnerProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`} role="status">

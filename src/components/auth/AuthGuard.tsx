@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { auth } from '@/lib/firebase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requireEmailVerification?: boolean;
 }
 
+/**
+ *
+ */
 export function AuthGuard({ children, requireEmailVerification = false }: AuthGuardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();

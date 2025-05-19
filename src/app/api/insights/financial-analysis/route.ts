@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
 import { auth, db } from '@/lib/firebase-admin';
 import { getTransactions } from '@/lib/plaid';
-import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/**
+ *
+ */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');

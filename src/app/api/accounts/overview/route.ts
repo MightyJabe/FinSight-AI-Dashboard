@@ -1,11 +1,15 @@
+import { endOfMonth, formatISO, startOfMonth, subDays, subMonths } from 'date-fns';
 import { NextResponse } from 'next/server';
+
 import { auth, db } from '@/lib/firebase-admin';
 import { getAccountBalances, getTransactions } from '@/lib/plaid';
-import { subDays, formatISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ *
+ */
 export async function GET(request: Request) {
   try {
     // Get the Firebase ID token from the Authorization header
@@ -189,6 +193,14 @@ export async function GET(request: Request) {
       });
     }
 
+    const totalEmergencyFund = accounts
+      .filter(acc => acc.name.toLowerCase().includes('savings'))
+      .reduce((sum, acc) => sum + (acc.balances.current || 0), 0);
+
+    const savingsRate = monthlyIncome > 0 ? monthlyCashFlow / monthlyIncome : 0;
+    const emergencyFundStatus =
+      monthlyExpenses > 0 ? totalEmergencyFund / (monthlyExpenses * 3) : 0;
+
     return NextResponse.json({
       totalBalance,
       totalAssets,
@@ -202,6 +214,8 @@ export async function GET(request: Request) {
       monthlyIncome,
       monthlyExpenses,
       netWorthHistory,
+      emergencyFundStatus,
+      savingsRate,
     });
   } catch (error) {
     console.error('Error fetching account overview:', error);

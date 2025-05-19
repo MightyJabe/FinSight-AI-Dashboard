@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Rule Type: Always
+This rule is attached to every chat and command+k request for API development.
+
+---
+
+### Purpose
+Ensure all API routes in the FinSight AI Dashboard project use Zod for input validation, following security and data integrity best practices.
+
+---
+
+### Tasks this rule is helpful for
+- Enforcing input validation in all API endpoints
+- Preventing unvalidated or unsafe data from being processed
+- Maintaining consistent API error handling
+- Ensuring compliance with project security standards
+
+---
+
+### Explicit Rule: API Input Validation with Zod
+- All API routes must use Zod schemas to validate incoming request data (body, query, params) before processing.
+- Each API file should import Zod (`import { z } from 'zod';`) and define a schema for the expected input.
+- Use `schema.safeParse(req.body)` (or `req.query`, etc.) to validate input. If validation fails, return a 400 response with the error details.
+- Never process or trust unvalidated input in API logic.
+- This applies to all files in `src/app/api/` and any custom API route directories.
+- Example pattern:
+  ```ts
+  import { z } from 'zod';
+  const schema = z.object({ ... });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.errors });
+  }
+  // Use parsed.data
+  ```
+- If you need to validate query or params, use the appropriate object (e.g., `req.query`).
+- If a new type of input is needed, extend the schema and document it in the file.
+
+**Tag files with:**
+- @src/app/api/ (all API route files)
+- @src/services/ (if any service layer also validates input)
+
+---
+
+**All API contributions must follow this rule for security, data integrity, and maintainability.**
+
+

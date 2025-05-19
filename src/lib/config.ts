@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { firebaseConfig, plaidConfig, openaiConfig } from './env';
+
+import { firebaseConfig, openaiConfig, plaidConfig } from './env';
 
 // Environment variables validation schema
 const configSchema = z.object({
@@ -80,6 +81,9 @@ export const config = {
 // Type for the config object
 export type Config = typeof config;
 
+/**
+ *
+ */
 export function getConfig() {
   return config;
 }

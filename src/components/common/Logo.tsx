@@ -10,14 +10,17 @@ interface LogoProps {
   accentColor?: string;
 }
 
+/**
+ *
+ */
 export function Logo({
   width = 200,
   height = 200,
   className = '',
-  gradientStart = '#2563eb', // Tailwind primary.DEFAULT
-  gradientEnd = '#0ea5e9', // Tailwind accent.DEFAULT
-  nodeColor = '#38bdf8', // Tailwind logoNode
-  accentColor = '#0ea5e9', // Tailwind accent.DEFAULT
+  gradientStart = 'rgb(37 99 235)', // Tailwind primary.DEFAULT
+  gradientEnd = 'rgb(14 165 233)', // Tailwind accent.DEFAULT
+  nodeColor = 'rgb(56 189 248)', // Tailwind logoNode
+  accentColor = 'rgb(14 165 233)', // Tailwind accent.DEFAULT
 }: LogoProps) {
   // Generate a unique suffix so IDs never clash
   const uid = useId();
@@ -76,7 +79,7 @@ export function Logo({
           cy={y}
           r="8"
           fill={`url(#${nodeGradId})`}
-          stroke="#fff"
+          stroke="rgb(255 255 255)"
           strokeWidth="2"
         />
       ))}

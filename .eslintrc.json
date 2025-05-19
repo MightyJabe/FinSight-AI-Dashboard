@@ -6,19 +6,81 @@
     "plugin:jsx-a11y/recommended",
     "prettier"
   ],
-  "plugins": ["@typescript-eslint", "react", "jsx-a11y", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "jsx-a11y",
+    "prettier",
+    "filenames",
+    "jsdoc",
+    "simple-import-sort"
+  ],
   "rules": {
     "prettier/prettier": "error",
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/no-explicit-any": "warn",
-    "jsx-a11y/anchor-is-valid": "off"
+    "@typescript-eslint/no-explicit-any": "error",
+
+    // Enforce either kebab-case (utils/hooks) or PascalCase (components)
+    "filenames/match-regex": ["error", "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$|^[A-Z][a-zA-Z0-9]*$"],
+
+    // Sort imports/exports
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+
+    // Ban hard-coded hex colors in code
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/^#([A-Fa-f0-9]{3}){1,2}$/]",
+        "message": "Do not use hardcoded color literals; use your Tailwind theme tokens instead."
+      }
+    ],
+
+    // JSDoc: only enforce on public exports
+    "jsdoc/require-jsdoc": [
+      "warn",
+      {
+        "require": {
+          "FunctionDeclaration": true,
+          "ClassDeclaration": true,
+          "MethodDefinition": true
+        },
+        "contexts": [
+          "ExportNamedDeclaration > FunctionDeclaration",
+          "ExportDefaultDeclaration > FunctionDeclaration"
+        ]
+      }
+    ],
+
+    // React Hooks
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   },
-  "settings": {
-    "react": {
-      "version": "detect"
+  "overrides": [
+    {
+      "files": ["src/components/**/*.tsx"],
+      "rules": {
+        // Force PascalCase for component filenames
+        "filenames/match-regex": ["error", "^[A-Z][a-zA-Z0-9]*$"]
+      }
+    },
+    {
+      "files": [
+        "*.config.js",
+        "*.config.ts",
+        "*.config.json",
+        "next.config.js",
+        "postcss.config.js"
+      ],
+      "rules": {
+        // Allow standard config file naming and require()
+        "filenames/match-regex": "off",
+        "@typescript-eslint/no-require-imports": "off"
+      }
     }
-  }
+  ]
 }

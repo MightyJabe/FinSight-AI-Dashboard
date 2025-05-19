@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 export const signupSchema = z
@@ -16,6 +16,9 @@ export const signupSchema = z
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
+/**
+ *
+ */
 export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

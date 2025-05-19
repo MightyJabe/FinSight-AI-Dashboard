@@ -1,8 +1,9 @@
 'use client';
 
-import { usePlaidLink } from 'react-plaid-link';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { usePlaidLink } from 'react-plaid-link';
+
 import { auth } from '@/lib/firebase';
 
 interface PlaidLinkButtonProps {
@@ -10,6 +11,9 @@ interface PlaidLinkButtonProps {
   className?: string;
 }
 
+/**
+ *
+ */
 export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonProps) {
   const [loading, setLoading] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);

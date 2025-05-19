@@ -1,0 +1,108 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule Type: Always
+This rule is attached to every chat and command+k request.
+
+---
+
+### Purpose
+Ensure all code, documentation, and structure in the FinSight AI Dashboard project follow the standards and best practices defined in project documentation.
+
+---
+
+### Tasks this rule is helpful for
+- Enforcing code quality and consistency
+- Maintaining TypeScript strict mode and type safety
+- Ensuring proper component structure and naming conventions
+- Organizing files according to project standards
+- Implementing and validating API routes with error handling and input validation
+- Applying Tailwind CSS and styling conventions
+- Handling errors and logging according to best practices
+- Writing and maintaining tests (unit, integration, E2E)
+- Following security and data protection requirements
+- Meeting performance benchmarks
+- Keeping documentation up to date and clear
+
+---
+
+### Tag files with:
+- @README.md (project overview, structure, and guidelines)
+- @project.md (technical design, architecture, and standards)
+- @src/types/ (TypeScript types and interfaces)
+- @src/services/ (API/data-fetching logic)
+- @src/utils/ (utility functions)
+- @src/lib/ (library initializations)
+- @components/ (UI and feature components)
+- @app/ (Next.js app structure and API routes)
+- @tests/ (testing files and coverage)
+- @tailwind.config.js (color palette and theme tokens)
+- @src/app/globals.css (global typography and style conventions)
+
+---
+
+### Explicit Rules
+
+1. **TypeScript**
+   - Use strict mode. No `any` types without explicit justification.
+   - Prefer interfaces over types. Use custom error types for error handling.
+2. **Component Structure**
+   - Use PascalCase for components. Group by feature or use-case. Use proper props interfaces.
+3. **API Routes**
+   - Use kebab-case for filenames. Validate input (e.g., with Zod). Handle errors and use correct HTTP status codes. Implement rate limiting.
+4. **Styling**
+   - Use Tailwind utility classes. Follow mobile-first design. Use consistent spacing and theming.
+5. **File Organization**
+   - Types/interfaces in `src/types/`. Services in `src/services/`. Utils in `src/utils/`. Library initializations in `src/lib/`.
+   - Environment variables in `.env.local` (never committed).
+6. **Error Handling**
+   - Use global error boundaries. Provide structured, user-friendly error messages. Log errors properly.
+7. **Testing**
+   - Write unit, integration, and E2E tests. Maintain >80% coverage. Use Jest and React Testing Library.
+8. **Security**
+   - Use JWT authentication, refresh token rotation, rate limiting, and input validation. Follow GDPR compliance.
+9. **Performance**
+   - Meet FCP <1.5s, LCP <2.5s, FID <100ms, CLS <0.1, API response <200ms.
+10. **Documentation**
+    - Document all public APIs and functions. Use JSDoc for complex logic. Keep README and environment docs up to date.
+11. **Color and Global Style Consistency**
+    - Use only the color palette and design tokens defined in `tailwind.config.js` for all UI elements (e.g., `primary`, `accent`, `background`, `text`, etc.).
+    - Do not use hardcoded color values in components, styles, or utility classes—always reference the Tailwind theme colors.
+    - Apply global typography and spacing conventions as defined in `src/app/globals.css`.
+    - If new colors or global styles are needed, add them to `tailwind.config.js` and/or `globals.css` and document their usage.
+    - Ensure dark mode and light mode color tokens are used appropriately.
+
+    **Tag files with:**
+    - [tailwind.config.js](mdc:tailwind.config.js) (color palette and theme tokens)
+    - [globals.css](mdc:src/app/globals.css) (global typography and style conventions)
+    - @components/ (UI components using theme colors)
+---
+
+**All contributions must follow these rules for maintainability, security, and scalability.**
+
+### Required Checks for Project Consistency
+To ensure all rules and standards are consistently implemented, perform the following checks before merging, pushing, or deploying any changes:
+
+#### Automated/CI Checks
+- Run `npm run lint` to enforce code quality, naming, and usage patterns (including Zod for APIs).
+- Run `npm test -- --coverage` to ensure all tests pass and coverage is above the required threshold (80%).
+- Run `npm run lhci:autorun` to verify performance budgets are met.
+- Run `npx stylelint "src/**/*.css"` to ensure no hardcoded colors or CSS violations.
+
+#### Manual Checks (if not automated)
+- Confirm every API route uses Zod for input validation (see API rules).
+- Ensure error handling is consistent and user-friendly across the codebase.
+- Check that all new/changed endpoints, features, or components are documented if needed.
+
+#### Best Practice
+- Integrate these checks into your CI pipeline (e.g., GitHub Actions) so they run automatically on every push or pull request.
+- If working solo, run these commands locally before pushing to main or deploying.
+
+
+
+
+
+
+

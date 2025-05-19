@@ -1,6 +1,6 @@
-import { useTransactions } from '@/hooks/useTransactions';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { useTransactions } from '@/hooks/use-transactions';
 import type { Transaction } from '@/types/finance';
 
 interface RecentTransactionsProps {
@@ -8,6 +8,9 @@ interface RecentTransactionsProps {
   onDeleteTransaction: (transaction: Transaction) => void;
 }
 
+/**
+ *
+ */
 export function RecentTransactions({
   onEditTransaction,
   onDeleteTransaction,

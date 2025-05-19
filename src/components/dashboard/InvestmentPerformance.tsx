@@ -1,0 +1,319 @@
+import {
+  ArcElement,
+  CategoryScale,
+  Chart as ChartJS,
+  ChartType,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  TooltipItem,
+} from 'chart.js';
+import { BarChart2, PieChart, TrendingUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Line, Pie } from 'react-chartjs-2';
+
+import { Investment } from '@/lib/finance';
+import { formatCurrency, formatPercentage } from '@/utils/format';
+import { getCssVarColor } from '@/utils/get-css-var-color';
+import { toRgba } from '@/utils/to-rgba';
+
+// Register Chart.js components
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+interface InvestmentPerformanceProps {
+  investments: Investment[];
+  assetAllocation: Array<{
+    type: string;
+    amount: number;
+    target: number;
+  }>;
+  historicalPerformance: Array<{
+    date: string;
+    value: number;
+  }>;
+}
+
+/**
+ * Displays investment performance metrics and asset allocation
+ */
+export function InvestmentPerformance({
+  investments = [],
+  assetAllocation = [],
+  historicalPerformance = [],
+}: InvestmentPerformanceProps) {
+  const performanceChartRef = useRef<ChartJS<'line'>>(null);
+  const allocationChartRef = useRef<ChartJS<'pie'>>(null);
+
+  // Dynamic theme colors for charts
+  const [chartColors, setChartColors] = useState({
+    blue: '#2563eb',
+    green: '#22c55e',
+    amber: '#f59e0b',
+    purple: '#a855f7',
+    rose: '#f43f5e',
+    yellow: '#eab308',
+    teal: '#14b8a6',
+    slate: '#64748b',
+  });
+
+  useEffect(() => {
+    setChartColors({
+      blue: getCssVarColor('--blue-600') || '#2563eb',
+      green: getCssVarColor('--green-500') || '#22c55e',
+      amber: getCssVarColor('--amber-500') || '#f59e0b',
+      purple: getCssVarColor('--purple-500') || '#a855f7',
+      rose: getCssVarColor('--rose-500') || '#f43f5e',
+      yellow: getCssVarColor('--yellow-500') || '#eab308',
+      teal: getCssVarColor('--teal-500') || '#14b8a6',
+      slate: getCssVarColor('--slate-500') || '#64748b',
+    });
+  }, []);
+
+  // Cleanup Chart.js instances on unmount
+  useEffect(() => {
+    const performanceChart = performanceChartRef.current;
+    const allocationChart = allocationChartRef.current;
+
+    return () => {
+      if (performanceChart) {
+        performanceChart.destroy();
+      }
+      if (allocationChart) {
+        allocationChart.destroy();
+      }
+    };
+  }, []);
+
+  const totalInvestment = investments?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
+  const averagePerformance = {
+    daily:
+      investments?.reduce((sum, acc) => sum + acc.performance.daily, 0) / investments?.length || 0,
+    monthly:
+      investments?.reduce((sum, acc) => sum + acc.performance.monthly, 0) / investments?.length ||
+      0,
+    yearly:
+      investments?.reduce((sum, acc) => sum + acc.performance.yearly, 0) / investments?.length || 0,
+  };
+
+  const safeAssetAllocation = assetAllocation || [];
+  const safeHistoricalPerformance = historicalPerformance || [];
+
+  // Get color class based on performance
+  const getPerformanceColorClass = (value: number) => {
+    return value >= 0 ? 'text-green-500' : 'text-rose-500';
+  };
+
+  // Get color class based on allocation difference
+  const getAllocationColorClass = (difference: number) => {
+    return difference > 0 ? 'bg-green-500' : 'bg-rose-500';
+  };
+
+  // Prepare data for asset allocation pie chart
+  const allocationPieData = {
+    labels: safeAssetAllocation.map(asset => asset.type),
+    datasets: [
+      {
+        data: safeAssetAllocation.map(asset => asset.amount),
+        backgroundColor: [
+          chartColors.blue,
+          chartColors.green,
+          chartColors.amber,
+          chartColors.purple,
+          chartColors.rose,
+          chartColors.yellow,
+          chartColors.teal,
+          chartColors.slate,
+        ],
+      },
+    ],
+  };
+
+  // Prepare data for historical performance line chart
+  const historicalPerformanceData = {
+    labels: safeHistoricalPerformance.map(d => d.date),
+    datasets: [
+      {
+        label: 'Portfolio Value',
+        data: safeHistoricalPerformance.map(d => d.value),
+        borderColor: chartColors.blue,
+        backgroundColor: toRgba(chartColors.blue, 0.12), // 12% opacity
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Investment Overview */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Investment Performance</h2>
+          <BarChart2 className="h-5 w-5 text-blue-600" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-500">Total Investment</p>
+            <p className="text-xl font-bold">{formatCurrency(totalInvestment)}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-500">Daily Return</p>
+            <p
+              className={`text-xl font-bold ${getPerformanceColorClass(averagePerformance.daily)}`}
+            >
+              {formatPercentage(averagePerformance.daily)}
+            </p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-500">Monthly Return</p>
+            <p
+              className={`text-xl font-bold ${getPerformanceColorClass(averagePerformance.monthly)}`}
+            >
+              {formatPercentage(averagePerformance.monthly)}
+            </p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-500">Yearly Return</p>
+            <p
+              className={`text-xl font-bold ${getPerformanceColorClass(averagePerformance.yearly)}`}
+            >
+              {formatPercentage(averagePerformance.yearly)}
+            </p>
+          </div>
+        </div>
+
+        {/* Investment Accounts Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-gray-500 border-b">
+                <th className="pb-3">Account</th>
+                <th className="pb-3">Type</th>
+                <th className="pb-3">Balance</th>
+                <th className="pb-3">Daily</th>
+                <th className="pb-3">Monthly</th>
+                <th className="pb-3">Yearly</th>
+              </tr>
+            </thead>
+            <tbody>
+              {investments.map(account => (
+                <tr key={account.name} className="border-b">
+                  <td className="py-3">{account.name}</td>
+                  <td className="py-3">{account.type}</td>
+                  <td className="py-3 font-medium">{formatCurrency(account.balance)}</td>
+                  <td className={`py-3 ${getPerformanceColorClass(account.performance.daily)}`}>
+                    {formatPercentage(account.performance.daily)}
+                  </td>
+                  <td className={`py-3 ${getPerformanceColorClass(account.performance.monthly)}`}>
+                    {formatPercentage(account.performance.monthly)}
+                  </td>
+                  <td className={`py-3 ${getPerformanceColorClass(account.performance.yearly)}`}>
+                    {formatPercentage(account.performance.yearly)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Asset Allocation */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Asset Allocation</h2>
+          <PieChart className="h-5 w-5 text-green-500" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="h-64 flex items-center justify-center">
+            <Pie
+              data={allocationPieData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'bottom' },
+                  tooltip: {
+                    callbacks: {
+                      label: (context: TooltipItem<ChartType>) => {
+                        const value = context.raw as number;
+                        const percentage = (value / totalInvestment) * 100;
+                        return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                      },
+                    },
+                  },
+                },
+              }}
+              ref={allocationChartRef}
+            />
+          </div>
+          <div className="space-y-4">
+            {safeAssetAllocation.map(asset => {
+              const currentPercentage = (asset.amount / totalInvestment) * 100;
+              const targetPercentage = asset.target;
+              const difference = currentPercentage - targetPercentage;
+
+              return (
+                <div key={asset.type} className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{asset.type}</span>
+                    <span>{formatPercentage(currentPercentage)}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full">
+                    <div
+                      className={`h-full rounded-full ${getAllocationColorClass(difference)}`}
+                      style={{ width: `${currentPercentage}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Target: {formatPercentage(targetPercentage)}</span>
+                    <span className={getPerformanceColorClass(difference)}>
+                      {formatPercentage(Math.abs(difference))} {difference > 0 ? 'over' : 'under'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Historical Performance */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Historical Performance</h2>
+          <TrendingUp className="h-5 w-5 text-blue-500" />
+        </div>
+        <div className="h-64">
+          <Line
+            data={historicalPerformanceData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  ticks: {
+                    callback: (value: number) => formatCurrency(value),
+                  },
+                },
+              },
+            }}
+            ref={performanceChartRef}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
