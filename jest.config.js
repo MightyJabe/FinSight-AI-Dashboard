@@ -12,40 +12,41 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testMatch: ['**/__tests__/**/*.ts?(x)', '**/?(*.)+(spec|test).ts?(x)'],
+  transformIgnorePatterns: ['/node_modules/(?!(jose|openai|@radix-ui|next-auth)/)'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/index.{js,jsx,ts,tsx}',
-    '!src/types/**/*',
-    '!src/**/types.ts',
   ],
   coverageThreshold: {
     global: {
+      statements: 80,
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80,
     },
     './src/lib/': {
+      statements: 90,
       branches: 90,
       functions: 90,
       lines: 90,
-      statements: 90,
     },
     './src/app/api/': {
+      statements: 85,
       branches: 85,
       functions: 85,
       lines: 85,
-      statements: 85,
     },
   },
   coverageReporters: ['text', 'lcov', 'clover', 'html'],
   verbose: true,
   testTimeout: 10000,
   maxWorkers: '50%',
+  testEnvironmentOptions: {
+    customExportConditions: ['node', 'node-addons'],
+  },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

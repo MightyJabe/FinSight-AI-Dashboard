@@ -22,9 +22,22 @@ describe('Tabs', () => {
     expect(screen.getByRole('tab', { name: 'Tab 1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab 2' })).toBeInTheDocument();
 
-    // Check if content is rendered
-    expect(screen.getByText('Content 1')).toBeInTheDocument();
-    expect(screen.getByText('Content 2')).toBeInTheDocument();
+    // Check if initial content is rendered
+    expect(screen.getByText('Content 1')).toBeVisible();
+
+    // Find all tabpanels
+    const tabpanels = screen.getAllByRole('tabpanel', { hidden: true });
+
+    // The first panel should be active and visible
+    const activePanel = screen.getByRole('tabpanel', { hidden: false });
+    expect(activePanel).toHaveTextContent('Content 1');
+    expect(activePanel).toHaveAttribute('data-state', 'active');
+
+    // The second panel should be inactive and hidden
+    const inactivePanel = tabpanels.find(panel => panel.getAttribute('data-state') === 'inactive');
+    expect(inactivePanel).toHaveTextContent('Content 2');
+    expect(inactivePanel).toHaveAttribute('data-state', 'inactive');
+    expect(inactivePanel).toHaveAttribute('hidden');
   });
 
   it('switches content when clicking tabs', async () => {

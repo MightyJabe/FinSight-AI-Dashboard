@@ -14,6 +14,9 @@
     "prepare": "husky install",
     "lhci:autorun": "lhci autorun",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:all": "jest --coverage --passWithNoTests",
     "seed": "ts-node --project src/scripts/tsconfig.json src/scripts/seedData.ts"
   },
   "dependencies": {
@@ -30,6 +33,7 @@
     "framer-motion": "^12.12.1",
     "lucide-react": "^0.511.0",
     "next": "^14.2.28",
+    "next-auth": "^4.24.11",
     "openai": "^4.100.0",
     "plaid": "^33.0.0",
     "react": "^18.2.0",
