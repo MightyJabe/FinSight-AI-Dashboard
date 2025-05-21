@@ -72,7 +72,14 @@
       }
     },
     {
-      "files": ["*.test.ts", "*.spec.ts", "src/tests/**/*.ts"],
+      "files": [
+        "*.test.ts",
+        "*.test.tsx",
+        "*.spec.ts",
+        "*.spec.tsx",
+        "src/tests/**/*.ts",
+        "src/tests/**/*.tsx"
+      ],
       "rules": {
         // Allow flexible naming for test files, e.g., moduleName.test.ts, module-name.test.ts
         "filenames/match-regex": ["error", "^[^.]+\\.(test|spec)$", true]
