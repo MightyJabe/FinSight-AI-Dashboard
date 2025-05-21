@@ -21,7 +21,10 @@
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
     "@typescript-eslint/no-explicit-any": "error",
 
     // Enforce either kebab-case (utils/hooks) or PascalCase (components)
@@ -69,12 +72,20 @@
       }
     },
     {
+      "files": ["*.test.ts", "*.spec.ts", "src/tests/**/*.ts"],
+      "rules": {
+        // Allow flexible naming for test files, e.g., moduleName.test.ts, module-name.test.ts
+        "filenames/match-regex": ["error", "^[^.]+\\.(test|spec)$", true]
+      }
+    },
+    {
       "files": [
         "*.config.js",
         "*.config.ts",
         "*.config.json",
         "next.config.js",
-        "postcss.config.js"
+        "postcss.config.js",
+        "jest.setup.js"
       ],
       "rules": {
         // Allow standard config file naming and require()

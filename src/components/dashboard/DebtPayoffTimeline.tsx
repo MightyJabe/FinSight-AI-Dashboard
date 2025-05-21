@@ -36,7 +36,7 @@ export function DebtPayoffTimeline({
     const totalPayments = debt.minimumPayment * debt.remainingPayments;
     return sum + (debt.amount - totalPayments);
   }, 0);
-  const payoffProgress = (totalPaid / totalDebt) * 100;
+  const payoffProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
 
   // Get progress color class based on percentage
   const getProgressColorClass = (progress: number) => {
@@ -78,7 +78,7 @@ export function DebtPayoffTimeline({
             className={`absolute h-full rounded-full transition-all duration-500 ${getProgressColorClass(
               payoffProgress
             )}`}
-            style={{ width: `${payoffProgress}%` }}
+            style={{ width: `${Math.min(100, Math.max(0, payoffProgress))}%` }}
           />
         </div>
 
@@ -98,7 +98,8 @@ export function DebtPayoffTimeline({
         <div className="space-y-4">
           {liabilities.map(debt => {
             const remainingAmount = debt.amount - debt.minimumPayment * debt.remainingPayments;
-            const progress = ((debt.amount - remainingAmount) / debt.amount) * 100;
+            const progress =
+              debt.amount > 0 ? ((debt.amount - remainingAmount) / debt.amount) * 100 : 0;
 
             return (
               <div key={debt.name} className="space-y-2">
@@ -118,7 +119,7 @@ export function DebtPayoffTimeline({
                 <div className="h-2 bg-gray-100 rounded-full">
                   <div
                     className={`h-full rounded-full ${getProgressColorClass(progress)}`}
-                    style={{ width: `${progress}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-gray-500">

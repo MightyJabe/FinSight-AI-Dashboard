@@ -1,23 +1,22 @@
 'use client';
-import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 import { Logo } from '@/components/common/Logo';
 import { useSession } from '@/components/providers/SessionProvider';
-import { auth } from '@/lib/firebase';
+import { Button } from '@/components/ui/Button';
 
 /**
  *
  */
 export function Header() {
-  const { user, loading } = useSession();
+  const { user, signOut } = useSession();
   const router = useRouter();
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await signOut();
       toast.success('Successfully logged out!');
       router.push('/login');
     } catch (error) {
@@ -28,9 +27,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur bg-background/80 border-b shadow-sm">
-      <div className="container flex h-20 items-center justify-between px-4 md:px-8">
-        <div className="mr-4 flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-3">
+      <div className="flex h-20 items-center justify-between px-8">
+        <div className="flex items-center gap-3">
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-3">
             <Logo width={40} height={40} className="h-10 w-10" />
             <div className="flex flex-col leading-tight justify-center">
               <div>
@@ -71,33 +70,19 @@ export function Header() {
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary via-accent to-logoNode flex items-center justify-center text-white font-bold shadow">
                 {user.email?.[0]?.toUpperCase()}
               </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="px-4 py-1.5 rounded-md border border-destructive text-destructive font-semibold hover:bg-destructive hover:text-destructive-foreground transition"
-              >
-                Logout
-              </button>
+              <Button variant="ghost" onClick={handleSignOut}>
+                Log Out
+              </Button>
             </div>
           )}
-          {!loading && !user && (
+          {!user && (
             <div className="flex items-center space-x-2">
-              <Link href="/login">
-                <button
-                  type="button"
-                  className="px-4 py-1.5 rounded-md border border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition"
-                >
-                  Login
-                </button>
-              </Link>
-              <Link href="/signup">
-                <button
-                  type="button"
-                  className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition"
-                >
-                  Sign Up
-                </button>
-              </Link>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Log In</Link>
+              </Button>
+              <Button variant="primary" asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
             </div>
           )}
         </div>

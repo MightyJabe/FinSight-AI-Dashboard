@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -21,23 +21,14 @@ type SignupFormValues = z.infer<typeof signupSchema>;
  */
 export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) => void }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
+    mode: 'onChange',
   });
-
-  // Only render the form on the client side to avoid hydration mismatches
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null; // Return null on server-side and first render
-  }
 
   return (
     <form

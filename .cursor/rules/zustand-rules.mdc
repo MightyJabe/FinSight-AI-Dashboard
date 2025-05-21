@@ -1,0 +1,87 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule Type: Always
+This rule is attached to every chat and command+k request involving state management.
+
+---
+
+### Purpose
+Ensure consistent, efficient, and maintainable use of Zustand for global state management in the FinSight AI Dashboard project.
+
+---
+
+### Tasks this rule is helpful for
+- Defining and organizing Zustand store slices.
+- Creating and using store hooks.
+- Managing asynchronous actions within the store.
+- Optimizing store performance with selectors.
+- Deciding when to use Zustand vs. local state or React Context.
+
+---
+
+### Tag files with:
+- `@store/index.ts` (root store setup)
+- `@store/slices/` (individual state slices)
+- `@store/hooks.ts` (custom hooks for store access)
+- `@components/` (components consuming Zustand state)
+- `@services/` (services interacting with Zustand for async operations)
+
+---
+
+### Explicit Rules for Zustand Usage
+
+1.  **Store Structure:**
+    *   The main store configuration should be in `src/store/index.ts`.
+    *   Divide the store into logical feature-based slices located in `src/store/slices/` (e.g., `userSlice.ts`, `accountsSlice.ts`, `settingsSlice.ts`).
+    *   Each slice should define its state interface, initial state, and actions (reducers).
+    *   Combine slices in the root store using the slice pattern (e.g., `create(devtools((...set) => ({...createUserSlice(...set), ...createAccountsSlice(...set)})))`).
+
+2.  **State Access and Modification:**
+    *   Access state and actions primarily through custom hooks defined in `src/store/hooks.ts` or directly exported from individual slice files if preferred for co-location.
+    *   Selectors should be used to derive or select specific pieces of state. Memoized selectors (e.g., with `proxy-memoize` or by default in Zustand for simple selectors) are preferred for performance-critical scenarios.
+    *   State updates must be immutable. Use spread operators or immutability helpers (like Immer, if integrated with Zustand) for updating state within actions.
+    *   Actions should be clearly named, indicating their purpose (e.g., `addUserAccount`, `setLoading`, `clearAuthError`).
+
+3.  **Asynchronous Operations:**
+    *   Handle asynchronous operations (e.g., API calls) within store actions.
+    *   Manage loading and error states within the relevant slice (e.g., `isLoading: boolean`, `error: string | null`).
+    *   Example async action pattern:
+        ```typescript
+        // In a slice
+        import { MyData } from '@/types';
+        import { fetchData } from '@/services/myService';
+
+        // ... state interface with isLoading and error fields
+
+        fetchMyData: async () => {
+          set({ isLoading: true, error: null });
+          try {
+            const data = await fetchData();
+            set({ myData: data, isLoading: false });
+          } catch (err) {
+            set({ error: (err as Error).message, isLoading: false });
+          }
+        },
+        ```
+
+4.  **Middleware:**
+    *   Use `devtools` middleware for Redux DevTools integration during development.
+    *   Consider `persist` middleware for persisting parts of the store to `localStorage` if needed (e.g., user preferences), but be mindful of sensitive data.
+
+5.  **When to Use Zustand:**
+    *   Use Zustand for global state that needs to be accessed by multiple, potentially deeply nested, components across different parts of the application.
+    *   For state local to a single component or a small component tree, prefer React's built-in `useState` or `useReducer`.
+    *   For theming or simple, slowly changing global values, React Context might be sufficient.
+
+6.  **Testing:**
+    *   Write unit tests for individual store slices, mocking any external dependencies like API services.
+    *   Test actions to ensure they update the state correctly.
+    *   Test selectors to ensure they return the expected derived state.
+
+---
+
+**All state management contributions using Zustand must adhere to these rules for consistency and maintainability.**
+

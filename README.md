@@ -298,37 +298,79 @@ Project Link: [https://github.com/MightyJade/finsight-ai-dashboard](https://gith
 ```
 src/
   app/                # Next.js app directory (routes, pages, API)
+    api/              # API routes (kebab-case filenames, Zod validation)
+    (auth)/           # Auth-related pages and route handlers
     dashboard/        # Dashboard page and related routes
-    api/              # API routes
-    (auth)/           # Auth-related pages
     layout.tsx        # App layout
-    globals.css       # Global styles
-  components/
-    common/           # Reusable UI components (Header, Footer, Logo, ErrorMessage, LoadingSpinner, etc.)
-    dashboard/        # Dashboard widgets and sections
-    auth/             # Auth forms and guards
-    providers/        # Context providers (e.g., SessionProvider)
-    PlaidLinkButton.tsx # Plaid integration button
-  services/           # API/data-fetching logic (e.g., finance.ts)
-  types/              # TypeScript types/interfaces (e.g., finance.ts)
-  utils/              # Utility functions (e.g., format.ts, chartData.ts)
-  lib/                # Library initializations (Firebase, Plaid, config)
+    globals.css       # Global styles (Tailwind @apply, global typography, theme variables)
+  components/         # React components
+    ui/               # Basic, reusable UI elements (e.g., Button, Input, Card)
+    features/         # Components specific to a feature or domain (e.g., FinancialSummary, BudgetPlanner)
+    layouts/          # Page and section layout components (e.g., DashboardLayout, AuthLayout)
+    plaid/            # Plaid-specific components (e.g., PlaidLinkButton.tsx)
+    providers/        # Context providers (e.g., SessionProvider, ThemeProvider)
+  lib/                # Library initializations, core configuration, and SDK instantiations
+    config.ts         # Environment configuration and validation
+    firebase.ts       # Firebase initialization and core services (Auth, Firestore)
+    plaid.ts          # Plaid client initialization
+    logger.ts         # Winston logger configuration
+  services/           # API/data-fetching logic (e.g., financeService.ts, userService.ts)
+  store/              # Zustand state management
+    slices/           # Individual store slices (e.g., userSlice.ts, accountSlice.ts)
+    hooks.ts          # Custom hooks for accessing store state and actions
+    index.ts          # Root store configuration and export
+  types/              # TypeScript types/interfaces (e.g., user.ts, transaction.ts, api.ts, zod.ts)
+  utils/              # Utility functions (e.g., formatters.ts, validators.ts, dateUtils.ts, constants.ts)
+public/               # Static assets (images, fonts, etc.)
+tests/
+  __fixtures__/       # Mock data for tests
+  __mocks__/          # Manual mocks for libraries
+  e2e/                # End-to-end tests (e.g., Cypress)
+  integration/        # Integration tests
+  unit/               # Unit tests
+
+# Project Root
+.cursor/              # Cursor rules and configuration
+.github/              # GitHub Actions workflows
+.husky/               # Git hooks
+.vscode/              # VSCode settings
+docs/                 # Extended documentation (API.md, ADRs)
+.env.example          # Example environment variables
+.env.local            # Local environment variables (GIT_IGNORED)
+.eslintrc.json        # ESLint configuration
+.gitignore            # Git ignore rules
+.prettierrc.json      # Prettier configuration
+CONTRIBUTING.md       # Contribution guidelines
+LICENSE               # Project license
+next.config.mjs       # Next.js configuration
+package.json          # Project dependencies and scripts
+project.md            # Technical design document
+README.md             # This file
+stylelint.config.js   # Stylelint configuration
+tsconfig.json         # TypeScript configuration
 ```
 
 ## Guidelines
 
-- **Types**: All types/interfaces go in `src/types/` and are imported everywhere.
-- **Services**: All API/data-fetching logic goes in `src/services/` and is used by SWR or other hooks.
-- **Utils**: All utility functions go in `src/utils/`.
-- **Components**: Grouped by feature or use-case. Use `common/` for global UI, `dashboard/` for dashboard widgets, `auth/` for authentication, etc.
-- **Presentational Components**: For repeated UI (e.g., NetWorthDisplay, ErrorMessage, LoadingSpinner).
-- **Data Fetching**: Use SWR for all server data, with descriptive keys and typed fetchers.
-- **Error/Loading Handling**: Use shared components for consistent UI.
-- **No inline types, no duplicated logic.**
-- **Environment Variables**: All secrets in `.env.local` (never committed).
-- **Linting/Formatting**: Use ESLint and Prettier. Fix all warnings and errors.
-- **Testing**: Add unit and integration tests for utilities and components.
-- **Documentation**: Keep this README up to date with structure and conventions.
+- **Types**: Shared types/interfaces in `src/types/`. Prefer interfaces for public APIs, type aliases for unions/intersections. Use `src/types/db.ts` for Firestore types and `src/types/zod.ts` for shared Zod schemas.
+- **Services**: API/data-fetching in `src/services/`. Encapsulate external API calls and business logic.
+- **Utils**: Generic, pure utility functions in `src/utils/`. `src/utils/constants.ts` for app-wide constants.
+- **Components**:
+  - Organize by scope: `ui/` (generic), `features/` (domain-specific), `layouts/`, `providers/`.
+  - PascalCase naming. Props interfaces (e.g., `MyComponentProps`).
+  - Prefer smaller, focused components. Adhere to accessibility (`a11y-rules.mdc`).
+- **State Management (Zustand)**: Global state in `src/store/`. Slices in `src/store/slices/`, hooks in `src/store/hooks.ts`. Follow `zustand-rules.mdc`.
+- **Styling (Tailwind CSS)**: Primarily utility classes. Global styles in `src/app/globals.css`. Theme consistency via `tailwind.config.js`. Refer to `curser-rules.mdc` (Color and Global Style Consistency section).
+- **Data Fetching**: Use Next.js Server Components for initial data. Client-side fetching via services, potentially with React Query or SWR.
+- **Error Handling & Logging**: Global error boundaries. Structured, user-friendly errors. Log via centralized logger (`src/lib/logger.ts`) as per `logging-rules.mdc`.
+- **Environment Variables**: Secrets in `.env.local` (not committed), accessed via `src/lib/config.ts`.
+- **Linting/Formatting**: ESLint, Prettier, Stylelint. Fix warnings before commit. `npm run lint`, `npm run format`.
+- **Testing**: Unit, integration, E2E tests in `tests/`. Aim for >80% coverage (`npm run test:coverage`). Follow `curser-rules.mdc` (Testing section).
+- **Documentation**: Keep `README.md`, `project.md`, and JSDoc for complex logic current. Document ADRs in `docs/`.
+- **Firebase**: Use `src/lib/firebase/` for SDK setup and core wrappers. Follow `firebase-rules.mdc`.
+- **API Routes (`src/app/api/`)**: Kebab-case filenames. Input validation with Zod (`api-rules.mdc`). Secure and well-documented.
+- **Security**: Follow guidelines in `curser-rules.mdc` (Security section), `firebase-rules.mdc`, and `api-rules.mdc`.
+- **Accessibility (A11y)**: Prioritize accessibility in all UI development. Refer to `a11y-rules.mdc`.
 
 ---
 

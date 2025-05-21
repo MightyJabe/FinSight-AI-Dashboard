@@ -1,46 +1,63 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { LinkTokenCreateRequest } from 'plaid';
 
 import { auth } from '@/lib/firebase-admin';
-import { createLinkToken } from '@/lib/plaid';
-
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+import { PLAID_COUNTRY_CODES, PLAID_PRODUCTS, plaidClient } from '@/lib/plaid';
 
 /**
  *
  */
-export async function POST(request: Request) {
+async function getUserIdFromSession(): Promise<string | null> {
+  const sessionCookie = cookies().get('session')?.value;
+  if (!sessionCookie) return null;
   try {
-    console.log('Creating link token...');
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+    return decodedClaims.uid;
+  } catch (error) {
+    console.error('Error verifying session cookie for link token creation:', error);
+    return null;
+  }
+}
 
-    // Get the Firebase ID token from the Authorization header
-    const authHeader = request.headers.get('Authorization');
-    console.log('Auth header present:', !!authHeader);
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.error('Missing or invalid Authorization header');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+/**
+ * Creates a Plaid Link token for the authenticated user.
+ */
+export async function POST(_request: Request) {
+  try {
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: User session is invalid or missing.' },
+        { status: 401 }
+      );
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
-    console.log('ID token present:', !!idToken);
-
-    const decodedToken = await auth.verifyIdToken(idToken);
-    console.log('Token decoded successfully, user ID:', decodedToken.uid);
-
-    const userId = decodedToken.uid;
-    const linkToken = await createLinkToken(userId);
-    console.log('Link token created successfully');
-
-    return NextResponse.json({ linkToken });
-  } catch (error) {
-    console.error('Error creating link token:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to create link token',
-        details: error instanceof Error ? error.message : 'Unknown error',
+    const linkTokenRequest: LinkTokenCreateRequest = {
+      user: {
+        client_user_id: userId,
       },
-      { status: 500 }
-    );
+      client_name: 'FinSight AI Dashboard', // Or your app name from an env variable
+      products: PLAID_PRODUCTS,
+      country_codes: PLAID_COUNTRY_CODES,
+      language: 'en',
+      // redirect_uri: process.env.PLAID_REDIRECT_URI, // Add if you are using hosted Link for OAuth
+      // webhook: process.env.PLAID_WEBHOOK_URL, // Add if you want to receive webhooks from Plaid
+    };
+
+    const tokenResponse = await plaidClient.linkTokenCreate(linkTokenRequest);
+
+    if (!tokenResponse.data.link_token) {
+      throw new Error('Plaid link_token was not created successfully.');
+    }
+
+    return NextResponse.json({ link_token: tokenResponse.data.link_token });
+  } catch (error: unknown) {
+    console.error('Error creating link token:', error);
+    let errorMessage = 'An unknown error occurred while creating link token.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 }

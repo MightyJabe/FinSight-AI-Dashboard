@@ -100,17 +100,17 @@ export function LoginForm({ onSubmit }: { onSubmit?: (data: LoginFormValues) => 
             id="remember-me"
             name="remember-me"
             type="checkbox"
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             suppressHydrationWarning
           />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-muted-foreground">
             Remember me
           </label>
         </div>
 
         <div className="text-sm">
-          <Link href="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
-            Forgot your password?
+          <Link href="/reset-password" className="text-primary hover:underline">
+            Forgot password?
           </Link>
         </div>
       </div>
@@ -125,10 +125,12 @@ export function LoginForm({ onSubmit }: { onSubmit?: (data: LoginFormValues) => 
       <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <span className="px-2 bg-card dark:bg-card-dark text-muted-foreground">
+              Or continue with
+            </span>
           </div>
         </div>
 

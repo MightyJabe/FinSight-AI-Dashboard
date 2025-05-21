@@ -1,6 +1,9 @@
-import { env } from './env';
-console.log('FIREBASE API KEY:', env.firebase.apiKey);
-console.log('FIREBASE CONFIG:', env.firebase);
+import { getConfig } from './config';
+
+const { firebase: firebaseEnv } = getConfig();
+
+console.log('FIREBASE API KEY:', firebaseEnv.apiKey);
+console.log('FIREBASE CONFIG:', firebaseEnv);
 
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
@@ -8,12 +11,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: env.firebase.apiKey,
-  authDomain: env.firebase.authDomain,
-  projectId: env.firebase.projectId,
-  storageBucket: env.firebase.storageBucket,
-  messagingSenderId: env.firebase.messagingSenderId,
-  appId: env.firebase.appId,
+  apiKey: firebaseEnv.apiKey,
+  authDomain: firebaseEnv.authDomain,
+  projectId: firebaseEnv.projectId,
+  storageBucket: firebaseEnv.storageBucket,
+  messagingSenderId: firebaseEnv.messagingSenderId,
+  appId: firebaseEnv.appId,
 };
 
 // Initialize Firebase

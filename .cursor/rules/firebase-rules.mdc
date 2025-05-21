@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule Type: Always
+This rule is attached to every chat and command+k request involving Firebase services.
+
+---
+
+### Purpose
+Ensure secure, efficient, and consistent use of Firebase services (Authentication, Firestore, Performance Monitoring) within the FinSight AI Dashboard.
+
+---
+
+### Tasks this rule is helpful for
+- Implementing Firebase Authentication flows.
+- Structuring and querying Firestore data.
+- Writing and maintaining Firestore security rules.
+- Utilizing Firebase Performance Monitoring effectively.
+- Managing Firebase SDK initialization and configuration.
+
+---
+
+### Tag files with:
+- `@lib/firebase/` (Firebase initialization, core service wrappers like `auth.ts`, `firestore.ts`)
+- `@services/` (services interacting with Firebase, e.g., `userService.ts`)
+- `@app/api/` (API routes using Firebase Admin SDK for backend operations)
+- `@components/auth/` (components related to authentication flows)
+- `firestore.rules` (Firestore security rules file)
+- `@store/slices/` (Zustand slices managing auth state or user data from Firestore)
+
+---
+
+### Explicit Rules for Firebase Usage
+
+1.  **SDK Initialization and Configuration:**
+    *   Firebase client SDK initialization must be centralized in `src/lib/firebase/index.ts` (or a similar dedicated file like `firebase.ts`).
+    *   Firebase Admin SDK (for backend use) should be initialized securely, typically within API routes or server-side utility functions, ensuring service account keys are not exposed client-side.
+    *   Environment variables for Firebase configuration (`NEXT_PUBLIC_FIREBASE_*`) must be correctly set up in `.env.local` and accessed via `src/lib/config.ts`.
+
+2.  **Firebase Authentication:**
+    *   Use Firebase Authentication for all user sign-up, sign-in, sign-out, and session management.
+    *   Implement appropriate auth flows (e.g., email/password, social providers).
+    *   Manage user auth state globally (e.g., via Zustand store and/or React Context through `src/components/providers/AuthProvider.tsx`).
+    *   Handle token refresh and session persistence as provided by the Firebase SDK.
+    *   Store minimal user profile data in Firestore, linked by Firebase UID.
+    *   For custom claims, manage them securely via the Admin SDK on the backend.
+
+3.  **Firestore:**
+    *   **Data Modeling:**
+        *   Follow the database schema defined in `project.md` (and potentially detailed in `src/types/db.ts`).
+        *   Denormalize data judiciously for read efficiency, but balance against write complexity and data consistency.
+        *   Use Firebase UIDs as document IDs for user-specific collections where appropriate.
+        *   Timestamp fields (`createdAt`, `updatedAt`) should use `FieldValue.serverTimestamp()`.
+    *   **Queries:**
+        *   Optimize queries for performance. Avoid large, unbounded queries.
+        *   Structure data to support your primary query patterns efficiently.
+        *   Use query cursors for pagination.
+        *   Client-side data fetching from Firestore should be encapsulated in `src/services/` or custom hooks.
+    *   **Security Rules (`firestore.rules`):**
+        *   **MANDATORY:** Implement comprehensive Firestore security rules. Default to denying all access and explicitly grant permissions where necessary.
+        *   Rules must enforce that users can only access and modify their own data, unless broader access is explicitly required and justified (e.g., admin roles).
+        *   Validate incoming data types and structure within security rules where possible.
+        *   Regularly review and test security rules, especially before deploying changes.
+        *   Use `request.auth.uid` to identify authenticated users.
+        *   Example: `allow read, write: if request.auth.uid == userId;`
+
+4.  **Firebase Performance Monitoring:**
+    *   Integrate Firebase Performance Monitoring to track app performance (e.g., startup time, HTTP requests, custom code traces).
+    *   Use custom traces for critical user flows or performance-sensitive operations.
+    *   Monitor performance metrics in the Firebase console and address identified issues.
+
+5.  **Error Handling:**
+    *   Properly handle errors from Firebase SDK calls (e.g., auth errors, Firestore permission errors).
+    *   Provide user-friendly feedback for Firebase-related errors.
+    *   Log significant Firebase errors for monitoring.
+
+6.  **Admin SDK Usage (Backend):**
+    *   Use the Firebase Admin SDK for privileged operations on the backend (e.g., minting custom tokens, managing users, bypassing security rules for administrative tasks).
+    *   Ensure Admin SDK initialization is secure and service account keys are properly managed (e.g., via environment variables on the server).
+
+---
+
+**All contributions involving Firebase must adhere to these rules for security, data integrity, and performance.**
+

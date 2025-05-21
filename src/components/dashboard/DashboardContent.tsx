@@ -1,5 +1,6 @@
 'use client';
 
+import { BalanceOverview } from '@/components/dashboard/BalanceOverview';
 import { BudgetSection } from '@/components/dashboard/BudgetSection';
 import { ChartsSection } from '@/components/dashboard/ChartsSection';
 import { DebtPayoffTimeline } from '@/components/dashboard/DebtPayoffTimeline';
@@ -26,6 +27,7 @@ export function DashboardContent({
 }: DashboardContentProps) {
   return (
     <div className="space-y-8 p-8">
+      <BalanceOverview overview={overview} />
       <OverviewCards overview={overview} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <FinancialHealthScore overview={overview} />
@@ -44,7 +46,7 @@ export function DashboardContent({
           projectedPayoffDate={liabilities.projectedPayoffDate}
         />
       </div>
-      <BudgetSection budget={budget} />
+      <BudgetSection budgetCategories={budget.budgetCategories} />
     </div>
   );
 }

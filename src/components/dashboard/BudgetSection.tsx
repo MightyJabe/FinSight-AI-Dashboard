@@ -1,17 +1,25 @@
 import { motion } from 'framer-motion';
 
-import { Overview } from '@/lib/finance';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 
+// Define a more specific prop type
+interface BudgetCategory {
+  id: string;
+  name: string;
+  amount: number;
+  spent: number;
+}
+
 interface BudgetSectionProps {
-  overview: Overview;
+  // Expect only the budgetCategories array
+  budgetCategories: BudgetCategory[];
 }
 
 /**
  *
  */
-export function BudgetSection({ overview = { budgetCategories: [] } }: BudgetSectionProps) {
-  const { budgetCategories } = overview;
+export function BudgetSection({ budgetCategories = [] }: BudgetSectionProps) {
+  // No need to destructure from 'overview' anymore
   const topSpendingCategories = [...budgetCategories].sort((a, b) => b.spent - a.spent).slice(0, 5);
 
   const cardVariants = {

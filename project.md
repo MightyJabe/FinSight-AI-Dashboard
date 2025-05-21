@@ -181,24 +181,69 @@ PUT /api/insights/:id
 
 ```
 finsight-ai-dashboard/
-├── app/                    # Next.js app router pages
-│   ├── api/               # API routes
-│   ├── (auth)/           # Authentication routes
-│   └── dashboard/        # Dashboard routes
-├── components/            # Reusable React components
-│   ├── ui/              # Basic UI components
-│   ├── features/        # Feature-specific components
-│   └── layouts/         # Layout components
-├── lib/                  # Utility functions and shared logic
-│   ├── api/            # API client functions
-│   ├── firebase/       # Firebase configuration
-│   └── utils/          # Helper functions
-├── store/               # Zustand store
-│   ├── slices/         # Store slices
-│   └── hooks/          # Store hooks
-├── styles/              # Global styles and Tailwind config
-├── public/              # Static assets
-└── types/              # TypeScript type definitions
+├── .cursor/              # Cursor configuration and rules (.mdc files)
+├── .github/              # GitHub Actions workflows and issue templates
+├── .husky/               # Husky Git hooks configuration
+├── .vscode/              # VSCode editor settings and recommendations
+├── app/                  # Next.js app directory (routes, pages, API handlers)
+│   ├── (auth)/           # Authentication-related routes (e.g., login, register, password-reset)
+│   ├── api/              # API routes (server-side handlers, kebab-case filenames)
+│   │   └── v1/             # Versioned API routes (example)
+│   ├── dashboard/        # Dashboard-specific routes and pages
+│   ├── layout.tsx        # Root application layout component
+│   ├── globals.css       # Global styles (Tailwind @layer, base styles, typography)
+│   └── not-found.tsx     # Custom 404 page
+├── components/           # React components, organized by scope
+│   ├── features/         # Components specific to a feature or domain (e.g., AccountSettings, BudgetChart)
+│   ├── layouts/          # Page and section layout components (e.g., DashboardLayout, PageWrapper)
+│   ├── plaid/            # Plaid integration specific components (e.g., PlaidLinkButton)
+│   ├── providers/        # Global context providers (e.g., AuthProvider, ThemeProvider, QueryProvider)
+│   └── ui/               # Basic, reusable UI elements (e.g., Button, Input, Card, Modal, Spinner)
+├── docs/                 # Project documentation (API.md, ADRs, etc.)
+├── lib/                  # Core logic, SDK initializations, configurations
+│   ├── config.ts         # Application configuration, environment variable access and validation
+│   ├── firebase/         # Firebase SDK initialization and core service wrappers (e.g., auth.ts, firestore.ts)
+│   ├── plaid/            # Plaid client initialization and core functions
+│   └── stripe/           # Stripe SDK initialization (if applicable for subscriptions)
+├── public/               # Static assets (images, fonts, favicons, robots.txt, sitemap.xml)
+├── services/             # Data fetching and business logic layer, interacting with APIs or lib/
+│   ├── apiClient.ts      # Centralized API client (e.g., Axios or fetch wrapper)
+│   ├── financeService.ts # Service for financial data operations
+│   └── userService.ts    # Service for user-related operations
+├── store/                # Zustand global state management
+│   ├── hooks.ts          # Custom hooks for accessing store state and actions
+│   ├── index.ts          # Root store setup and export
+│   └── slices/           # Individual state slices (e.g., userSlice.ts, settingsSlice.ts)
+├── styles/               # Additional global styles or Tailwind plugins/presets (if globals.css is insufficient)
+├── tests/                # All test files
+│   ├── __fixtures__/     # Mock data, stubs, and factories for tests
+│   ├── __mocks__/        # Manual mocks for libraries (e.g., next/navigation)
+│   ├── e2e/              # End-to-end tests (Cypress or Playwright)
+│   ├── integration/      # Integration tests (React Testing Library with MSW)
+│   └── unit/             # Unit tests (Jest/Vitest + React Testing Library)
+├── types/                # TypeScript type definitions and interfaces
+│   ├── api/              # Types for API request/response payloads
+│   ├── db.ts             # Firestore collection/document types (matches schema)
+│   ├── index.ts          # Barrel file for exporting common types
+│   └── zod.ts            # Shared Zod schemas if not co-located with API routes
+└── utils/                # Utility functions, pure and reusable
+    ├── constants.ts      # Application-wide constants
+    ├── dateUtils.ts      # Date and time manipulation functions
+    ├── formatters.ts     # Text, number, currency formatting functions
+    └── validators.ts     # Generic validation functions (not Zod schemas)
+
+# Root directory files
+.env.example          # Example environment variables
+.env.local            # Local environment variables (GIT_IGNORED)
+.eslintrc.json        # ESLint configuration
+.gitignore            # Git ignore rules
+.prettierrc.json      # Prettier configuration
+next.config.mjs       # Next.js configuration
+package.json          # Project dependencies and scripts
+README.md             # Project overview and setup guide
+project.md            # This technical design document
+stylelint.config.js   # Stylelint configuration (for CSS/Tailwind conventions)
+tsconfig.json         # TypeScript configuration
 ```
 
 ### Naming Conventions

@@ -28,6 +28,15 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
       const aValue = a[sortField];
       const bValue = b[sortField];
 
+      if (sortField === 'date') {
+        // Ensure aValue and bValue are treated as strings for date conversion
+        const dateA = new Date(aValue as string);
+        const dateB = new Date(bValue as string);
+        return sortDirection === 'asc'
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      }
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
@@ -36,12 +45,6 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
 
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-
-      if (aValue instanceof Date && bValue instanceof Date) {
-        return sortDirection === 'asc'
-          ? aValue.getTime() - bValue.getTime()
-          : bValue.getTime() - aValue.getTime();
       }
 
       return 0;

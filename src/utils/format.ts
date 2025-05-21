@@ -15,6 +15,9 @@ export function formatCurrency(amount: number, currency: string = 'USD', locale:
 /**
  *
  */
-export function formatPercentage(value: number): string {
+export function formatPercentage(value: number | undefined): string {
+  if (value === undefined || isNaN(value)) {
+    return '0.0%';
+  }
   return `${value.toFixed(1)}%`;
 }

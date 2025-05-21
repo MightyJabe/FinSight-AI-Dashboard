@@ -32,6 +32,12 @@ export interface Liability {
   name: string;
   type: string;
   amount: number;
+  interestRate?: number;
+  minimumPayment?: number;
+  remainingPayments?: number;
+  payoffDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BudgetCategory {

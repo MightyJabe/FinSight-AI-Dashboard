@@ -7,6 +7,7 @@ import {
   LinearScale,
   LineElement,
   PointElement,
+  Tick,
   Title,
   Tooltip,
   TooltipItem,
@@ -15,7 +16,6 @@ import { BarChart2, PieChart, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
 
-import { Investment } from '@/lib/finance';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 import { getCssVarColor } from '@/utils/get-css-var-color';
 import { toRgba } from '@/utils/to-rgba';
@@ -32,8 +32,20 @@ ChartJS.register(
   Legend
 );
 
+interface InvestmentAccountPerformanceData {
+  id: string;
+  name: string;
+  balance: number;
+  type: string;
+  performance: {
+    daily: number;
+    monthly: number;
+    yearly: number;
+  };
+}
+
 interface InvestmentPerformanceProps {
-  investments: Investment[];
+  investmentAccounts: InvestmentAccountPerformanceData[];
   assetAllocation: Array<{
     type: string;
     amount: number;
@@ -49,7 +61,7 @@ interface InvestmentPerformanceProps {
  * Displays investment performance metrics and asset allocation
  */
 export function InvestmentPerformance({
-  investments = [],
+  investmentAccounts = [],
   assetAllocation = [],
   historicalPerformance = [],
 }: InvestmentPerformanceProps) {
@@ -96,15 +108,17 @@ export function InvestmentPerformance({
     };
   }, []);
 
-  const totalInvestment = investments?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
+  const totalInvestment = investmentAccounts?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
   const averagePerformance = {
     daily:
-      investments?.reduce((sum, acc) => sum + acc.performance.daily, 0) / investments?.length || 0,
+      investmentAccounts?.reduce((sum, acc) => sum + acc.performance.daily, 0) /
+        investmentAccounts?.length || 0,
     monthly:
-      investments?.reduce((sum, acc) => sum + acc.performance.monthly, 0) / investments?.length ||
-      0,
+      investmentAccounts?.reduce((sum, acc) => sum + acc.performance.monthly, 0) /
+        investmentAccounts?.length || 0,
     yearly:
-      investments?.reduce((sum, acc) => sum + acc.performance.yearly, 0) / investments?.length || 0,
+      investmentAccounts?.reduce((sum, acc) => sum + acc.performance.yearly, 0) /
+        investmentAccounts?.length || 0,
   };
 
   const safeAssetAllocation = assetAllocation || [];
@@ -208,7 +222,7 @@ export function InvestmentPerformance({
               </tr>
             </thead>
             <tbody>
-              {investments.map(account => (
+              {investmentAccounts.map(account => (
                 <tr key={account.name} className="border-b">
                   <td className="py-3">{account.name}</td>
                   <td className="py-3">{account.type}</td>
@@ -305,7 +319,12 @@ export function InvestmentPerformance({
               scales: {
                 y: {
                   ticks: {
-                    callback: (value: number) => formatCurrency(value),
+                    callback: (tickValue: string | number, _index: number, _ticks: Tick[]) => {
+                      if (typeof tickValue === 'number') {
+                        return formatCurrency(tickValue);
+                      }
+                      return tickValue;
+                    },
                   },
                 },
               },

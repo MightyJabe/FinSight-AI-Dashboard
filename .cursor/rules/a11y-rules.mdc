@@ -1,0 +1,85 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule Type: Always
+This rule is attached to every chat and command+k request involving UI development or changes.
+
+---
+
+### Purpose
+Ensure the FinSight AI Dashboard is accessible to all users, including those with disabilities, by adhering to WCAG guidelines and accessibility best practices.
+
+---
+
+### Tasks this rule is helpful for
+- Designing and developing accessible UI components.
+- Ensuring proper semantic HTML structure.
+- Implementing ARIA attributes correctly.
+- Verifying keyboard navigability and focus management.
+- Checking for sufficient color contrast.
+- Testing with accessibility tools and assistive technologies.
+
+---
+
+### Tag files with:
+- `@components/` (all UI components)
+- `@app/` (page structure, layouts)
+- `@tailwind.config.js` (color definitions, ensuring contrast)
+- `@src/app/globals.css` (base typography, focus styles)
+
+---
+
+### Explicit Rules for Accessibility (A11y)
+
+1.  **WCAG Compliance:**
+    *   Strive for WCAG 2.1 Level AA compliance for all UI elements and content.
+
+2.  **Semantic HTML:**
+    *   Use HTML elements for their semantic meaning (e.g., `<nav>`, `<main>`, `<article>`, `<aside>`, `<button>`, `<a>`).
+    *   Avoid using `div` or `span` for interactive elements; use `<button>` or `<a>` with appropriate ARIA roles if native elements are not suitable.
+    *   Ensure correct heading hierarchy (`<h1>` to `<h6>`). Each page should ideally have one `<h1>`.
+
+3.  **Keyboard Navigation & Focus Management:**
+    *   All interactive elements must be focusable and operable via keyboard.
+    *   Logical focus order: Ensure tab order follows the visual layout and logical flow of the page.
+    *   Visible focus indicators: Ensure clear and prominent focus styles for all focusable elements (can be customized in `globals.css` or Tailwind config).
+    *   Manage focus appropriately in dynamic components (e.g., modals, dropdowns, single-page navigation changes).
+
+4.  **ARIA (Accessible Rich Internet Applications):**
+    *   Use ARIA attributes to enhance accessibility where semantic HTML is insufficient, especially for custom components or dynamic content updates.
+    *   Examples: `aria-label`, `aria-labelledby`, `aria-describedby`, `aria-hidden`, `aria-expanded`, `aria-haspopup`, roles like `dialog`, `menuitem`.
+    *   Avoid redundant ARIA roles if a native HTML element already provides the semantics (e.g., don't put `role="button"` on a `<button>`).
+
+5.  **Images & Media:**
+    *   Provide descriptive `alt` text for all informative images. For decorative images, use `alt=""`.
+    *   Provide transcripts and/or captions for pre-recorded audio and video content.
+
+6.  **Color & Contrast:**
+    *   Ensure text and interactive elements have sufficient color contrast against their background (WCAG AA: 4.5:1 for normal text, 3:1 for large text and UI components).
+    *   Do not rely on color alone to convey information. Use text labels, icons, or other visual cues.
+    *   Verify color choices from `tailwind.config.js` meet contrast requirements, especially for text/background combinations.
+
+7.  **Forms:**
+    *   All form inputs must have associated `<label>` elements, programmatically linked using `for` and `id` attributes or by wrapping the input with the label.
+    *   Provide clear instructions and error messages for form fields. Use `aria-describedby` to associate error messages with inputs.
+    *   Group related form controls using `<fieldset>` and `<legend>`.
+
+8.  **Responsive Design & Zoom:**
+    *   Ensure content is readable and functional when zoomed up to 200%.
+    *   Maintain accessibility across different viewport sizes (mobile, tablet, desktop).
+
+9.  **Testing & Tools:**
+    *   Regularly test with automated accessibility checkers (e.g., Axe DevTools browser extension, `eslint-plugin-jsx-a11y`).
+    *   Perform manual keyboard navigation testing.
+    *   Test with screen readers (e.g., NVDA, VoiceOver, JAWS) for critical user flows.
+
+10. **Dynamic Content & Single Page Applications (SPA):**
+    *   Announce page title changes and significant content updates to screen readers (e.g., using ARIA live regions or by managing focus).
+    *   Ensure routing changes update the page title and, if necessary, move focus to the main content area.
+
+---
+
+**All UI development must prioritize accessibility and adhere to these guidelines to create an inclusive experience.**
+

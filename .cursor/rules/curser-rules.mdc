@@ -6,10 +6,18 @@ alwaysApply: true
 Rule Type: Always
 This rule is attached to every chat and command+k request.
 
+
+
+
+
 ---
 
 ### Purpose
 Ensure all code, documentation, and structure in the FinSight AI Dashboard project follow the standards and best practices defined in project documentation.
+
+
+
+
 
 ---
 
@@ -17,14 +25,20 @@ Ensure all code, documentation, and structure in the FinSight AI Dashboard proje
 - Enforcing code quality and consistency
 - Maintaining TypeScript strict mode and type safety
 - Ensuring proper component structure and naming conventions
-- Organizing files according to project standards
-- Implementing and validating API routes with error handling and input validation
-- Applying Tailwind CSS and styling conventions
-- Handling errors and logging according to best practices
+- Organizing files according to project standards (see `project.md` for definitive structure)
+- Implementing and validating API routes with error handling and input validation (see `api-rules.mdc`)
+- Applying Tailwind CSS and styling conventions (see `tailwind.config.js` and `globals.css`)
+- Handling errors and logging according to best practices (see `logging-rules.mdc`)
 - Writing and maintaining tests (unit, integration, E2E)
-- Following security and data protection requirements
+- Following security and data protection requirements (see `firebase-rules.mdc`)
 - Meeting performance benchmarks
+- Ensuring accessibility (see `a11y-rules.mdc`)
 - Keeping documentation up to date and clear
+- Consistent state management (see `zustand-rules.mdc`)
+
+
+
+
 
 ---
 
@@ -34,50 +48,104 @@ Ensure all code, documentation, and structure in the FinSight AI Dashboard proje
 - @src/types/ (TypeScript types and interfaces)
 - @src/services/ (API/data-fetching logic)
 - @src/utils/ (utility functions)
-- @src/lib/ (library initializations)
+- @src/lib/ (library initializations, e.g., `firebase.ts`, `config.ts`)
 - @components/ (UI and feature components)
 - @app/ (Next.js app structure and API routes)
+- @store/ (Zustand state management)
 - @tests/ (testing files and coverage)
 - @tailwind.config.js (color palette and theme tokens)
 - @src/app/globals.css (global typography and style conventions)
+- `.cursor/rules/` (for all .mdc rule files)
+
+
+
+
 
 ---
 
 ### Explicit Rules
 
 1. **TypeScript**
-   - Use strict mode. No `any` types without explicit justification.
-   - Prefer interfaces over types. Use custom error types for error handling.
-2. **Component Structure**
-   - Use PascalCase for components. Group by feature or use-case. Use proper props interfaces.
-3. **API Routes**
-   - Use kebab-case for filenames. Validate input (e.g., with Zod). Handle errors and use correct HTTP status codes. Implement rate limiting.
-4. **Styling**
-   - Use Tailwind utility classes. Follow mobile-first design. Use consistent spacing and theming.
+   - Use strict mode (`"strict": true` in `tsconfig.json`). No `any` types without explicit justification and an accompanying `// eslint-disable-next-line @typescript-eslint/no-explicit-any` with a comment explaining why.
+   - Prefer interfaces for public APIs of modules/classes and for object shapes passed between components or services. Use `type` aliases for union types, intersection types, or simple functional types.
+   - Utilize utility types (`Pick`, `Omit`, `Partial`, `Required`, `Readonly`, etc.) to create new types from existing ones concisely.
+   - Use custom error classes (e.g., extending `Error`) for specific error scenarios to allow for better error handling and type checking.
+   - Leverage `eslint-plugin-typescript-eslint` for advanced type checking and linting rules.
+2. **Component Structure (React/Next.js)**
+   - Use PascalCase for component filenames and function/class names (e.g., `UserProfileCard.tsx`).
+   - Group components by feature or use-case as defined in `project.md` (e.g., `components/features/authentication/`, `components/ui/`).
+   - Define props using TypeScript interfaces (e.g., `interface UserProfileCardProps { ... }`).
+   - Clearly separate presentational (dumb) components from container (smart) components where beneficial for reusability and testability.
+   - Handle side effects in `useEffect` hooks with proper dependency arrays and cleanup functions to prevent memory leaks.
+   - Aim for smaller, focused components. Consider splitting a component if it exceeds ~150-200 lines of code or handles too many responsibilities.
+3. **API Routes (Next.js App Router)**
+   - Refer to `@.cursor/rules/api-rules.mdc` for detailed API route guidelines (kebab-case filenames, Zod validation, error handling, HTTP status codes, rate limiting).
+4. **Styling (Tailwind CSS)**
+   - Primarily use Tailwind utility classes. Avoid custom CSS unless absolutely necessary for complex styles not achievable with utilities.
+   - If custom CSS is needed, prefer CSS Modules co-located with the component or global styles in `src/app/globals.css` for base styling.
+   - Follow mobile-first design principles.
+   - Adhere to the theme defined in `tailwind.config.js` (colors, spacing, typography, breakpoints). Do not use hardcoded pixel values or magic numbers for spacing/sizing; use theme tokens.
+   - Ensure responsive design by applying Tailwind's responsive prefixes (e.g., `sm:`, `md:`, `lg:`).
 5. **File Organization**
-   - Types/interfaces in `src/types/`. Services in `src/services/`. Utils in `src/utils/`. Library initializations in `src/lib/`.
-   - Environment variables in `.env.local` (never committed).
-6. **Error Handling**
-   - Use global error boundaries. Provide structured, user-friendly error messages. Log errors properly.
+   - Follow the definitive folder structure outlined in `project.md`.
+   - Types/interfaces in `src/types/` (categorized, e.g., `src/types/user.ts`, `src/types/api.ts`).
+   - Services (data-fetching, business logic) in `src/services/`.
+   - Utility functions (pure, generic) in `src/utils/`.
+   - Library initializations and core configurations in `src/lib/` (e.g., `firebase.ts`, `plaid.ts`, `config.ts`, `logger.ts`).
+   - Zustand store in `src/store/` (see `zustand-rules.mdc`).
+   - Environment variables exclusively in `.env.local` (never committed) and accessed via `src/lib/config.ts`.
+6. **Error Handling & Logging**
+   - Implement global error boundaries in React (e.g., in `app/layout.tsx` or a root provider).
+   - Provide structured, user-friendly error messages. Avoid exposing raw error details to the user.
+   - Log errors properly using the centralized logger (see `logging-rules.mdc`). Include context and stack traces.
+   - For APIs, return appropriate HTTP status codes and structured error responses (see `api-rules.mdc`).
 7. **Testing**
-   - Write unit, integration, and E2E tests. Maintain >80% coverage. Use Jest and React Testing Library.
+   - Write unit tests (Jest/Vitest + RTL) for utilities, individual components, and store slices.
+   - Write integration tests (RTL + MSW) for components interacting with services, API route handlers, and feature flows.
+   - Write E2E tests (Cypress/Playwright) for critical user paths.
+   - Maintain >80% test coverage. Use `npm run test:coverage` to check.
+   - Tests should be co-located with source files in `__tests__` subdirectories or in the central `tests/` directory as per `project.md` structure.
+   - Use mock data from `tests/__fixtures__/`.
 8. **Security**
-   - Use JWT authentication, refresh token rotation, rate limiting, and input validation. Follow GDPR compliance.
+   - Follow principles outlined in `firebase-rules.mdc` for Firebase-related security (Auth, Firestore rules).
+   - Implement JWT-based authentication with secure token handling (e.g., HttpOnly cookies for refresh tokens if applicable, short-lived access tokens).
+   - Enforce input validation on all API endpoints (Zod, as per `api-rules.mdc`) and user inputs on the client-side.
+   - Protect against common web vulnerabilities (XSS, CSRF, etc.) by using Next.js/React best practices and appropriate headers.
+   - Regularly update dependencies to patch security vulnerabilities.
+   - Manage secrets and API keys securely (environment variables, never hardcoded).
 9. **Performance**
-   - Meet FCP <1.5s, LCP <2.5s, FID <100ms, CLS <0.1, API response <200ms.
+   - Aim to meet Core Web Vitals benchmarks: FCP <1.8s (updated from 1.5s for more realism), LCP <2.5s, FID <100ms (or INP <200ms), CLS <0.1.
+   - API response times <200ms for P95.
+   - Optimize React components (e.g., `React.memo`, `useCallback`, `useMemo` where appropriate, virtualize long lists).
+   - Code splitting is handled by Next.js by default; leverage dynamic imports (`next/dynamic`) for large components not needed on initial load.
+   - O[ptimize images (`next/image`).](mdc:tailwind.config.js)
+   - M[onitor performa](mdc:src/app/globals.css)nce with Firebase Performance Monitoring and/or Next.js Analytics.
 10. **Documentation**
-    - Document all public APIs and functions. Use JSDoc for complex logic. Keep README and environment docs up to date.
-11. **Color and Global Style Consistency**
-    - Use only the color palette and design tokens defined in `tailwind.config.js` for all UI elements (e.g., `primary`, `accent`, `background`, `text`, etc.).
+    - Document all public APIs, complex functions, and non-obvious logic using JSDoc comments.
+    - @Keep `README.md` (project overview, setup, guidelines) and `project.md` (technical design, architecture) up to date.
+    - @Update architecture diagrams (Mermaid charts in `project.md`) when significant architectural changes are made.
+    - Document environment variables in `.env.example`.
+    - Document the "why" behind significant technical decisions, potentially in ADRs (Architecture Decision Records) in the `docs/` folder.
+11. **@Color and Global Style Consistency**
+    - @Use only the color palette and design tokens defined in `tailwind.config.js` for all UI elements (e.g., `primary`, `accent`, `background`, `text`, etc.).
     - Do not use hardcoded color values in components, styles, or utility classes—always reference the Tailwind theme colors.
     - Apply global typography and spacing conventions as defined in `src/app/globals.css`.
-    - If new colors or global styles are needed, add them to `tailwind.config.js` and/or `globals.css` and document their usage.
-    - Ensure dark mode and light mode color tokens are used appropriately.
+    - @If new colors or global styles are needed, they must be added to `tailwind.config.js` and/or `globals.css` and their usage documented. Changes to theme colors require design approval.
+    - @Ensure dark mode and light mode color tokens are used appropriately if/when dark mode is implemented.
 
     **Tag files with:**
-    - [tailwind.config.js](mdc:tailwind.config.js) (color palette and theme tokens)
-    - [globals.css](mdc:src/app/globals.css) (global typography and style conventions)
+    - @tailwind.config.js (color palette and theme tokens)
+    - @src/app/globals.css (global typography and style conventions)
     - @components/ (UI components using theme colors)
+12. **Accessibility (A11y)**
+    - Refer to `@.cursor/rules/a11y-rules.mdc` for detailed accessibility guidelines.
+    - Ensure all new features and components are designed and implemented with accessibility in mind from the start.
+13. **State Management (Zustand)**
+    - Refer to `@.cursor/rules/zustand-rules.mdc` for detailed state management guidelines.
+
+
+
+
 ---
 
 **All contributions must follow these rules for maintainability, security, and scalability.**
@@ -86,19 +154,29 @@ Ensure all code, documentation, and structure in the FinSight AI Dashboard proje
 To ensure all rules and standards are consistently implemented, perform the following checks before merging, pushing, or deploying any changes:
 
 #### Automated/CI Checks
-- Run `npm run lint` to enforce code quality, naming, and usage patterns (including Zod for APIs).
-- Run `npm test -- --coverage` to ensure all tests pass and coverage is above the required threshold (80%).
-- Run `npm run lhci:autorun` to verify performance budgets are met.
-- Run `npx stylelint "src/**/*.css"` to ensure no hardcoded colors or CSS violations.
+- Run `npm run lint` to enforce code quality, naming, and usage patterns (including Zod for APIs, `eslint-plugin-jsx-a11y`).
+- Run `npm run type-check` for TypeScript strictness.
+- Run `npm run test:all` to ensure all tests pass and coverage is above the required threshold (80%).
+- Run `npm run build` to check for build errors.
+- Run `npm run lhci:autorun` to verify performance budgets are met (if Lighthouse CI is set up).
+- Run `npx stylelint "**/*.{css,tsx,jsx}"` (configure to scan relevant files) to ensure no hardcoded colors or CSS violations.
+- Consider tools like `knip` or `ts-prune` to check for dead code/unused exports.
 
 #### Manual Checks (if not automated)
-- Confirm every API route uses Zod for input validation (see API rules).
+- Confirm every API route uses Zod for input validation (see `api-rules.mdc`).
 - Ensure error handling is consistent and user-friendly across the codebase.
-- Check that all new/changed endpoints, features, or components are documented if needed.
+- Check that all new/changed endpoints, features, or components are documented if needed (README, project.md, JSDoc).
+- Perform a quick accessibility check for new UI (keyboard navigation, basic screen reader pass if possible).
+- Verify Firestore security rules are updated and tested if database interactions change.
 
 #### Best Practice
 - Integrate these checks into your CI pipeline (e.g., GitHub Actions) so they run automatically on every push or pull request.
 - If working solo, run these commands locally before pushing to main or deploying.
+- Use Git hooks (e.g., Husky with `lint-staged`) to run linters/formatters/tests on pre-commit.
+
+
+
+
 
 
 

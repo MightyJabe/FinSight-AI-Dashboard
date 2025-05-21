@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/abs';
 import type { Transaction } from '@/lib/finance';
 
 import { CategoryBreakdown } from './CategoryBreakdown';
@@ -19,9 +19,10 @@ interface TransactionsContentProps {
 export function TransactionsContent({
   transactions: initialTransactions,
 }: TransactionsContentProps) {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date(),
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    const to = new Date();
+    const from = new Date(to.getFullYear(), to.getMonth() - 1, to.getDate()); // Default to last month
+    return { from, to };
   });
 
   // Filter transactions by date range
@@ -34,7 +35,12 @@ export function TransactionsContent({
     <div className="space-y-6 p-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Transactions</h1>
-        <DateRangeSelector value={dateRange} onChange={setDateRange} />
+        <DateRangeSelector
+          onDateRangeChange={(newFrom, newTo) => {
+            setDateRange({ from: newFrom, to: newTo });
+            // You might want to trigger fetching transactions here if not already handled by an effect
+          }}
+        />
       </div>
 
       <Tabs defaultValue="list" className="space-y-4">
