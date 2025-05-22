@@ -1,7 +1,19 @@
-import { auth } from '@/lib/firebase-admin';
-import { GET } from '@/app/api/insights/route';
+import { DecodedIdToken } from 'firebase-admin/auth';
+import { Firestore } from 'firebase-admin/firestore';
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server'; // Ensure NextResponse is available for direct use if needed
+import {
+  Transaction as PlaidTransaction,
+  TransactionPaymentChannelEnum,
+  TransactionTransactionTypeEnum,
+} from 'plaid';
+import { DocumentData, DocumentSnapshot, WriteResult } from 'firebase-admin/firestore';
+
+import { GET } from '@/app/api/insights/route';
+import { auth, db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
+import { generateChatCompletion } from '@/lib/openai';
+import { getTransactions } from '@/lib/plaid';
 
 // Mock Firebase Admin auth
 jest.mock('@/lib/firebase-admin', () => ({
@@ -31,8 +43,133 @@ jest.mock('@/lib/logger', () => ({
   error: jest.fn(),
 }));
 
+// Type assertions for mocked functions
+const mockDecodedToken: DecodedIdToken = {
+  uid: 'test-user-id',
+  aud: 'test-aud',
+  auth_time: 1234567890,
+  exp: 1234567890,
+  firebase: {
+    sign_in_provider: 'custom',
+    identities: {},
+  },
+  iat: 1234567890,
+  iss: 'test-iss',
+  sub: 'test-sub',
+};
+
+const mockTransactions = [
+  {
+    account_id: 'test-account',
+    amount: 5,
+    iso_currency_code: 'USD',
+    unofficial_currency_code: null,
+    category: ['Food and Drink'],
+    category_id: 'test-category-id',
+    date: '2024-03-10',
+    name: 'Coffee Shop',
+    payment_channel: TransactionPaymentChannelEnum.Online,
+    pending: false,
+    pending_transaction_id: null,
+    account_owner: null,
+    transaction_id: 'test-transaction-id',
+    transaction_type: TransactionTransactionTypeEnum.Special,
+    location: {
+      address: null,
+      city: null,
+      country: null,
+      lat: null,
+      lon: null,
+      postal_code: null,
+      region: null,
+      store_number: null,
+    },
+    payment_meta: {
+      by_order_of: null,
+      payee: null,
+      payer: null,
+      payment_method: null,
+      payment_processor: null,
+      ppd_id: null,
+      reason: null,
+      reference_number: null,
+    },
+    authorized_date: null,
+    authorized_datetime: null,
+    datetime: null,
+    transaction_code: null,
+  },
+  {
+    account_id: 'test-account',
+    amount: -2000,
+    iso_currency_code: 'USD',
+    unofficial_currency_code: null,
+    category: ['Transfer', 'Income'],
+    category_id: 'test-category-id',
+    date: '2024-03-01',
+    name: 'Salary',
+    payment_channel: TransactionPaymentChannelEnum.Online,
+    pending: false,
+    pending_transaction_id: null,
+    account_owner: null,
+    transaction_id: 'test-transaction-id-2',
+    transaction_type: TransactionTransactionTypeEnum.Special,
+    location: {
+      address: null,
+      city: null,
+      country: null,
+      lat: null,
+      lon: null,
+      postal_code: null,
+      region: null,
+      store_number: null,
+    },
+    payment_meta: {
+      by_order_of: null,
+      payee: null,
+      payer: null,
+      payment_method: null,
+      payment_processor: null,
+      ppd_id: null,
+      reason: null,
+      reference_number: null,
+    },
+    authorized_date: null,
+    authorized_datetime: null,
+    datetime: null,
+    transaction_code: null,
+  }
+];
+
+const mockedAuth = {
+  verifyIdToken: jest.fn().mockResolvedValue(mockDecodedToken),
+} as unknown as jest.Mocked<typeof auth>;
+
+const mockedDb = {
+  collection: jest.fn().mockReturnThis(),
+  doc: jest.fn().mockReturnValue({
+    get: jest.fn(),
+    set: jest.fn(),
+  }),
+} as unknown as jest.Mocked<Firestore>;
+
+const mockedGenerateChatCompletion = jest.fn() as jest.MockedFunction<
+  typeof generateChatCompletion
+>;
+const mockedGetTransactions = jest.fn().mockResolvedValue(mockTransactions) as jest.MockedFunction<
+  typeof getTransactions
+>;
+const mockedLogger = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as jest.Mocked<typeof logger>;
+
 // Helper to create a mock NextRequest
-const createMockRequest = (headers: Record<string, string>, searchParams: Record<string, string> = {}): NextRequest => {
+const createMockRequest = (
+  headers: Record<string, string>,
+  searchParams: Record<string, string> = {}
+): NextRequest => {
   const url = new URL('http://localhost/api/insights');
   Object.entries(searchParams).forEach(([key, value]) => url.searchParams.set(key, value));
   return new NextRequest(url.toString(), { headers });
@@ -49,21 +186,35 @@ describe('Insights API Integration Tests', () => {
   });
 
   beforeEach(() => {
-    // Reset fetch mock before each test
     jest.clearAllMocks();
-    // Default mock implementations
-    require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: 'testUserId' });
-    require('@/lib/firebase-admin').db.get.mockResolvedValue({ exists: false }); // Default to no cache, no user data initially
-    require('@/lib/firebase-admin').db.set.mockResolvedValue(undefined);
-    require('@/lib/openai').generateChatCompletion.mockResolvedValue({
+    mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+    mockedDb.doc().get.mockResolvedValue({ 
+      exists: false,
+      data: () => null,
+      id: 'test-id',
+      ref: {} as any,
+      metadata: {} as any,
+      createTime: {} as any,
+      updateTime: {} as any,
+      readTime: {} as any,
+      get: () => null,
+      isEqual: () => false
+    });
+    mockedDb.doc().set.mockResolvedValue({ 
+      writeTime: {} as any,
+      isEqual: () => false
+    });
+    mockedGenerateChatCompletion.mockResolvedValue({
       role: 'assistant',
       content: JSON.stringify({
-        insights: [{ title: 'Mock Insight', description: 'Mock desc', actionItems: [], priority: 'medium' }],
+        insights: [
+          { title: 'Mock Insight', description: 'Mock desc', actionItems: [], priority: 'medium' },
+        ],
         summary: 'Mock summary',
         nextSteps: ['Mock step'],
       }),
     });
-    require('@/lib/plaid').getTransactions.mockResolvedValue([]);
+    mockedGetTransactions.mockResolvedValue(mockTransactions);
   });
 
   describe('GET /api/insights', () => {
@@ -198,32 +349,52 @@ describe('Insights API Integration Tests', () => {
     test('should return a successful response with insights on happy path', async () => {
       const mockUserId = 'testUser123';
       const mockAccessToken = 'plaid-access-token';
-      const mockTransactions = [
-        { name: 'Coffee Shop', amount: 5, date: '2024-03-10', category: ['Food and Drink'] },
-        { name: 'Salary', amount: -2000, date: '2024-03-01', category: ['Transfer', 'Income'] },
-      ];
       const mockManualAssets = [{ id: 'asset1', name: 'Savings ETH', amount: 10000 }];
       const mockManualLiabilities = [{ id: 'lia1', name: 'Credit Card Debt', amount: 500 }];
       const mockOpenAIContent = {
-        insights: [{ title: 'Test Insight', description: 'Description here', actionItems: ['Do this'], priority: 'high' as const }],
+        insights: [
+          {
+            title: 'Test Insight',
+            description: 'Description here',
+            actionItems: ['Do this'],
+            priority: 'high' as const,
+          },
+        ],
         summary: 'Overall financial summary.',
         nextSteps: ['Consider X', 'Review Y'],
       };
 
       // Setup mocks
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // No cache
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
         if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
         // User doc with Plaid token
-        if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: mockAccessToken }) });
+        if (path.includes(`users/${mockUserId}`)) {
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: mockAccessToken }),
+          });
+        }
         // Manual assets & liabilities
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: mockManualAssets.map(a => ({ id: a.id, data: () => ({name: a.name, amount: a.amount}) })) });
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: mockManualLiabilities.map(l => ({ id: l.id, data: () => ({name: l.name, amount: l.amount}) })) });
+        if (path.includes('manualAssets'))
+          return Promise.resolve({
+            docs: mockManualAssets.map(a => ({
+              id: a.id,
+              data: () => ({ name: a.name, amount: a.amount }),
+            })),
+          });
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({
+            docs: mockManualLiabilities.map(l => ({
+              id: l.id,
+              data: () => ({ name: l.name, amount: l.amount }),
+            })),
+          });
         return Promise.resolve({ exists: false }); // Default
       });
-      require('@/lib/plaid').getTransactions.mockResolvedValue(mockTransactions);
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({
+      mockedGetTransactions.mockResolvedValue(mockTransactions);
+      mockedGenerateChatCompletion.mockResolvedValue({
         role: 'assistant',
         content: JSON.stringify(mockOpenAIContent),
       });
@@ -245,45 +416,66 @@ describe('Insights API Integration Tests', () => {
       expect(body.metrics.totalLiabilities).toBe(500);
       expect(body.metrics.spendingByCategory['Food and Drink']).toBe(5);
       expect(body.metrics.monthlySpending['2024-03']).toBe(2005); // 5 + abs(-2000) (Note: salary is income, but current logic sums abs amounts)
-      
+
       expect(body.plaidDataAvailable).toBe(true);
       expect(body.cachedAt).toBeDefined();
 
       // Check caching
-      const db = require('@/lib/firebase-admin').db;
-      expect(db.collection).toHaveBeenCalledWith('users');
-      expect(db.doc).toHaveBeenCalledWith(mockUserId);
-      expect(db.collection).toHaveBeenCalledWith('insights');
-      expect(db.doc).toHaveBeenCalledWith('latest');
-      expect(db.set).toHaveBeenCalledWith(expect.objectContaining({
-        ...mockOpenAIContent,
-        metrics: expect.any(Object),
-        cachedAt: expect.any(Date),
-        plaidDataAvailable: true,
-      }));
+      expect(mockedDb.collection).toHaveBeenCalledWith('users');
+      expect(mockedDb.doc).toHaveBeenCalledWith(mockUserId);
+      expect(mockedDb.collection).toHaveBeenCalledWith('insights');
+      expect(mockedDb.doc).toHaveBeenCalledWith('latest');
+      expect(mockedDb.doc().set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...mockOpenAIContent,
+          metrics: expect.any(Object),
+          cachedAt: expect.any(Date),
+          plaidDataAvailable: true,
+        })
+      );
 
       // Check logging
-      expect(require('@/lib/logger').info).toHaveBeenCalledWith('Insights cached', { userId: mockUserId });
+      expect(mockedLogger.info).toHaveBeenCalledWith('Insights cached', {
+        userId: mockUserId,
+      });
     });
-    
+
     test('should return cached insights if available and not forced', async () => {
       const mockUserId = 'testUserCached';
       const cachedDate = new Date(); // Recent cache
       const mockCachedData = {
-        insights: [{ title: 'Cached Insight', description: 'From cache', actionItems: [], priority: 'low' as const }],
+        insights: [
+          {
+            title: 'Cached Insight',
+            description: 'From cache',
+            actionItems: [],
+            priority: 'low' as const,
+          },
+        ],
         summary: 'Cached summary',
         nextSteps: ['Cached step'],
-        metrics: { netWorth: 5000, totalAssets: 6000, totalLiabilities: 1000, spendingByCategory: {}, monthlySpending: {} },
+        metrics: {
+          netWorth: 5000,
+          totalAssets: 6000,
+          totalLiabilities: 1000,
+          spendingByCategory: {},
+          monthlySpending: {},
+        },
         cachedAt: cachedDate,
         plaidDataAvailable: true,
       };
 
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
-      // Setup mock for db.get to return cached data
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: true, data: () => mockCachedData });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      // Setup mock for db.doc().get to return cached data
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: true, data: () => mockCachedData });
         // User doc with Plaid token (though not strictly needed if cache hit)
-        if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'some-token'}) });
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: 'some-token' }),
+          });
         return Promise.resolve({ exists: false });
       });
 
@@ -295,40 +487,59 @@ describe('Insights API Integration Tests', () => {
       expect(body).toEqual(mockCachedData);
 
       // Ensure OpenAI was not called, and no new caching occurred
-      expect(require('@/lib/openai').generateChatCompletion).not.toHaveBeenCalled();
-      expect(require('@/lib/firebase-admin').db.set).not.toHaveBeenCalled();
-      expect(require('@/lib/logger').info).toHaveBeenCalledWith('Returning cached insights', { userId: mockUserId, cachedAt: cachedDate });
+      expect(mockedGenerateChatCompletion).not.toHaveBeenCalled();
+      expect(mockedDb.doc().set).not.toHaveBeenCalled();
+      expect(mockedLogger.info).toHaveBeenCalledWith('Returning cached insights', {
+        userId: mockUserId,
+        cachedAt: cachedDate,
+      });
     });
 
     test('should fetch fresh insights if force=true, even if cache exists', async () => {
       const mockUserId = 'testUserForceRefresh';
       const oldCachedDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // Old cache
       const mockOldCachedData = {
-        insights: [{ title: 'Old Cached Insight', description: 'Old cache', actionItems: [], priority: 'medium' as const}],
+        insights: [
+          {
+            title: 'Old Cached Insight',
+            description: 'Old cache',
+            actionItems: [],
+            priority: 'medium' as const,
+          },
+        ],
         summary: 'Old summary',
         metrics: { netWorth: 1000 },
         cachedAt: oldCachedDate,
       };
       const freshOpenAIContent = {
-          insights: [{ title: 'Fresh Insight', description: 'Freshly generated', actionItems: [], priority: 'high' as const }],
-          summary: 'Fresh summary',
-          nextSteps: ['Fresh next step'],
+        insights: [
+          {
+            title: 'Fresh Insight',
+            description: 'Freshly generated',
+            actionItems: [],
+            priority: 'high' as const,
+          },
+        ],
+        summary: 'Fresh summary',
+        nextSteps: ['Fresh next step'],
       };
 
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
-      // Mock db.get to return old cached data, and user data for fresh fetch
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: true, data: () => mockOldCachedData });
-        if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      // Mock db.doc().get to return old cached data, and user data for fresh fetch
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: true, data: () => mockOldCachedData });
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
         if (path.includes('manualAssets')) return Promise.resolve({ docs: [] }); // No manual data for simplicity here
         if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
         return Promise.resolve({ exists: false });
       });
       // Mock Plaid and OpenAI for the fresh call
-      require('@/lib/plaid').getTransactions.mockResolvedValue([]); // No transactions for simplicity
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({
-          role: 'assistant',
-          content: JSON.stringify(freshOpenAIContent),
+      mockedGetTransactions.mockResolvedValue([]); // No transactions for simplicity
+      mockedGenerateChatCompletion.mockResolvedValue({
+        role: 'assistant',
+        content: JSON.stringify(freshOpenAIContent),
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' }, { force: 'true' });
@@ -339,26 +550,34 @@ describe('Insights API Integration Tests', () => {
 
       expect(body.insights[0].title).toBe('Fresh Insight');
       expect(body.summary).toBe('Fresh summary');
-      expect(require('@/lib/openai').generateChatCompletion).toHaveBeenCalled();
-      expect(require('@/lib/firebase-admin').db.set).toHaveBeenCalled(); // Should cache the new fresh data
-      expect(require('@/lib/logger').info).toHaveBeenCalledWith('Insights cached', { userId: mockUserId });
+      expect(mockedGenerateChatCompletion).toHaveBeenCalled();
+      expect(mockedDb.doc().set).toHaveBeenCalled(); // Should cache the new fresh data
+      expect(mockedLogger.info).toHaveBeenCalledWith('Insights cached', {
+        userId: mockUserId,
+      });
     });
-    
+
     test('should indicate plaidDataAvailable is false if Plaid token is missing', async () => {
       const mockUserId = 'testUserNoPlaidToken';
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // No Plaid token for the user
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
         if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
-        if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({}) }); // No plaidAccessToken
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({ exists: true, data: () => ({}) }); // No plaidAccessToken
         if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
         if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
         return Promise.resolve({ exists: false });
       });
       // OpenAI will still be called, but with prompt indicating no Plaid data
-      const mockOpenAIContent = { insights: [{ title: 'No Plaid Insight', description: '...', priority: 'medium' as const}], summary: 'Summary without Plaid', nextSteps: [] };    
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({ 
-          role: 'assistant', content: JSON.stringify(mockOpenAIContent) 
+      const mockOpenAIContent = {
+        insights: [{ title: 'No Plaid Insight', description: '...', priority: 'medium' as const }],
+        summary: 'Summary without Plaid',
+        nextSteps: [],
+      };
+      mockedGenerateChatCompletion.mockResolvedValue({
+        role: 'assistant',
+        content: JSON.stringify(mockOpenAIContent),
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
@@ -369,24 +588,35 @@ describe('Insights API Integration Tests', () => {
       expect(body.plaidDataAvailable).toBe(false);
       expect(body.insights[0].title).toBe('No Plaid Insight');
       // We could also check that getTransactions was NOT called
-      expect(require('@/lib/plaid').getTransactions).not.toHaveBeenCalled();
+      expect(mockedGetTransactions).not.toHaveBeenCalled();
       // And verify the prompt sent to OpenAI reflected this (more complex, involves inspecting mock call args)
     });
 
     test('should indicate plaidDataAvailable is false if Plaid getTransactions fails', async () => {
       const mockUserId = 'testUserPlaidFails';
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
         if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
-        if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'good-token'}) });
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: 'good-token' }),
+          });
         if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
         if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
         return Promise.resolve({ exists: false });
       });
-      require('@/lib/plaid').getTransactions.mockRejectedValue(new Error('Plaid API Error'));
-      const mockOpenAIContent = { insights: [{ title: 'Plaid Error Insight', description: '...', priority: 'medium' as const}], summary: 'Summary post Plaid error', nextSteps: [] };    
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({ 
-          role: 'assistant', content: JSON.stringify(mockOpenAIContent) 
+      mockedGetTransactions.mockRejectedValue(new Error('Plaid API Error'));
+      const mockOpenAIContent = {
+        insights: [
+          { title: 'Plaid Error Insight', description: '...', priority: 'medium' as const },
+        ],
+        summary: 'Summary post Plaid error',
+        nextSteps: [],
+      };
+      mockedGenerateChatCompletion.mockResolvedValue({
+        role: 'assistant',
+        content: JSON.stringify(mockOpenAIContent),
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
@@ -396,20 +626,27 @@ describe('Insights API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(body.plaidDataAvailable).toBe(false);
       expect(body.insights[0].title).toBe('Plaid Error Insight');
-      expect(require('@/lib/logger').error).toHaveBeenCalledWith('Error fetching Plaid transactions', expect.objectContaining({ userId: mockUserId }));
+      expect(mockedLogger.error).toHaveBeenCalledWith(
+        'Error fetching Plaid transactions',
+        expect.objectContaining({ userId: mockUserId })
+      );
     });
 
     test('should return fallback insights if OpenAI response is malformed JSON', async () => {
       const mockUserId = 'testUserOpenAIMalformed';
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
-          if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
-          if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
-          if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-          if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-          return Promise.resolve({ exists: false });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
+        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
+        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
+        return Promise.resolve({ exists: false });
       });
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({ role: 'assistant', content: 'This is not JSON' });
+      mockedGenerateChatCompletion.mockResolvedValue({
+        role: 'assistant',
+        content: 'This is not JSON',
+      });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
       const response = await GET(request);
@@ -418,21 +655,31 @@ describe('Insights API Integration Tests', () => {
       expect(response.status).toBe(200); // Still 200 but with fallback data
       expect(body.insights[0].title).toBe('Content Format Issue');
       expect(body.summary).toBe('Financial insights received with formatting issues.');
-      expect(require('@/lib/logger').error).toHaveBeenCalledWith('Error parsing insights JSON from OpenAI', expect.anything());
+      expect(mockedLogger.error).toHaveBeenCalledWith(
+        'Error parsing insights JSON from OpenAI',
+        expect.anything()
+      );
     });
 
     test('should return fallback insights if OpenAI response fails Zod validation', async () => {
       const mockUserId = 'testUserOpenAIZodFail';
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: mockUserId });
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
-          if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
-          if (path.includes(`users/${mockUserId}`)) return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
-          if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-          if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-          return Promise.resolve({ exists: false });
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+        if (path.includes(`users/${mockUserId}`))
+          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
+        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
+        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
+        return Promise.resolve({ exists: false });
       });
-      const invalidOpenAIContent = JSON.stringify({ insights: [{ title: 'Missing fields' }], summary: null }); // Missing priority, null summary
-      require('@/lib/openai').generateChatCompletion.mockResolvedValue({ role: 'assistant', content: invalidOpenAIContent });
+      const invalidOpenAIContent = JSON.stringify({
+        insights: [{ title: 'Missing fields' }],
+        summary: null,
+      }); // Missing priority, null summary
+      mockedGenerateChatCompletion.mockResolvedValue({
+        role: 'assistant',
+        content: invalidOpenAIContent,
+      });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
       const response = await GET(request);
@@ -441,15 +688,19 @@ describe('Insights API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(body.insights[0].title).toBe('Insights Temporarily Unavailable');
       expect(body.summary).toBe('Could not generate personalized summary at this time.');
-      expect(require('@/lib/logger').error).toHaveBeenCalledWith('OpenAI response validation failed', expect.anything());
+      expect(mockedLogger.error).toHaveBeenCalledWith(
+        'OpenAI response validation failed',
+        expect.anything()
+      );
     });
 
-    test('should return 500 if a critical error occurs (e.g., db.get for user fails)', async () => {
-      require('@/lib/firebase-admin').auth.verifyIdToken.mockResolvedValue({ uid: 'anyUser' });
-      require('@/lib/firebase-admin').db.get.mockImplementation((path: string) => {
-          // Simulate failure to get user document
-          if (path.includes('users/') && !path.includes('insights')) return Promise.reject(new Error('Firestore unavailable'));
-          return Promise.resolve({exists: false }); // for cache check
+    test('should return 500 if a critical error occurs (e.g., db.doc().get for user fails)', async () => {
+      mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
+      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+        // Simulate failure to get user document
+        if (path.includes('users/') && !path.includes('insights'))
+          return Promise.reject(new Error('Firestore unavailable'));
+        return Promise.resolve({ exists: false }); // for cache check
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
@@ -458,12 +709,14 @@ describe('Insights API Integration Tests', () => {
       expect(response.status).toBe(500);
       const responseText = await response.text();
       expect(responseText).toBe('Internal Server Error');
-      expect(require('@/lib/logger').error).toHaveBeenCalledWith('Critical error in GET /api/insights', expect.objectContaining({
-          error: 'Firestore unavailable'
-      }));
+      expect(mockedLogger.error).toHaveBeenCalledWith(
+        'Critical error in GET /api/insights',
+        expect.objectContaining({
+          error: 'Firestore unavailable',
+        })
+      );
     });
 
     // Add more tests here for Plaid integration, OpenAI calls, etc.
-
   });
 });

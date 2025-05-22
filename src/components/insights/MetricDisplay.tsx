@@ -9,6 +9,9 @@ interface MetricDisplayProps {
   valueSuffix?: string;
 }
 
+/**
+ *
+ */
 export default function MetricDisplay({
   title,
   value,
@@ -17,7 +20,10 @@ export default function MetricDisplay({
   valuePrefix = '',
   valueSuffix = '',
 }: MetricDisplayProps) {
-  const displayValue = value !== null && value !== undefined ? `${valuePrefix}${typeof value === 'number' ? value.toLocaleString() : value}${valueSuffix}` : 'N/A';
+  const displayValue =
+    value !== null && value !== undefined
+      ? `${valuePrefix}${typeof value === 'number' ? value.toLocaleString() : value}${valueSuffix}`
+      : 'N/A';
 
   return (
     <div className={`bg-white p-6 rounded-xl shadow-lg ${className}`}>
@@ -25,10 +31,8 @@ export default function MetricDisplay({
       {isLoading ? (
         <div className="h-8 bg-gray-200 rounded animate-pulse w-3/4"></div>
       ) : (
-        <p className="text-3xl font-bold text-gray-800">
-          {displayValue}
-        </p>
+        <p className="text-3xl font-bold text-gray-800">{displayValue}</p>
       )}
     </div>
   );
-} 
+}

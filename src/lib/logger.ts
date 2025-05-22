@@ -1,4 +1,4 @@
-import { Logform, transports as WinstonTransports, format, createLogger } from 'winston';
+import { createLogger, format, Logform, transports as WinstonTransports } from 'winston';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 
@@ -9,13 +9,13 @@ interface PrintfInfo extends Logform.TransformableInfo {
   timestamp?: string; // Timestamp might not always be pre-formatted depending on order
   level: string;
   message: string;
-  [key: string]: any; // Acknowledging meta can have various properties
+  [key: string]: string | number | boolean | null | undefined; // More specific type for meta properties
 }
 
 const consoleLogFormat = combine(
   colorize(),
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // This adds 'timestamp' to info
-  printf((info) => {
+  printf(info => {
     const { timestamp: ts, level, message, ...meta } = info as PrintfInfo;
     // Basic meta stringification, symbols might be ignored by JSON.stringify by default
     const metaString = Object.keys(meta).length > 0 ? JSON.stringify(meta, null, 2) : '';
@@ -45,4 +45,4 @@ const logger = createLogger({
   exitOnError: false, // Do not exit on handled exceptions
 });
 
-export default logger; 
+export default logger;

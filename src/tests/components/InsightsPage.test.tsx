@@ -1,5 +1,6 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import InsightsPage from '@/app/insights/page';
 
 // Mock SessionProvider
@@ -10,7 +11,8 @@ jest.mock('@/components/providers/SessionProvider', () => ({
 // Mock fetch
 global.fetch = jest.fn();
 
-const mockUseSession = require('@/components/providers/SessionProvider').useSession;
+import { useSession as _useSession } from '@/components/providers/SessionProvider';
+const mockUseSession = _useSession as jest.Mock;
 
 describe('<InsightsPage />', () => {
   beforeEach(() => {
@@ -27,7 +29,12 @@ describe('<InsightsPage />', () => {
       ok: true,
       json: async () => ({
         insights: [
-          { title: 'AI Insight 1', description: 'Desc 1', actionItems: ['Action 1'], priority: 'high' },
+          {
+            title: 'AI Insight 1',
+            description: 'Desc 1',
+            actionItems: ['Action 1'],
+            priority: 'high',
+          },
         ],
         summary: 'Test Summary',
         nextSteps: ['Test Next Step'],
@@ -35,7 +42,7 @@ describe('<InsightsPage />', () => {
           netWorth: 10000,
           totalAssets: 15000,
           totalLiabilities: 5000,
-          spendingByCategory: { 'Food': 200, 'Travel': 300 },
+          spendingByCategory: { Food: 200, Travel: 300 },
           monthlySpending: { '2024-01': 500, '2024-02': 600 },
         },
         plaidDataAvailable: true,
@@ -53,7 +60,7 @@ describe('<InsightsPage />', () => {
     mockUseSession.mockReturnValueOnce({ user: null, loading: false });
     render(<InsightsPage />);
     await waitFor(() => {
-        expect(screen.getByText('Error: Please log in to view insights')).toBeInTheDocument();
+      expect(screen.getByText('Error: Please log in to view insights')).toBeInTheDocument();
     });
   });
 
@@ -87,14 +94,20 @@ describe('<InsightsPage />', () => {
   test('should display Plaid data unavailable warning if plaidDataAvailable is false', async () => {
     (global.fetch as jest.Mock).mockReset(); // Clear previous default mock
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-            insights: [],
-            summary: 'Summary with no plaid',
-            nextSteps: [],
-            metrics: { netWorth: 100, totalAssets:100, totalLiabilities:0, spendingByCategory: {}, monthlySpending: {}},
-            plaidDataAvailable: false,
-        }),
+      ok: true,
+      json: async () => ({
+        insights: [],
+        summary: 'Summary with no plaid',
+        nextSteps: [],
+        metrics: {
+          netWorth: 100,
+          totalAssets: 100,
+          totalLiabilities: 0,
+          spendingByCategory: {},
+          monthlySpending: {},
+        },
+        plaidDataAvailable: false,
+      }),
     });
     render(<InsightsPage />);
     await waitFor(() => {
@@ -109,21 +122,34 @@ describe('<InsightsPage />', () => {
     });
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-            insights: [{ title: 'Refreshed Insight', description: 'Fresh Desc', actionItems: [], priority: 'medium' }],
-            summary: 'Refreshed Summary',
-            nextSteps: [],
-            metrics: { netWorth: 20000, totalAssets:0, totalLiabilities:0, spendingByCategory: {}, monthlySpending: {}},
-            plaidDataAvailable: true,
-        }),
+      ok: true,
+      json: async () => ({
+        insights: [
+          {
+            title: 'Refreshed Insight',
+            description: 'Fresh Desc',
+            actionItems: [],
+            priority: 'medium',
+          },
+        ],
+        summary: 'Refreshed Summary',
+        nextSteps: [],
+        metrics: {
+          netWorth: 20000,
+          totalAssets: 0,
+          totalLiabilities: 0,
+          spendingByCategory: {},
+          monthlySpending: {},
+        },
+        plaidDataAvailable: true,
+      }),
     });
 
     const refreshButton = screen.getByRole('button', { name: /Refresh Insights/i });
     await act(async () => {
-        userEvent.click(refreshButton);
+      userEvent.click(refreshButton);
     });
-    
+
     await waitFor(() => {
       expect(screen.getByText('Refreshed Insight')).toBeInTheDocument();
     });
@@ -138,26 +164,26 @@ describe('<InsightsPage />', () => {
 
     const actionButton = screen.getByRole('button', { name: /Actionable Steps/i });
     expect(screen.queryByText('Action 1')).not.toBeVisible(); // Assuming not visible by default or does not exist if collapsed
-    
+
     // Expand
     await act(async () => {
-        userEvent.click(actionButton);
+      userEvent.click(actionButton);
     });
     await waitFor(() => {
-        expect(screen.getByText('Action 1')).toBeVisible();
+      expect(screen.getByText('Action 1')).toBeVisible();
     });
 
     // Collapse
     await act(async () => {
-        userEvent.click(actionButton);
+      userEvent.click(actionButton);
     });
     await waitFor(() => {
-        //This assertion depends on how visibility is handled (e.g. removal from DOM or CSS)
-        // If it's removed from DOM:
-        expect(screen.queryByText('Action 1')).toBeNull(); 
-        // If it's display:none, you might need a different assertion or setup to check for .not.toBeVisible()
+      //This assertion depends on how visibility is handled (e.g. removal from DOM or CSS)
+      // If it's removed from DOM:
+      expect(screen.queryByText('Action 1')).toBeNull();
+      // If it's display:none, you might need a different assertion or setup to check for .not.toBeVisible()
     });
   });
 
   // Add tests for error state from fetch, different priorities rendering, etc.
-}); 
+});

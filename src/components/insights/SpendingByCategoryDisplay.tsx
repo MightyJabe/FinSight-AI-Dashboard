@@ -5,6 +5,9 @@ interface SpendingByCategoryDisplayProps {
   isLoading?: boolean;
 }
 
+/**
+ *
+ */
 export default function SpendingByCategoryDisplay({
   spendingData,
   isLoading = false,
@@ -36,12 +39,10 @@ export default function SpendingByCategoryDisplay({
         {Object.entries(spendingData).map(([category, amount]) => (
           <div key={category} className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <p className="font-medium text-gray-700 truncate">{category}</p>
-            <p className="text-2xl font-semibold text-gray-800">
-              ${amount.toLocaleString()}
-            </p>
+            <p className="text-2xl font-semibold text-gray-800">${amount.toLocaleString()}</p>
           </div>
         ))}
       </div>
     </div>
   );
-} 
+}

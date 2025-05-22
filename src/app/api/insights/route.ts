@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
 import { getTransactions } from '@/lib/plaid';
-import { openAIInsightsSchema, OpenAIInsights } from './schemas';
-import logger from '@/lib/logger';
+
+import { OpenAIInsights, openAIInsightsSchema } from './schemas';
 
 interface Transaction {
   name: string;
@@ -42,14 +43,23 @@ interface CalculatedMetrics {
   monthlySpending: Record<string, number>;
 }
 
+interface CachedInsights {
+  insights: OpenAIInsights[];
+  summary: string;
+  nextSteps: string[];
+  metrics: Record<string, number>;
+  plaidDataAvailable: boolean;
+  cachedAt: string;
+}
+
 const insightsQuerySchema = z.object({
-  force: z.preprocess(
-    (val) => val === 'true' || val === '1',
-    z.boolean().optional().default(false)
-  ),
+  force: z.preprocess(val => val === 'true' || val === '1', z.boolean().optional().default(false)),
 });
 
-async function getCachedInsights(userId: string): Promise<any | null> {
+/**
+ *
+ */
+async function getCachedInsights(userId: string): Promise<CachedInsights | null> {
   const insightsDoc = await db
     .collection('users')
     .doc(userId)
@@ -64,13 +74,17 @@ async function getCachedInsights(userId: string): Promise<any | null> {
     const dataFromDoc = insightsDoc.data();
     if (dataFromDoc) {
       const cachedAtTimestamp = dataFromDoc.cachedAt;
-      const cachedAtDate = cachedAtTimestamp && typeof cachedAtTimestamp.toDate === 'function' 
-        ? cachedAtTimestamp.toDate() 
-        : null;
+      const cachedAtDate =
+        cachedAtTimestamp && typeof cachedAtTimestamp.toDate === 'function'
+          ? cachedAtTimestamp.toDate()
+          : null;
 
       if (cachedAtDate && cachedAtDate > oneDayAgo) {
-        logger.info('Returning cached insights for user', { userId, cachedAt: cachedAtDate.toISOString() });
-        
+        logger.info('Returning cached insights for user', {
+          userId,
+          cachedAt: cachedAtDate.toISOString(),
+        });
+
         // Create a plain object with all data serialized
         const serializedData = {
           insights: dataFromDoc.insights || [],
@@ -89,6 +103,9 @@ async function getCachedInsights(userId: string): Promise<any | null> {
   return null;
 }
 
+/**
+ *
+ */
 async function cacheInsights(userId: string, insightsDataWithDateObject: any): Promise<void> {
   // Create a serialized version of the data for Firestore
   const serializedData = {
@@ -99,15 +116,13 @@ async function cacheInsights(userId: string, insightsDataWithDateObject: any): P
     nextSteps: JSON.parse(JSON.stringify(insightsDataWithDateObject.nextSteps || [])),
   };
 
-  await db
-    .collection('users')
-    .doc(userId)
-    .collection('insights')
-    .doc('latest')
-    .set(serializedData);
+  await db.collection('users').doc(userId).collection('insights').doc('latest').set(serializedData);
   logger.info('Insights cached', { userId });
 }
 
+/**
+ *
+ */
 async function fetchFinancialData(userId: string, accessToken?: string): Promise<FinancialData> {
   let transactions: Transaction[] = [];
   let plaidDataAvailable = false;
@@ -127,16 +142,15 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
       }));
       plaidDataAvailable = true;
     } catch (error) {
-      logger.error('Error fetching Plaid transactions', { userId, error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error fetching Plaid transactions', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Continue without Plaid data, plaidDataAvailable remains false
     }
   }
 
-  const assetsSnapshot = await db
-    .collection('users')
-    .doc(userId)
-    .collection('manualAssets')
-    .get();
+  const assetsSnapshot = await db.collection('users').doc(userId).collection('manualAssets').get();
   const manualAssets = assetsSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
@@ -155,6 +169,9 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
   return { transactions, manualAssets, manualLiabilities, plaidDataAvailable };
 }
 
+/**
+ *
+ */
 function calculateFinancialMetrics(
   transactions: Transaction[],
   manualAssets: ManualAsset[],
@@ -185,7 +202,13 @@ function calculateFinancialMetrics(
   return { netWorth, totalAssets, totalLiabilities, spendingByCategory, monthlySpending };
 }
 
-function prepareOpenAIPrompt(metrics: CalculatedMetrics, plaidDataAvailable: boolean): { role: 'system'; content: string }[] {
+/**
+ *
+ */
+function prepareOpenAIPrompt(
+  metrics: CalculatedMetrics,
+  plaidDataAvailable: boolean
+): { role: 'system'; content: string }[] {
   let promptContent = `You are a specialized financial advisor AI assistant for Finsight AI. Your primary goal is to provide clear, actionable, and personalized financial insights. Analyze the user's data meticulously.
 
 User's Financial Snapshot:
@@ -201,13 +224,13 @@ User's Financial Snapshot:
     promptContent += `
 - Monthly Spending Overview (Last 90 days): ${JSON.stringify(metrics.monthlySpending)}`;
   }
-  
+
   if (!plaidDataAvailable) {
     promptContent += `
 
-Important Note: Detailed transaction data (spending, income) from linked bank accounts is currently unavailable or incomplete. Therefore, insights regarding spending patterns will be general. Insights will primarily focus on net worth, assets, and liabilities. For more detailed spending analysis and personalized budgeting advice, please ensure bank accounts are linked and transactions are up to date.`
+Important Note: Detailed transaction data (spending, income) from linked bank accounts is currently unavailable or incomplete. Therefore, insights regarding spending patterns will be general. Insights will primarily focus on net worth, assets, and liabilities. For more detailed spending analysis and personalized budgeting advice, please ensure bank accounts are linked and transactions are up to date.`;
   }
-  
+
   promptContent += `
 
 Based on this data, provide 3-5 distinct and actionable insights. Each insight should help the user improve their financial health.
@@ -243,6 +266,9 @@ Format your entire response STRICTLY as a single JSON object with the following 
   return [{ role: 'system', content: promptContent }];
 }
 
+/**
+ *
+ */
 function parseAndValidateInsights(openAIResponseContent: string, userId: string): OpenAIInsights {
   try {
     const parsedContent = JSON.parse(openAIResponseContent);
@@ -253,7 +279,8 @@ function parseAndValidateInsights(openAIResponseContent: string, userId: string)
         rawResponse: openAIResponseContent, // Be cautious logging raw response
         userId,
       });
-      return { // Consistent fallback structure
+      return {
+        // Consistent fallback structure
         insights: [
           {
             title: 'Insights Temporarily Unavailable',
@@ -278,14 +305,15 @@ function parseAndValidateInsights(openAIResponseContent: string, userId: string)
       rawResponse: openAIResponseContent,
       userId,
     });
-    return { // Consistent fallback structure
+    return {
+      // Consistent fallback structure
       insights: [
         {
           title: 'Content Format Issue',
           description:
             "We received data that couldn't be properly formatted. You can try refreshing. The raw content snippet is: " +
             openAIResponseContent.substring(0, 200) +
-            "...",
+            '...',
           actionItems: [],
           priority: 'medium',
         },
@@ -339,12 +367,13 @@ export async function GET(request: Request) {
     const userData = userDoc.data();
     const accessToken = userData?.plaidAccessToken;
 
-    const { transactions, manualAssets, manualLiabilities, plaidDataAvailable } = await fetchFinancialData(userId, accessToken);
+    const { transactions, manualAssets, manualLiabilities, plaidDataAvailable } =
+      await fetchFinancialData(userId, accessToken);
     const metrics = calculateFinancialMetrics(transactions, manualAssets, manualLiabilities);
-    
+
     const openAIMessages = prepareOpenAIPrompt(metrics, plaidDataAvailable);
     const openAIResponse = await generateChatCompletion(openAIMessages);
-    
+
     const insightsData = parseAndValidateInsights(openAIResponse.content, userId);
 
     // Create a serialized version of the data for caching

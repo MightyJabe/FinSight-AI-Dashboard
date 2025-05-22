@@ -190,10 +190,13 @@ export async function getOverview(): Promise<Overview> {
     ]);
 
   // Helper function to safely convert dates
-  const safeDateConversion = (date: any): string | undefined => {
+  const safeDateConversion = (
+    date: string | Date | { toDate: () => Date } | undefined
+  ): string | undefined => {
     if (!date) return undefined;
     if (typeof date === 'string') return date;
-    if (date.toDate && typeof date.toDate === 'function') {
+    if (date instanceof Date) return date.toISOString();
+    if (typeof date === 'object' && date.toDate && typeof date.toDate === 'function') {
       return date.toDate().toISOString();
     }
     return undefined;
@@ -430,7 +433,8 @@ export async function getOverview(): Promise<Overview> {
       category,
       amount: Number(amount),
     })),
-    debtToIncomeRatio: monthlyIncome > 0 ? Number(totalLiabilities) / (Number(monthlyIncome) * 12) : 0,
+    debtToIncomeRatio:
+      monthlyIncome > 0 ? Number(totalLiabilities) / (Number(monthlyIncome) * 12) : 0,
   };
 
   // Ensure complete serialization

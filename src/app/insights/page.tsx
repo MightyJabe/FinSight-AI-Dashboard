@@ -3,11 +3,11 @@
 import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useSession } from '@/components/providers/SessionProvider';
 import InsightCard from '@/components/insights/InsightCard';
 import MetricDisplay from '@/components/insights/MetricDisplay';
 import PlaidDataWarning from '@/components/insights/PlaidDataWarning';
 import SpendingByCategoryDisplay from '@/components/insights/SpendingByCategoryDisplay';
+import { useSession } from '@/components/providers/SessionProvider';
 
 interface InsightData {
   title: string;
@@ -30,6 +30,9 @@ interface InsightsPageData {
   plaidDataAvailable?: boolean;
 }
 
+/**
+ *
+ */
 export default function InsightsPage() {
   const { user, loading: authLoading } = useSession();
   const [insightsData, setInsightsData] = useState<InsightsPageData | null>(null);
@@ -46,7 +49,7 @@ export default function InsightsPage() {
 
       try {
         if (authLoading) {
-          return; 
+          return;
         }
 
         if (!user) {
@@ -63,7 +66,9 @@ export default function InsightsPage() {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Failed to fetch insights' }));
+          const errorData = await response
+            .json()
+            .catch(() => ({ message: 'Failed to fetch insights' }));
           throw new Error(errorData.message || `Failed to fetch insights (${response.status})`);
         }
 
@@ -84,7 +89,9 @@ export default function InsightsPage() {
         setInsightsData(serializedData);
       } catch (err) {
         console.error('Error fetching insights:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching insights');
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred while fetching insights'
+        );
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -102,7 +109,8 @@ export default function InsightsPage() {
     await fetchInsights(true);
   };
 
-  if (authLoading || (loading && !insightsData)) { // Show loading if auth is loading OR initial data load is in progress
+  if (authLoading || (loading && !insightsData)) {
+    // Show loading if auth is loading OR initial data load is in progress
     return (
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex justify-center items-center">
         <div className="text-center">
@@ -116,15 +124,15 @@ export default function InsightsPage() {
   if (error) {
     return (
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex justify-center items-center">
-         <div className="text-center p-6 bg-white rounded-lg shadow-xl">
-            <h2 className="text-xl font-semibold text-red-600 mb-3">Oops! Something went wrong.</h2>
-            <p className="text-red-500 mb-4">{error}</p>
-            <button 
-                onClick={() => fetchInsights()} 
-                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
-            >
-                Try Again
-            </button>
+        <div className="text-center p-6 bg-white rounded-lg shadow-xl">
+          <h2 className="text-xl font-semibold text-red-600 mb-3">Oops! Something went wrong.</h2>
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => fetchInsights()}
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -133,16 +141,23 @@ export default function InsightsPage() {
   if (!insightsData) {
     return (
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex justify-center items-center">
-        <p className="text-lg text-gray-500">No insights available at the moment. Try refreshing.</p>
+        <p className="text-lg text-gray-500">
+          No insights available at the moment. Try refreshing.
+        </p>
       </div>
     );
   }
 
-  const totalMonthlySpending = typeof insightsData.metrics.monthlySpending === 'number'
-    ? insightsData.metrics.monthlySpending
-    : typeof insightsData.metrics.monthlySpending === 'object' && insightsData.metrics.monthlySpending !== null
-      ? Object.values(insightsData.metrics.monthlySpending as Record<string, number>).reduce((s, v) => s + v, 0)
-      : null;
+  const totalMonthlySpending =
+    typeof insightsData.metrics.monthlySpending === 'number'
+      ? insightsData.metrics.monthlySpending
+      : typeof insightsData.metrics.monthlySpending === 'object' &&
+          insightsData.metrics.monthlySpending !== null
+        ? Object.values(insightsData.metrics.monthlySpending as Record<string, number>).reduce(
+            (s, v) => s + v,
+            0
+          )
+        : null;
 
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
@@ -162,48 +177,62 @@ export default function InsightsPage() {
         {insightsData.plaidDataAvailable === false && <PlaidDataWarning />}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <MetricDisplay title="Net Worth" value={insightsData.metrics.netWorth} valuePrefix="$" isLoading={loading} />
-          <MetricDisplay title="Total Monthly Spending" value={totalMonthlySpending} valuePrefix="$" isLoading={loading} />
+          <MetricDisplay
+            title="Net Worth"
+            value={insightsData.metrics.netWorth}
+            valuePrefix="$"
+            isLoading={loading}
+          />
+          <MetricDisplay
+            title="Total Monthly Spending"
+            value={totalMonthlySpending}
+            valuePrefix="$"
+            isLoading={loading}
+          />
         </div>
 
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">AI-Generated Insights</h2>
           {loading && !insightsData.insights.length ? (
             <div className="space-y-4">
-                {[...Array(2)].map((_, i) => 
-                    <div key={i} className="bg-white rounded-xl shadow-lg p-5">
-                        <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mb-3"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-full mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-                    </div>
-                )}
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg p-5">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                </div>
+              ))}
             </div>
           ) : (
             <>
-            {insightsData.summary && (
+              {insightsData.summary && (
                 <p className="mb-6 text-gray-700 bg-blue-50 p-4 rounded-lg shadow">
-                <strong>Summary:</strong> {insightsData.summary}
+                  <strong>Summary:</strong> {insightsData.summary}
                 </p>
-            )}
-            <div className="space-y-4">
+              )}
+              <div className="space-y-4">
                 {insightsData.insights.map((insight, index) => (
-                <InsightCard key={index} insight={insight} index={index} />
+                  <InsightCard key={index} insight={insight} index={index} />
                 ))}
-            </div>
-            {insightsData.nextSteps && insightsData.nextSteps.length > 0 && (
+              </div>
+              {insightsData.nextSteps && insightsData.nextSteps.length > 0 && (
                 <div className="mt-6 bg-green-50 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-green-700 mb-2">Next Steps:</h3>
-                <ul className="list-disc pl-5 text-green-700 space-y-1">
-                    {insightsData.nextSteps.map((step, i) => <li key={i}>{step}</li>)}
-                </ul>
+                  <h3 className="text-lg font-semibold text-green-700 mb-2">Next Steps:</h3>
+                  <ul className="list-disc pl-5 text-green-700 space-y-1">
+                    {insightsData.nextSteps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ul>
                 </div>
-            )}
+              )}
             </>
           )}
         </div>
 
-        <SpendingByCategoryDisplay spendingData={insightsData.metrics.spendingByCategory} isLoading={loading} />
-      
+        <SpendingByCategoryDisplay
+          spendingData={insightsData.metrics.spendingByCategory}
+          isLoading={loading}
+        />
       </div>
     </div>
   );

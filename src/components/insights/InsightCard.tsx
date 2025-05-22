@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface Insight {
   title: string;
@@ -15,12 +15,36 @@ interface InsightCardProps {
   index: number; // For unique IDs if needed, or managing expansion state from parent
 }
 
-const priorityStyles: Record<string, { bg: string; text: string; border: string; badgeBg: string; badgeText: string }> = {
-  high: { bg: 'bg-red-50', text: 'text-red-800', border: 'border-red-500', badgeBg: 'bg-red-100', badgeText: 'text-red-700' },
-  medium: { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-500', badgeBg: 'bg-yellow-100', badgeText: 'text-yellow-700' },
-  low: { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-500', badgeBg: 'bg-green-100', badgeText: 'text-green-700' },
+const priorityStyles: Record<
+  string,
+  { bg: string; text: string; border: string; badgeBg: string; badgeText: string }
+> = {
+  high: {
+    bg: 'bg-red-50',
+    text: 'text-red-800',
+    border: 'border-red-500',
+    badgeBg: 'bg-red-100',
+    badgeText: 'text-red-700',
+  },
+  medium: {
+    bg: 'bg-yellow-50',
+    text: 'text-yellow-800',
+    border: 'border-yellow-500',
+    badgeBg: 'bg-yellow-100',
+    badgeText: 'text-yellow-700',
+  },
+  low: {
+    bg: 'bg-green-50',
+    text: 'text-green-800',
+    border: 'border-green-500',
+    badgeBg: 'bg-green-100',
+    badgeText: 'text-green-700',
+  },
 };
 
+/**
+ *
+ */
 export default function InsightCard({ insight, index }: InsightCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const styles = priorityStyles[insight.priority] || priorityStyles.medium;
@@ -30,11 +54,13 @@ export default function InsightCard({ insight, index }: InsightCardProps) {
   };
 
   return (
-    <div className={`rounded-xl shadow-lg overflow-hidden border-l-4 ${styles.border} ${styles.bg}`}>
+    <div
+      className={`rounded-xl shadow-lg overflow-hidden border-l-4 ${styles.border} ${styles.bg}`}
+    >
       <div className={`p-5`}>
         <div className="flex justify-between items-start">
           <h3 className={`text-xl font-semibold ${styles.text}`}>{insight.title}</h3>
-          <span 
+          <span
             className={`px-2 py-0.5 text-xs font-semibold rounded-full ${styles.badgeBg} ${styles.badgeText}`}
           >
             {insight.priority.toUpperCase()} PRIORITY
@@ -57,7 +83,10 @@ export default function InsightCard({ insight, index }: InsightCardProps) {
               />
             </button>
             {isExpanded && (
-              <ul id={`action-items-${index}`} className="list-disc pl-6 mt-2 space-y-1 text-sm text-gray-600">
+              <ul
+                id={`action-items-${index}`}
+                className="list-disc pl-6 mt-2 space-y-1 text-sm text-gray-600"
+              >
                 {insight.actionItems.map((item, itemIndex) => (
                   <li key={itemIndex}>{item}</li>
                 ))}
@@ -68,4 +97,4 @@ export default function InsightCard({ insight, index }: InsightCardProps) {
       </div>
     </div>
   );
-} 
+}

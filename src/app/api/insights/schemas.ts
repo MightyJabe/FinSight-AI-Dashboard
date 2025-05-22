@@ -13,4 +13,4 @@ export const openAIInsightsSchema = z.object({
   nextSteps: z.array(z.string()).optional(),
 });
 
-export type OpenAIInsights = z.infer<typeof openAIInsightsSchema>; 
+export type OpenAIInsights = z.infer<typeof openAIInsightsSchema>;

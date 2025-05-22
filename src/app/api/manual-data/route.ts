@@ -54,8 +54,12 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         ...docData,
         date: docData.date?.toDate ? docData.date.toDate().toISOString() : docData.date,
-        createdAt: docData.createdAt?.toDate ? docData.createdAt.toDate().toISOString() : docData.createdAt,
-        updatedAt: docData.updatedAt?.toDate ? docData.updatedAt.toDate().toISOString() : docData.updatedAt,
+        createdAt: docData.createdAt?.toDate
+          ? docData.createdAt.toDate().toISOString()
+          : docData.createdAt,
+        updatedAt: docData.updatedAt?.toDate
+          ? docData.updatedAt.toDate().toISOString()
+          : docData.updatedAt,
       };
     });
 
