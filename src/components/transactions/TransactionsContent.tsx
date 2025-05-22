@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/abs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import type { Transaction } from '@/lib/finance';
 
 import { CategoryBreakdown } from './CategoryBreakdown';

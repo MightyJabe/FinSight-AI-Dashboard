@@ -4,7 +4,70 @@ import { auth } from '@/lib/firebase-admin';
 import { db } from '@/lib/firebase-admin';
 
 /**
- *
+ * Get or add manual data
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the token
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(token);
+    const userId = decodedToken.uid;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get the type from query params
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+
+    if (!type) {
+      return NextResponse.json({ error: 'Missing type in query params' }, { status: 400 });
+    }
+
+    let collectionName = '';
+    switch (type) {
+      case 'manualAssets':
+        collectionName = `users/${userId}/manualAssets`;
+        break;
+      case 'manualLiabilities':
+        collectionName = `users/${userId}/manualLiabilities`;
+        break;
+      case 'transactions':
+        collectionName = `users/${userId}/transactions`;
+        break;
+      default:
+        return NextResponse.json({ error: 'Invalid data type specified' }, { status: 400 });
+    }
+
+    // Get the data from Firestore
+    const snapshot = await db.collection(collectionName).orderBy('date', 'desc').get();
+    const data = snapshot.docs.map(doc => {
+      const docData = doc.data();
+      return {
+        id: doc.id,
+        ...docData,
+        date: docData.date?.toDate ? docData.date.toDate().toISOString() : docData.date,
+        createdAt: docData.createdAt?.toDate ? docData.createdAt.toDate().toISOString() : docData.createdAt,
+        updatedAt: docData.updatedAt?.toDate ? docData.updatedAt.toDate().toISOString() : docData.updatedAt,
+      };
+    });
+
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    console.error('Error fetching manual data:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * Add manual data
  */
 export async function POST(request: NextRequest) {
   try {
@@ -39,7 +102,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     preparedData.createdAt = now;
     preparedData.updatedAt = now;
-    preparedData.userId = userId; // Add userId to the data being saved
+    preparedData.userId = userId;
 
     // Add type-specific validation
     switch (type) {

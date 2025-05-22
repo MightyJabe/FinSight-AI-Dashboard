@@ -189,7 +189,17 @@ export async function getOverview(): Promise<Overview> {
       db.collection(`users/${userId}/plaidItems`).get(),
     ]);
 
-  // Process Manual Assets (as before, but without currentBalance calculation here, it's for display)
+  // Helper function to safely convert dates
+  const safeDateConversion = (date: any): string | undefined => {
+    if (!date) return undefined;
+    if (typeof date === 'string') return date;
+    if (date.toDate && typeof date.toDate === 'function') {
+      return date.toDate().toISOString();
+    }
+    return undefined;
+  };
+
+  // Process Manual Assets
   const manualAssetsRaw = manualAssetsSnapshot.docs.map(doc => {
     const data = doc.data();
     return {
@@ -198,16 +208,12 @@ export async function getOverview(): Promise<Overview> {
       amount: Number(data.amount),
       type: data.type as string,
       description: data.description as string | undefined,
-      createdAt: data.createdAt?.toDate
-        ? data.createdAt.toDate().toISOString()
-        : (data.createdAt as string | undefined),
-      updatedAt: data.updatedAt?.toDate
-        ? data.updatedAt.toDate().toISOString()
-        : (data.updatedAt as string | undefined),
+      createdAt: safeDateConversion(data.createdAt),
+      updatedAt: safeDateConversion(data.updatedAt),
     };
-  }) as Array<Overview['manualAssets'][number] & { amount: number }>; // Ensure amount is number
+  });
 
-  // Process Liabilities (as before)
+  // Process Liabilities
   const liabilities = liabilitiesSnapshot.docs.map(doc => {
     const data = doc.data();
     return {
@@ -219,35 +225,27 @@ export async function getOverview(): Promise<Overview> {
       minimumPayment: Number(data.minimumPayment),
       remainingPayments: Number(data.remainingPayments),
       payoffDate: data.payoffDate as string,
-      createdAt: data.createdAt?.toDate
-        ? data.createdAt.toDate().toISOString()
-        : (data.createdAt as string | undefined),
-      updatedAt: data.updatedAt?.toDate
-        ? data.updatedAt.toDate().toISOString()
-        : (data.updatedAt as string | undefined),
+      createdAt: safeDateConversion(data.createdAt),
+      updatedAt: safeDateConversion(data.updatedAt),
     };
-  }) as Overview['liabilities'];
+  });
 
-  // Process Transactions (as before, ensuring dates are strings)
+  // Process Transactions
   const transactions = transactionsSnapshot.docs.map(doc => {
     const data = doc.data();
     return {
       id: doc.id,
-      date: data.date?.toDate ? data.date.toDate().toISOString() : (data.date as string),
+      date: safeDateConversion(data.date) || new Date().toISOString(),
       description: data.description as string,
       amount: Number(data.amount),
       category: data.category as string,
       account: data.account as string,
       accountId: data.accountId as string,
       type: data.type as 'income' | 'expense',
-      createdAt: data.createdAt?.toDate
-        ? data.createdAt.toDate().toISOString()
-        : (data.createdAt as string | undefined),
-      updatedAt: data.updatedAt?.toDate
-        ? data.updatedAt.toDate().toISOString()
-        : (data.updatedAt as string | undefined),
+      createdAt: safeDateConversion(data.createdAt),
+      updatedAt: safeDateConversion(data.updatedAt),
     };
-  }) as Transaction[];
+  });
 
   // --- Calculate Net Transaction Changes for Manual Assets ---
   const accountNetTransactionChanges: Record<string, number> = {};
@@ -391,7 +389,8 @@ export async function getOverview(): Promise<Overview> {
       {} as Record<string, number>
     );
 
-  return {
+  // Ensure all data is serialized before returning
+  const serializedOverview = {
     netWorth,
     totalAssets,
     totalLiabilities,
@@ -405,21 +404,37 @@ export async function getOverview(): Promise<Overview> {
         : 0,
     savingsRate: monthlyIncome > 0 ? monthlySavings / monthlyIncome : 0,
     netWorthHistory: [], // TODO
-    accounts: overviewAccounts, // Populate with both manual liquid and Plaid liquid accounts
-    manualAssets: updatedManualAssetsWithCurrentBalance, // Manual assets with their current dynamic balance
-    liabilities,
+    accounts: overviewAccounts.map(account => ({
+      ...account,
+      balance: Number(account.balance),
+    })),
+    manualAssets: updatedManualAssetsWithCurrentBalance.map(asset => ({
+      ...asset,
+      amount: Number(asset.amount),
+      currentBalance: Number(asset.currentBalance),
+    })),
+    liabilities: liabilities.map(liability => ({
+      ...liability,
+      amount: Number(liability.amount),
+      interestRate: Number(liability.interestRate),
+      minimumPayment: Number(liability.minimumPayment),
+      remainingPayments: Number(liability.remainingPayments),
+    })),
     budgetCategories: Object.entries(spendingByCategory).map(([name, amount]) => ({
       id: name,
       name,
-      amount: monthlyExpenses,
-      spent: amount,
+      amount: Number(monthlyExpenses),
+      spent: Number(amount),
     })),
     spendingByCategory: Object.entries(spendingByCategory).map(([category, amount]) => ({
       category,
-      amount,
+      amount: Number(amount),
     })),
-    debtToIncomeRatio: monthlyIncome > 0 ? totalLiabilities / (monthlyIncome * 12) : 0,
+    debtToIncomeRatio: monthlyIncome > 0 ? Number(totalLiabilities) / (Number(monthlyIncome) * 12) : 0,
   };
+
+  // Ensure complete serialization
+  return JSON.parse(JSON.stringify(serializedOverview));
 }
 
 /**

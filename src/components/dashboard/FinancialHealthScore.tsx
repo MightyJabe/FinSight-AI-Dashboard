@@ -1,3 +1,6 @@
+import { HelpCircle } from 'lucide-react';
+
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { Overview } from '@/lib/finance';
 import { formatPercentage } from '@/utils/format';
 
@@ -6,7 +9,7 @@ interface FinancialHealthScoreProps {
 }
 
 /**
- *
+ * Displays a comprehensive financial health score based on key metrics
  */
 export function FinancialHealthScore({ overview }: FinancialHealthScoreProps) {
   const { emergencyFundStatus = 0, savingsRate = 0, debtToIncomeRatio = 0 } = overview;
@@ -30,33 +33,87 @@ export function FinancialHealthScore({ overview }: FinancialHealthScoreProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-card p-6">
-      <h2 className="text-lg font-semibold mb-4">Financial Health Score</h2>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-4xl font-bold mb-2">
-            <span className={getScoreColor(healthScore)}>{Math.round(healthScore)}</span>
-            <span className="text-2xl text-muted-foreground">/100</span>
+    <TooltipProvider>
+      <div className="rounded-lg border bg-card p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center">
+          Financial Health Score
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                A comprehensive score that evaluates your overall financial health based on
+                emergency fund status, savings rate, and debt-to-income ratio.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </h2>
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="text-4xl font-bold mb-2">
+              <span className={getScoreColor(healthScore)}>{Math.round(healthScore)}</span>
+              <span className="text-2xl text-muted-foreground">/100</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {getScoreLabel(healthScore)} financial health
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {getScoreLabel(healthScore)} financial health
-          </p>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Emergency Fund</span>
-            <span className="text-sm font-medium">{formatPercentage(emergencyFundStatus)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Savings Rate</span>
-            <span className="text-sm font-medium">{formatPercentage(savingsRate)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Debt-to-Income</span>
-            <span className="text-sm font-medium">{formatPercentage(debtToIncomeRatio)}</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm flex items-center">
+                Emergency Fund
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Your emergency fund status as a percentage of recommended 3-6 months of
+                      expenses. Aim for 100% or higher.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span className="text-sm font-medium">{formatPercentage(emergencyFundStatus)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm flex items-center">
+                Savings Rate
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      The percentage of your income that you save each month. A higher rate
+                      indicates better financial health.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span className="text-sm font-medium">{formatPercentage(savingsRate)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm flex items-center">
+                Debt-to-Income
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      The ratio of your monthly debt payments to your monthly income. A lower ratio
+                      indicates better financial health.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span className="text-sm font-medium">{formatPercentage(debtToIncomeRatio)}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -22,8 +22,10 @@
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-tabs": "^1.1.11",
+    "@radix-ui/react-tooltip": "^1.2.7",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/winston": "^2.4.4",
     "chart.js": "^4.4.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,8 +44,10 @@
     "react-hook-form": "^7.56.4",
     "react-hot-toast": "^2.5.2",
     "react-plaid-link": "^4.0.1",
+    "react-tooltip": "^5.28.1",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.3.0",
+    "winston": "^3.17.0",
     "zod": "^3.25.7"
   },
   "devDependencies": {
