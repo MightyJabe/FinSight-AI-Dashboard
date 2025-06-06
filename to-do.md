@@ -160,6 +160,28 @@
   - Deploy to Vercel with your GitHub repo
   - Commit "chore: optimize and deploy"
 
+## Sprint 5 (1 week): Code Cleanup
+
+- [ ] **Remove debug API route**
+
+  - Delete `src/app/api/debug` testing endpoint
+  - Commit "chore: remove debug api"
+
+- [ ] **Strip console logging**
+
+  - Remove `console.log` calls from `src/components/PlaidLinkButton.tsx` and `src/lib/firebase.ts`
+  - Commit "chore: remove console logs"
+
+- [ ] **Finalize finance utilities**
+
+  - Address TODO comments in `src/lib/finance.ts`, implementing or removing as needed
+  - Commit "refactor: finalize finance utils"
+
+- [ ] **Update documentation**
+
+  - Summarize cleanup in `README.md` and `project.md`
+  - Commit "docs: update after cleanup"
+
 ---
 
 📈 **How to use:**  
