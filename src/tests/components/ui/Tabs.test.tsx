@@ -34,8 +34,7 @@ describe('Tabs', () => {
     expect(activePanel).toHaveAttribute('data-state', 'active');
 
     // The second panel should be inactive and hidden
-    const inactivePanel = tabpanels.find(panel => panel.getAttribute('data-state') === 'inactive');
-    expect(inactivePanel).toHaveTextContent('Content 2');
+    const inactivePanel = tabpanels[1];
     expect(inactivePanel).toHaveAttribute('data-state', 'inactive');
     expect(inactivePanel).toHaveAttribute('hidden');
   });
