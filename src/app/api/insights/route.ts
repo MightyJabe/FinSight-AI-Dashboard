@@ -106,7 +106,19 @@ async function getCachedInsights(userId: string): Promise<CachedInsights | null>
 /**
  *
  */
-async function cacheInsights(userId: string, insightsDataWithDateObject: any): Promise<void> {
+interface InsightsCacheData extends OpenAIInsights {
+  metrics: CalculatedMetrics;
+  cachedAt: Date;
+  plaidDataAvailable: boolean;
+}
+
+/**
+ *
+ */
+async function cacheInsights(
+  userId: string,
+  insightsDataWithDateObject: InsightsCacheData
+): Promise<void> {
   // Create a serialized version of the data for Firestore
   const serializedData = {
     ...insightsDataWithDateObject,
@@ -408,7 +420,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(serializedResponse);
   } catch (error) {
-    const userIdFromError = (error as any).userId || 'unknown';
+    const userIdFromError = (error as { userId?: string }).userId ?? 'unknown';
     logger.error('Critical error in GET /api/insights', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,

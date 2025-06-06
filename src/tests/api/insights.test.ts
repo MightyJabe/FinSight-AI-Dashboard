@@ -1,16 +1,10 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
-import { Firestore } from 'firebase-admin/firestore';
+import type { DocumentData, DocumentSnapshot, WriteResult } from 'firebase-admin/firestore';
 import { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server'; // Ensure NextResponse is available for direct use if needed
-import {
-  Transaction as PlaidTransaction,
-  TransactionPaymentChannelEnum,
-  TransactionTransactionTypeEnum,
-} from 'plaid';
-import { DocumentData, DocumentSnapshot, WriteResult } from 'firebase-admin/firestore';
+import { TransactionPaymentChannelEnum, TransactionTransactionTypeEnum } from 'plaid';
 
 import { GET } from '@/app/api/insights/route';
-import { auth, db } from '@/lib/firebase-admin';
+import { auth } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
 import { getTransactions } from '@/lib/plaid';
@@ -138,7 +132,7 @@ const mockTransactions = [
     authorized_datetime: null,
     datetime: null,
     transaction_code: null,
-  }
+  },
 ];
 
 const mockedAuth = {
@@ -151,7 +145,10 @@ const mockedDb = {
     get: jest.fn(),
     set: jest.fn(),
   }),
-} as unknown as jest.Mocked<Firestore>;
+} as unknown as {
+  collection: jest.Mock;
+  doc: jest.Mock;
+};
 
 const mockedGenerateChatCompletion = jest.fn() as jest.MockedFunction<
   typeof generateChatCompletion
@@ -188,22 +185,11 @@ describe('Insights API Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
-    mockedDb.doc().get.mockResolvedValue({ 
+    mockedDb.doc('path').get.mockResolvedValue({
       exists: false,
       data: () => null,
-      id: 'test-id',
-      ref: {} as any,
-      metadata: {} as any,
-      createTime: {} as any,
-      updateTime: {} as any,
-      readTime: {} as any,
-      get: () => null,
-      isEqual: () => false
-    });
-    mockedDb.doc().set.mockResolvedValue({ 
-      writeTime: {} as any,
-      isEqual: () => false
-    });
+    } as unknown as DocumentSnapshot<DocumentData>);
+    mockedDb.doc('path').set.mockResolvedValue({} as unknown as WriteResult);
     mockedGenerateChatCompletion.mockResolvedValue({
       role: 'assistant',
       content: JSON.stringify({
@@ -333,8 +319,7 @@ describe('Insights API Integration Tests', () => {
       // To simulate a 400 for query params, let's imagine a different schema temporarily.
       // This highlights the difficulty of testing Zod schema failures for tolerant schemas with `searchParams`.
       // For now, this test case is more illustrative of a general Zod validation failure.
-      const { insightsQuerySchema } = jest.requireActual('@/app/api/insights/route'); // Access actual for manipulation if needed
-      // console.log(insightsQuerySchema); // This won't work as it's not exported
+      // const { insightsQuerySchema } = jest.requireActual('@/app/api/insights/route'); // Example of accessing actual schema if needed
 
       // To properly test this, we'd ideally mock the schema parsing itself, or have a more complex schema.
       // Given the current setup, we'll assume Zod validation path is covered by Zod's own tests
@@ -367,14 +352,15 @@ describe('Insights API Integration Tests', () => {
       // Setup mocks
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // No cache
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
         // User doc with Plaid token
         if (path.includes(`users/${mockUserId}`)) {
           return Promise.resolve({
             exists: true,
             data: () => ({ plaidAccessToken: mockAccessToken }),
-          });
+          } as unknown as DocumentSnapshot<DocumentData>);
         }
         // Manual assets & liabilities
         if (path.includes('manualAssets'))
@@ -383,15 +369,15 @@ describe('Insights API Integration Tests', () => {
               id: a.id,
               data: () => ({ name: a.name, amount: a.amount }),
             })),
-          });
+          } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes('manualLiabilities'))
           return Promise.resolve({
             docs: mockManualLiabilities.map(l => ({
               id: l.id,
               data: () => ({ name: l.name, amount: l.amount }),
             })),
-          });
-        return Promise.resolve({ exists: false }); // Default
+          } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>); // Default
       });
       mockedGetTransactions.mockResolvedValue(mockTransactions);
       mockedGenerateChatCompletion.mockResolvedValue({
@@ -425,7 +411,7 @@ describe('Insights API Integration Tests', () => {
       expect(mockedDb.doc).toHaveBeenCalledWith(mockUserId);
       expect(mockedDb.collection).toHaveBeenCalledWith('insights');
       expect(mockedDb.doc).toHaveBeenCalledWith('latest');
-      expect(mockedDb.doc().set).toHaveBeenCalledWith(
+      expect(mockedDb.doc('path').set).toHaveBeenCalledWith(
         expect.objectContaining({
           ...mockOpenAIContent,
           metrics: expect.any(Object),
@@ -467,16 +453,19 @@ describe('Insights API Integration Tests', () => {
 
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // Setup mock for db.doc().get to return cached data
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
         if (path.includes('insights/latest'))
-          return Promise.resolve({ exists: true, data: () => mockCachedData });
+          return Promise.resolve({
+            exists: true,
+            data: () => mockCachedData,
+          } as unknown as DocumentSnapshot<DocumentData>);
         // User doc with Plaid token (though not strictly needed if cache hit)
         if (path.includes(`users/${mockUserId}`))
           return Promise.resolve({
             exists: true,
             data: () => ({ plaidAccessToken: 'some-token' }),
-          });
-        return Promise.resolve({ exists: false });
+          } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
@@ -488,7 +477,7 @@ describe('Insights API Integration Tests', () => {
 
       // Ensure OpenAI was not called, and no new caching occurred
       expect(mockedGenerateChatCompletion).not.toHaveBeenCalled();
-      expect(mockedDb.doc().set).not.toHaveBeenCalled();
+      expect(mockedDb.doc('path').set).not.toHaveBeenCalled();
       expect(mockedLogger.info).toHaveBeenCalledWith('Returning cached insights', {
         userId: mockUserId,
         cachedAt: cachedDate,
@@ -526,14 +515,22 @@ describe('Insights API Integration Tests', () => {
 
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // Mock db.doc().get to return old cached data, and user data for fresh fetch
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
         if (path.includes('insights/latest'))
-          return Promise.resolve({ exists: true, data: () => mockOldCachedData });
+          return Promise.resolve({
+            exists: true,
+            data: () => mockOldCachedData,
+          } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes(`users/${mockUserId}`))
-          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] }); // No manual data for simplicity here
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-        return Promise.resolve({ exists: false });
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: 'token' }),
+          } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualAssets'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>); // No manual data for simplicity here
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
       // Mock Plaid and OpenAI for the fresh call
       mockedGetTransactions.mockResolvedValue([]); // No transactions for simplicity
@@ -551,7 +548,7 @@ describe('Insights API Integration Tests', () => {
       expect(body.insights[0].title).toBe('Fresh Insight');
       expect(body.summary).toBe('Fresh summary');
       expect(mockedGenerateChatCompletion).toHaveBeenCalled();
-      expect(mockedDb.doc().set).toHaveBeenCalled(); // Should cache the new fresh data
+      expect(mockedDb.doc('path').set).toHaveBeenCalled(); // Should cache the new fresh data
       expect(mockedLogger.info).toHaveBeenCalledWith('Insights cached', {
         userId: mockUserId,
       });
@@ -561,13 +558,19 @@ describe('Insights API Integration Tests', () => {
       const mockUserId = 'testUserNoPlaidToken';
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       // No Plaid token for the user
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes(`users/${mockUserId}`))
-          return Promise.resolve({ exists: true, data: () => ({}) }); // No plaidAccessToken
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-        return Promise.resolve({ exists: false });
+          return Promise.resolve({
+            exists: true,
+            data: () => ({}),
+          } as unknown as DocumentSnapshot<DocumentData>); // No plaidAccessToken
+        if (path.includes('manualAssets'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
       // OpenAI will still be called, but with prompt indicating no Plaid data
       const mockOpenAIContent = {
@@ -595,16 +598,19 @@ describe('Insights API Integration Tests', () => {
     test('should indicate plaidDataAvailable is false if Plaid getTransactions fails', async () => {
       const mockUserId = 'testUserPlaidFails';
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes(`users/${mockUserId}`))
           return Promise.resolve({
             exists: true,
             data: () => ({ plaidAccessToken: 'good-token' }),
-          });
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-        return Promise.resolve({ exists: false });
+          } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualAssets'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
       mockedGetTransactions.mockRejectedValue(new Error('Plaid API Error'));
       const mockOpenAIContent = {
@@ -635,13 +641,19 @@ describe('Insights API Integration Tests', () => {
     test('should return fallback insights if OpenAI response is malformed JSON', async () => {
       const mockUserId = 'testUserOpenAIMalformed';
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes(`users/${mockUserId}`))
-          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-        return Promise.resolve({ exists: false });
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: 'token' }),
+          } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualAssets'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
       mockedGenerateChatCompletion.mockResolvedValue({
         role: 'assistant',
@@ -664,13 +676,19 @@ describe('Insights API Integration Tests', () => {
     test('should return fallback insights if OpenAI response fails Zod validation', async () => {
       const mockUserId = 'testUserOpenAIZodFail';
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
-        if (path.includes('insights/latest')) return Promise.resolve({ exists: false });
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
+        if (path.includes('insights/latest'))
+          return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
         if (path.includes(`users/${mockUserId}`))
-          return Promise.resolve({ exists: true, data: () => ({ plaidAccessToken: 'token' }) });
-        if (path.includes('manualAssets')) return Promise.resolve({ docs: [] });
-        if (path.includes('manualLiabilities')) return Promise.resolve({ docs: [] });
-        return Promise.resolve({ exists: false });
+          return Promise.resolve({
+            exists: true,
+            data: () => ({ plaidAccessToken: 'token' }),
+          } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualAssets'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        if (path.includes('manualLiabilities'))
+          return Promise.resolve({ docs: [] } as unknown as DocumentSnapshot<DocumentData>);
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>);
       });
       const invalidOpenAIContent = JSON.stringify({
         insights: [{ title: 'Missing fields' }],
@@ -696,11 +714,11 @@ describe('Insights API Integration Tests', () => {
 
     test('should return 500 if a critical error occurs (e.g., db.doc().get for user fails)', async () => {
       mockedAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
-      mockedDb.doc().get.mockImplementation((path: string): Promise<DocumentSnapshot<DocumentData>> => {
+      mockedDb.doc('path').get.mockImplementation((path: string) => {
         // Simulate failure to get user document
         if (path.includes('users/') && !path.includes('insights'))
           return Promise.reject(new Error('Firestore unavailable'));
-        return Promise.resolve({ exists: false }); // for cache check
+        return Promise.resolve({ exists: false } as unknown as DocumentSnapshot<DocumentData>); // for cache check
       });
 
       const request = createMockRequest({ Authorization: 'Bearer valid-token' });
