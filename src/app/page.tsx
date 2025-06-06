@@ -7,34 +7,34 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+import { Button } from '@/components/ui/Button';
+
 /**
  *
  */
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-background/95">
+    <div className="space-y-16">
       {/* Hero Section */}
-      <section className="px-6 py-12 md:py-16 lg:py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            AI-Powered Financial Insights
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Get real-time analytics and predictive insights to make smarter financial decisions
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-              Get Started
-            </button>
-            <button className="px-6 py-2.5 border border-border rounded-lg hover:bg-accent/10 transition-colors">
-              Learn More
-            </button>
-          </div>
+      <section className="py-12 md:py-16 lg:py-20 text-center flex flex-col items-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-balance bg-gradient-to-r from-logoGradientStart to-logoGradientEnd bg-clip-text text-transparent">
+          AI-Powered Financial Insights
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+          Get real-time analytics and predictive insights to make smarter financial decisions
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <Button variant="primary" size="lg">
+            Get Started
+          </Button>
+          <Button variant="outline" size="lg">
+            Learn More
+          </Button>
         </div>
       </section>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <div className="space-y-12">
         {/* Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <div className="rounded-xl border border-border/40 bg-card p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20">
@@ -122,7 +122,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -25,6 +25,11 @@ export function Header() {
     }
   };
 
+  const toggleDarkMode = () => {
+    const root = document.documentElement;
+    root.classList.toggle('dark');
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur bg-background/80 border-b shadow-sm">
       <div className="flex h-20 items-center justify-between px-8">
@@ -33,16 +38,14 @@ export function Header() {
             <Logo width={40} height={40} className="h-10 w-10" />
             <div className="flex flex-col leading-tight justify-center">
               <div>
-                <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-primary via-accent to-logoNode text-transparent bg-clip-text drop-shadow">
+                <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-logoGradientStart via-accent to-logoGradientEnd text-transparent bg-clip-text drop-shadow">
                   FinSight
                 </span>
-                <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-logoNode via-accent to-primary text-transparent bg-clip-text ml-1 drop-shadow">
+                <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-logoGradientEnd via-accent to-logoGradientStart text-transparent bg-clip-text ml-1 drop-shadow">
                   AI
                 </span>
               </div>
-              <span className="text-sm font-medium bg-gradient-to-r from-primary/80 to-accent/80 text-transparent bg-clip-text">
-                AI Dashboard
-              </span>
+              <span className="text-sm font-medium text-logoSubtitle">AI Dashboard</span>
             </div>
           </Link>
         </div>
@@ -50,6 +53,7 @@ export function Header() {
           <button
             className="rounded-full p-2 bg-card/70 hover:bg-card transition shadow border border-border"
             aria-label="Toggle dark mode"
+            onClick={toggleDarkMode}
           >
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
               <path
