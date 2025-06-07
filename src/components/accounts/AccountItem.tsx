@@ -1,6 +1,14 @@
 'use client';
 
-import { AlertTriangle, Trash2 } from 'lucide-react'; // Added AlertTriangle
+import {
+  AlertTriangle,
+  Briefcase,
+  CreditCard,
+  Landmark,
+  Link2,
+  Trash2,
+  Wallet,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -10,10 +18,39 @@ import { formatCurrency } from '@/utils/format';
 
 interface AccountItemProps {
   account: DisplayableAccount;
-  iconElement: JSX.Element; // Changed from getAccountIcon function to JSX.Element
 }
 
-const AccountItem: React.FC<AccountItemProps> = ({ account, iconElement }) => {
+const getAccountIcon = (account: DisplayableAccount): JSX.Element => {
+  const typeLower = account.type.toLowerCase();
+  if (typeLower === 'error') {
+    return <AlertTriangle className="mr-3 h-6 w-6 text-red-500 flex-shrink-0" />;
+  }
+  if (typeLower.includes('checking') || typeLower.includes('current')) {
+    return <Landmark className="mr-3 h-6 w-6 text-blue-500 flex-shrink-0" />;
+  }
+  if (typeLower.includes('savings')) {
+    return <Landmark className="mr-3 h-6 w-6 text-green-500 flex-shrink-0" />;
+  }
+  if (typeLower.includes('credit card')) {
+    return <CreditCard className="mr-3 h-6 w-6 text-orange-500 flex-shrink-0" />;
+  }
+  if (typeLower.includes('cash') || typeLower.includes('wallet')) {
+    return <Wallet className="mr-3 h-6 w-6 text-yellow-500 flex-shrink-0" />;
+  }
+  if (
+    typeLower.includes('investment') ||
+    typeLower.includes('brokerage') ||
+    typeLower.includes('crypto')
+  ) {
+    return <Briefcase className="mr-3 h-6 w-6 text-purple-500 flex-shrink-0" />;
+  }
+  if (account.source === 'linked') {
+    return <Link2 className="mr-3 h-6 w-6 text-gray-500 flex-shrink-0" />;
+  }
+  return <Landmark className="mr-3 h-6 w-6 text-gray-400 flex-shrink-0" />;
+};
+
+const AccountItem: React.FC<AccountItemProps> = ({ account }) => {
   const router = useRouter();
   const [isUnlinking, setIsUnlinking] = useState(false);
 
@@ -63,11 +100,7 @@ const AccountItem: React.FC<AccountItemProps> = ({ account, iconElement }) => {
                     ${isErrorAccount ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200 hover:shadow-xl'}`}
     >
       <div className="flex items-center overflow-hidden">
-        {isErrorAccount ? (
-          <AlertTriangle className="mr-3 h-6 w-6 text-red-500 flex-shrink-0" />
-        ) : (
-          iconElement
-        )}
+        {getAccountIcon(account)}
         <div className="overflow-hidden">
           <h3
             className={`text-base sm:text-lg font-semibold truncate ${isErrorAccount ? 'text-red-700' : 'text-gray-800'}`}
