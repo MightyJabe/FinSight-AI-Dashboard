@@ -1,41 +1,9 @@
-import {
-  AlertTriangle,
-  Briefcase,
-  CreditCard,
-  Landmark,
-  Link2,
-  PlusCircle,
-  Wallet,
-} from 'lucide-react';
+import { Link2, PlusCircle, Wallet } from 'lucide-react';
 import Link from 'next/link';
 
 import AccountItem from '@/components/accounts/AccountItem';
 import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { DisplayableAccount, getDisplayableAccounts } from '@/lib/finance';
-
-// Helper function to get an icon based on account type or source
-const getAccountIcon = (account: DisplayableAccount): JSX.Element => {
-  const typeLower = account.type.toLowerCase();
-  if (typeLower === 'error')
-    return <AlertTriangle className="mr-3 h-6 w-6 text-red-500 flex-shrink-0" />;
-  if (typeLower.includes('checking') || typeLower.includes('current'))
-    return <Landmark className="mr-3 h-6 w-6 text-blue-500 flex-shrink-0" />;
-  if (typeLower.includes('savings'))
-    return <Landmark className="mr-3 h-6 w-6 text-green-500 flex-shrink-0" />;
-  if (typeLower.includes('credit card'))
-    return <CreditCard className="mr-3 h-6 w-6 text-orange-500 flex-shrink-0" />;
-  if (typeLower.includes('cash') || typeLower.includes('wallet'))
-    return <Wallet className="mr-3 h-6 w-6 text-yellow-500 flex-shrink-0" />;
-  if (
-    typeLower.includes('investment') ||
-    typeLower.includes('brokerage') ||
-    typeLower.includes('crypto')
-  )
-    return <Briefcase className="mr-3 h-6 w-6 text-purple-500 flex-shrink-0" />;
-  if (account.source === 'linked')
-    return <Link2 className="mr-3 h-6 w-6 text-gray-500 flex-shrink-0" />;
-  return <Landmark className="mr-3 h-6 w-6 text-gray-400 flex-shrink-0" />;
-};
 
 /**
  *
@@ -114,10 +82,9 @@ export default async function AccountsPage() {
         )}
         {!fetchError && accounts.length > 0 && (
           <div className="space-y-4">
-            {accounts.map(account => {
-              const iconElement = getAccountIcon(account);
-              return <AccountItem key={account.id} account={account} iconElement={iconElement} />;
-            })}
+            {accounts.map(account => (
+              <AccountItem key={account.id} account={account} />
+            ))}
           </div>
         )}
       </section>
