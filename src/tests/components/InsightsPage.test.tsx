@@ -24,30 +24,32 @@ describe('<InsightsPage />', () => {
       },
       loading: false,
     });
-    // Default successful fetch mock
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        insights: [
-          {
-            title: 'AI Insight 1',
-            description: 'Desc 1',
-            actionItems: ['Action 1'],
-            priority: 'high',
+    // Default successful fetch mock for all calls
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          insights: [
+            {
+              title: 'AI Insight 1',
+              description: 'Desc 1',
+              actionItems: ['Action 1'],
+              priority: 'high',
+            },
+          ],
+          summary: 'Test Summary',
+          nextSteps: ['Test Next Step'],
+          metrics: {
+            netWorth: 10000,
+            totalAssets: 15000,
+            totalLiabilities: 5000,
+            spendingByCategory: { Food: 200, Travel: 300 },
+            monthlySpending: { '2024-01': 500, '2024-02': 600 },
           },
-        ],
-        summary: 'Test Summary',
-        nextSteps: ['Test Next Step'],
-        metrics: {
-          netWorth: 10000,
-          totalAssets: 15000,
-          totalLiabilities: 5000,
-          spendingByCategory: { Food: 200, Travel: 300 },
-          monthlySpending: { '2024-01': 500, '2024-02': 600 },
-        },
-        plaidDataAvailable: true,
-      }),
-    });
+          plaidDataAvailable: true,
+        }),
+      })
+    );
   });
 
   test('should display loading state initially', () => {
@@ -116,33 +118,59 @@ describe('<InsightsPage />', () => {
   });
 
   test('refresh button should re-fetch insights', async () => {
+    // Set up fetch to return different results for first and second call
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          insights: [
+            {
+              title: 'AI Insight 1',
+              description: 'Desc 1',
+              actionItems: ['Action 1'],
+              priority: 'high',
+            },
+          ],
+          summary: 'Test Summary',
+          nextSteps: ['Test Next Step'],
+          metrics: {
+            netWorth: 10000,
+            totalAssets: 15000,
+            totalLiabilities: 5000,
+            spendingByCategory: { Food: 200, Travel: 300 },
+            monthlySpending: { '2024-01': 500, '2024-02': 600 },
+          },
+          plaidDataAvailable: true,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          insights: [
+            {
+              title: 'Refreshed Insight',
+              description: 'Fresh Desc',
+              actionItems: [],
+              priority: 'medium',
+            },
+          ],
+          summary: 'Refreshed Summary',
+          nextSteps: [],
+          metrics: {
+            netWorth: 20000,
+            totalAssets: 0,
+            totalLiabilities: 0,
+            spendingByCategory: {},
+            monthlySpending: {},
+          },
+          plaidDataAvailable: true,
+        }),
+      });
+
     render(<InsightsPage />);
     await waitFor(() => {
       expect(screen.getByText('AI Insight 1')).toBeInTheDocument();
-    });
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        insights: [
-          {
-            title: 'Refreshed Insight',
-            description: 'Fresh Desc',
-            actionItems: [],
-            priority: 'medium',
-          },
-        ],
-        summary: 'Refreshed Summary',
-        nextSteps: [],
-        metrics: {
-          netWorth: 20000,
-          totalAssets: 0,
-          totalLiabilities: 0,
-          spendingByCategory: {},
-          monthlySpending: {},
-        },
-        plaidDataAvailable: true,
-      }),
     });
 
     const refreshButton = screen.getByRole('button', { name: /Refresh Insights/i });

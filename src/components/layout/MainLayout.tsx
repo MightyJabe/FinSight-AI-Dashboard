@@ -12,11 +12,10 @@ import { SWRProvider } from '@/components/providers/SWRProvider';
 
 interface RootLayoutContentProps {
   children: React.ReactNode;
-  className?: string;
 }
 
 /** Main layout component that handles authenticated and public routes */
-export function RootLayoutContent({ children, className }: RootLayoutContentProps) {
+export function RootLayoutContent({ children }: RootLayoutContentProps) {
   const { user, loading } = useSession();
   const pathname = usePathname();
   const isPublicRoute = ['/', '/login', '/signup'].includes(pathname);
@@ -33,7 +32,7 @@ export function RootLayoutContent({ children, className }: RootLayoutContentProp
   // Public layout (homepage, login, signup)
   if (!user || isPublicRoute) {
     return (
-      <div className={className}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased">
         <div className="flex min-h-screen">
           <div className="flex-1">
             <Header />
@@ -48,7 +47,7 @@ export function RootLayoutContent({ children, className }: RootLayoutContentProp
 
   // Authenticated layout
   return (
-    <div className={className}>
+    <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased">
       <SWRProvider>
         <ErrorBoundary>
           <div className="flex min-h-screen">

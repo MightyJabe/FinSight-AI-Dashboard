@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 
 import { auth } from '@/lib/firebase-admin';
+import type { Overview } from '@/types/finance';
 
 import { db } from './firebase-admin';
 import { plaidClient } from './plaid'; // Make sure plaidClient is exported from plaid.ts
@@ -17,67 +18,6 @@ export const LIQUID_ASSET_TYPES = [
   'Bank Account',
   // Add any other types that should be considered liquid cash
 ];
-
-export interface Overview {
-  netWorth: number;
-  totalAssets: number;
-  totalLiabilities: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  monthlySavings: number;
-  /**
-   * Sum of balances from liquid asset types (e.g., cash, checking, savings)
-   */
-  totalCashAssets: number;
-  /**
-   * Ratio of current emergency fund to recommended (e.g. 1 = 100% funded)
-   */
-  emergencyFundStatus: number;
-  /**
-   * Ratio of monthly savings to monthly income (e.g. 0.2 = 20%)
-   */
-  savingsRate: number;
-  netWorthHistory: Array<{ date: string; value: number }>;
-  accounts: Array<{
-    id: string;
-    name: string;
-    balance: number;
-    type: string;
-  }>;
-  manualAssets: Array<{
-    id: string;
-    name: string;
-    amount: number;
-    type: string;
-    description?: string;
-    currentBalance: number;
-    createdAt: string | undefined;
-    updatedAt: string | undefined;
-  }>;
-  liabilities: Array<{
-    id: string;
-    name: string;
-    amount: number;
-    type: string;
-    interestRate: number;
-    minimumPayment: number;
-    remainingPayments: number;
-    payoffDate: string;
-    createdAt: string | undefined;
-    updatedAt: string | undefined;
-  }>;
-  budgetCategories: Array<{
-    id: string;
-    name: string;
-    amount: number;
-    spent: number;
-  }>;
-  spendingByCategory: Array<{
-    category: string;
-    amount: number;
-  }>;
-  debtToIncomeRatio: number;
-}
 
 export interface Budget {
   monthlyExpenses: number;
@@ -105,15 +45,6 @@ export interface InvestmentAccounts {
       yearly: number;
     };
   }>;
-  assetAllocation: Array<{
-    type: string;
-    amount: number;
-    target: number;
-  }>;
-  historicalPerformance: Array<{
-    date: string;
-    value: number;
-  }>;
 }
 
 export interface Liabilities {
@@ -127,9 +58,7 @@ export interface Liabilities {
     remainingPayments: number;
     payoffDate: string;
   }>;
-  totalMonthlyPayment: number;
   totalDebt: number;
-  projectedPayoffDate: string;
 }
 
 export interface Transaction {
@@ -276,6 +205,7 @@ export async function getOverview(): Promise<Overview> {
         name: asset.name,
         balance: currentBalance,
         type: asset.type,
+        institution: '', // No institution for manual assets
       });
     }
     return { ...asset, currentBalance };
@@ -311,6 +241,7 @@ export async function getOverview(): Promise<Overview> {
                   .toLowerCase()
                   .replace(/_/g, ' ')
                   .replace(/(?:^|\s)\S/g, a => a.toUpperCase()),
+                institution: '', // Plaid does not provide institution per account here
               });
             }
             // We could also add non-cash Plaid accounts to a different list if needed elsewhere
@@ -406,7 +337,6 @@ export async function getOverview(): Promise<Overview> {
         ? Math.min(monthlySavings / (monthlyExpenses * 3), 1)
         : 0,
     savingsRate: monthlyIncome > 0 ? monthlySavings / monthlyIncome : 0,
-    netWorthHistory: [], // TODO
     accounts: overviewAccounts.map(account => ({
       ...account,
       balance: Number(account.balance),
@@ -419,9 +349,6 @@ export async function getOverview(): Promise<Overview> {
     liabilities: liabilities.map(liability => ({
       ...liability,
       amount: Number(liability.amount),
-      interestRate: Number(liability.interestRate),
-      minimumPayment: Number(liability.minimumPayment),
-      remainingPayments: Number(liability.remainingPayments),
     })),
     budgetCategories: Object.entries(spendingByCategory).map(([name, amount]) => ({
       id: name,
@@ -435,6 +362,9 @@ export async function getOverview(): Promise<Overview> {
     })),
     debtToIncomeRatio:
       monthlyIncome > 0 ? Number(totalLiabilities) / (Number(monthlyIncome) * 12) : 0,
+    netWorthHistory: Array.isArray((globalThis as { netWorthHistory?: number[] }).netWorthHistory)
+      ? (globalThis as { netWorthHistory?: number[] }).netWorthHistory
+      : [],
   };
 
   // Ensure complete serialization
@@ -545,13 +475,11 @@ export async function getInvestmentAccounts(): Promise<InvestmentAccounts> {
       balance: Number(asset.amount),
       type: asset.type,
       performance: {
-        daily: 0, // TODO: Implement performance tracking
+        daily: 0, // Not implemented yet; UI should handle empty state
         monthly: 0,
         yearly: 0,
       },
     })),
-    assetAllocation: [], // TODO: Implement asset allocation tracking
-    historicalPerformance: [], // TODO: Implement historical performance tracking
   };
 }
 
@@ -570,10 +498,16 @@ export async function getLiabilities(): Promise<Liabilities> {
   const totalDebt = liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
 
   return {
-    accounts: liabilities,
-    totalMonthlyPayment: 0, // TODO: Implement payment tracking
+    accounts: liabilities.map(liability => ({
+      ...liability,
+      amount: Number(liability.amount),
+      interestRate: liability.interestRate !== undefined ? Number(liability.interestRate) : 0,
+      minimumPayment: liability.minimumPayment !== undefined ? Number(liability.minimumPayment) : 0,
+      remainingPayments:
+        liability.remainingPayments !== undefined ? Number(liability.remainingPayments) : 0,
+      payoffDate: liability.payoffDate || '',
+    })),
     totalDebt,
-    projectedPayoffDate: '', // TODO: Implement payoff date calculation
   };
 }
 
@@ -715,3 +649,6 @@ export async function getDisplayableAccounts(): Promise<DisplayableAccount[]> {
     a.name.localeCompare(b.name)
   );
 }
+
+// Ensure Overview is exported for external use
+export type { Overview };

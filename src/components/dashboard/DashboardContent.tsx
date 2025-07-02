@@ -1,13 +1,38 @@
 'use client';
 
-import { BalanceOverview } from '@/components/dashboard/BalanceOverview';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { AIInsights } from '@/components/dashboard/AIInsights';
 import { BudgetSection } from '@/components/dashboard/BudgetSection';
 import { ChartsSection } from '@/components/dashboard/ChartsSection';
-import { DebtPayoffTimeline } from '@/components/dashboard/DebtPayoffTimeline';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
-import { InvestmentPerformance } from '@/components/dashboard/InvestmentPerformance';
-import { OverviewCards } from '@/components/dashboard/OverviewCards';
-import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/lib/finance';
+import { NetWorthDisplay } from '@/components/dashboard/NetWorthDisplay';
+import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/types/finance';
+
+// Dynamic imports for heavy components that are conditionally rendered
+const DebtPayoffTimeline = dynamic(
+  () =>
+    import('@/components/dashboard/DebtPayoffTimeline').then(mod => ({
+      default: mod.DebtPayoffTimeline,
+    })),
+  {
+    loading: () => <LoadingSpinner message="Loading debt timeline..." />,
+    ssr: false, // Disable SSR for chart components
+  }
+);
+
+const InvestmentPerformance = dynamic(
+  () =>
+    import('@/components/dashboard/InvestmentPerformance').then(mod => ({
+      default: mod.InvestmentPerformance,
+    })),
+  {
+    loading: () => <LoadingSpinner message="Loading investment data..." />,
+    ssr: false, // Disable SSR for chart components
+  }
+);
 
 interface DashboardContentProps {
   overview: Overview;
@@ -26,27 +51,40 @@ export function DashboardContent({
   liabilities,
 }: DashboardContentProps) {
   return (
-    <div className="space-y-8 p-8">
-      <BalanceOverview overview={overview} />
-      <OverviewCards overview={overview} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FinancialHealthScore overview={overview} />
-        <ChartsSection overview={overview} />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <InvestmentPerformance
-          investmentAccounts={investmentAccounts.accounts}
-          assetAllocation={investmentAccounts.assetAllocation}
-          historicalPerformance={investmentAccounts.historicalPerformance}
-        />
-        <DebtPayoffTimeline
-          liabilities={liabilities.accounts}
-          monthlyPayment={liabilities.totalMonthlyPayment}
-          totalDebt={liabilities.totalDebt}
-          projectedPayoffDate={liabilities.projectedPayoffDate}
-        />
-      </div>
-      <BudgetSection budgetCategories={budget.budgetCategories} />
+    <div className="space-y-6">
+      {/* Net Worth Display */}
+      <NetWorthDisplay netWorth={overview.netWorth} />
+
+      {/* Financial Health Score */}
+      <FinancialHealthScore overview={overview} />
+
+      {/* Charts Section */}
+      <ChartsSection overview={overview} />
+
+      {/* AI Insights */}
+      <AIInsights insights={[]} insightsLoading={false} />
+
+      {/* Debt Payoff Timeline - Dynamically loaded */}
+      {liabilities.accounts.length > 0 && (
+        <Suspense fallback={<LoadingSpinner message="Loading debt timeline..." />}>
+          <DebtPayoffTimeline
+            liabilities={liabilities.accounts}
+            totalDebt={liabilities.totalDebt}
+          />
+        </Suspense>
+      )}
+
+      {/* Investment Performance - Dynamically loaded */}
+      {investmentAccounts.accounts.length > 0 && (
+        <Suspense fallback={<LoadingSpinner message="Loading investment data..." />}>
+          <InvestmentPerformance investmentAccounts={investmentAccounts.accounts} />
+        </Suspense>
+      )}
+
+      {/* Budget Section */}
+      {budget.budgetCategories.length > 0 && (
+        <BudgetSection budgetCategories={budget.budgetCategories} />
+      )}
     </div>
   );
 }

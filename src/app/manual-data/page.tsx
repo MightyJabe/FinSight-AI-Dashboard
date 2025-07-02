@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { useAuth } from '@/lib/auth';
+import { useSession } from '@/components/providers/SessionProvider';
 
 interface AssetForm {
   name: string;
@@ -38,8 +38,8 @@ interface LiquidAccount {
  *
  */
 export default function ManualDataPage() {
+  const { user: _user, firebaseUser, loading: _authLoading } = useSession();
   const router = useRouter();
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'asset' | 'liability' | 'transaction'>('asset');
   const [loading, setLoading] = useState(false);
   const [liquidAccounts, setLiquidAccounts] = useState<LiquidAccount[]>([]);
@@ -70,13 +70,13 @@ export default function ManualDataPage() {
 
   // Effect to fetch liquid accounts when transaction tab is active and user is available
   useEffect(() => {
-    if (activeTab === 'transaction' && user) {
+    if (activeTab === 'transaction' && firebaseUser) {
       const fetchLiquidAccounts = async () => {
         try {
           setLoading(true);
           const response = await fetch('/api/liquid-assets', {
             headers: {
-              Authorization: `Bearer ${await user.getIdToken()}`,
+              Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
             },
           });
           if (!response.ok) {
@@ -94,12 +94,12 @@ export default function ManualDataPage() {
       };
       fetchLiquidAccounts();
     }
-  }, [activeTab, user]);
+  }, [activeTab, firebaseUser]);
 
   // Form handlers
   const handleAssetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!firebaseUser) {
       toast.error('Please sign in to add assets');
       return;
     }
@@ -114,7 +114,7 @@ export default function ManualDataPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await user.getIdToken()}`,
+          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
         },
         body: JSON.stringify({
           type: 'manualAssets',
@@ -137,7 +137,7 @@ export default function ManualDataPage() {
 
   const handleLiabilitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!firebaseUser) {
       toast.error('Please sign in to add liabilities');
       return;
     }
@@ -148,7 +148,7 @@ export default function ManualDataPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await user.getIdToken()}`,
+          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
         },
         body: JSON.stringify({
           type: 'manualLiabilities',
@@ -171,7 +171,7 @@ export default function ManualDataPage() {
 
   const handleTransactionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!firebaseUser) {
       toast.error('Please sign in to add transactions');
       return;
     }
@@ -186,7 +186,7 @@ export default function ManualDataPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await user.getIdToken()}`,
+          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
         },
         body: JSON.stringify({
           type: 'transactions',
@@ -224,7 +224,13 @@ export default function ManualDataPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Add Financial Data</h1>
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Add Financial Data</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Add accounts, transactions, and other financial information that isn&apos;t connected to
+          your bank.
+        </p>
+      </header>
 
       {/* Tabs */}
       <div className="flex mb-8 border-b">
@@ -242,7 +248,7 @@ export default function ManualDataPage() {
           }`}
           onClick={() => setActiveTab('liability')}
         >
-          Add Liability
+          Add Debt
         </button>
         <button
           className={`flex-1 py-3 text-base font-semibold ${

@@ -32,24 +32,28 @@ interface ManualTransaction {
  *
  */
 export default function TransactionsPage() {
-  const { user, loading: authLoading } = useSession();
+  const { user: _user, firebaseUser, loading: authLoading } = useSession();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(async () => {
-    if (!user) return;
+    if (!firebaseUser) return;
 
     try {
       setLoading(true);
       setError(null);
 
       // Get the ID token
-      const idToken = await user.getIdToken();
+      const idToken = await firebaseUser.getIdToken();
 
       // Fetch both Plaid and manual transactions
       const [plaidResponse, manualResponse] = await Promise.all([
-        fetch('/api/plaid/transactions'),
+        fetch('/api/plaid/transactions', {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }),
         fetch('/api/manual-data?type=transactions', {
           headers: {
             Authorization: `Bearer ${idToken}`,
@@ -110,7 +114,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     fetchTransactions();
@@ -128,8 +132,10 @@ export default function TransactionsPage() {
     <div className="pl-72">
       <div className="container max-w-7xl py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-          <p className="mt-2 text-muted-foreground">View and manage your financial transactions</p>
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Track your spending, analyze patterns, and manage your budget across all accounts.
+          </p>
         </div>
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <TransactionsContent transactions={transactions} />

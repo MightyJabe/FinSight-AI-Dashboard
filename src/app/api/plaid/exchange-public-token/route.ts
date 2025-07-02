@@ -1,22 +1,45 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { auth, db } from '@/lib/firebase-admin';
 import { plaidClient } from '@/lib/plaid';
 
+// Zod schema for input validation
+const exchangeTokenSchema = z.object({
+  publicToken: z.string().min(1, 'publicToken is required'),
+  institution_id: z.string().optional(),
+  institution_name: z.string().optional(),
+});
+
 /**
  *
  */
-async function getUserIdFromSession(): Promise<string | null> {
-  const sessionCookie = cookies().get('session')?.value;
-  if (!sessionCookie) return null;
-  try {
-    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-    return decodedClaims.uid;
-  } catch (error) {
-    console.error('Error verifying session cookie for token exchange:', error);
-    return null;
+async function getUserIdFromRequest(request: Request): Promise<string | null> {
+  // Try to get user ID from Authorization header first
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const idToken = authHeader.substring(7);
+      const decodedToken = await auth.verifyIdToken(idToken);
+      return decodedToken.uid;
+    } catch (error) {
+      console.error('Error verifying ID token:', error);
+    }
   }
+
+  // Fallback to session cookie
+  const sessionCookie = cookies().get('session')?.value;
+  if (sessionCookie) {
+    try {
+      const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+      return decodedClaims.uid;
+    } catch (error) {
+      console.error('Error verifying session cookie for token exchange:', error);
+    }
+  }
+
+  return null;
 }
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +50,7 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: Request) {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized: User session is invalid or missing.' },
@@ -36,13 +59,21 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { public_token, institution_id, institution_name } = body;
-
-    if (!public_token) {
-      return NextResponse.json({ error: 'Missing public_token in request body' }, { status: 400 });
+    const parsed = exchangeTokenSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
+    const { publicToken, institution_id, institution_name } = parsed.data;
 
-    const exchangeResponse = await plaidClient.itemPublicTokenExchange({ public_token });
+    const exchangeResponse = await plaidClient.itemPublicTokenExchange({
+      public_token: publicToken,
+    });
     const { access_token, item_id } = exchangeResponse.data;
 
     if (!access_token || !item_id) {
@@ -76,6 +107,6 @@ export async function POST(request: Request) {
       errorMessage = error.message;
     }
     // if (error instanceof PlaidError) { errorMessage = error.response?.data?.error_message || error.message; }
-    throw new Error(errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

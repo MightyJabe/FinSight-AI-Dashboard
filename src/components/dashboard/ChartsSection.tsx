@@ -2,19 +2,28 @@ import {
   ArcElement,
   CategoryScale,
   Chart as ChartJS,
-  Filler,
+  ChartType,
   Legend,
   LinearScale,
   LineElement,
   PointElement,
+  Tick,
   Title,
   Tooltip,
+  TooltipItem,
 } from 'chart.js';
-import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { HelpCircle, PieChart, TrendingUp } from 'lucide-react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
 
-import { Overview } from '@/lib/finance';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/Tooltip';
+import type { Overview } from '@/types/finance';
+import { formatCurrency, formatPercentage } from '@/utils/format';
 import { getCssVarColor } from '@/utils/get-css-var-color';
 import { toRgba } from '@/utils/to-rgba';
 
@@ -27,8 +36,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 );
 
 interface ChartsSectionProps {
@@ -36,18 +44,11 @@ interface ChartsSectionProps {
 }
 
 /**
- *
+ * Optimized charts section with memoization and proper cleanup
  */
-export function ChartsSection({ overview }: ChartsSectionProps) {
-  const {
-    netWorthHistory,
-    monthlyIncome,
-    monthlyExpenses,
-    monthlySavings,
-    accounts,
-    manualAssets,
-    liabilities,
-  } = overview;
+export const ChartsSection = memo(function ChartsSection({ overview }: ChartsSectionProps) {
+  const { netWorthHistory, monthlyIncome, monthlyExpenses, monthlySavings, accounts, liabilities } =
+    overview;
 
   const netWorthChartRef = useRef<ChartJS<'line'>>(null);
   const cashFlowChartRef = useRef<ChartJS<'pie'>>(null);
@@ -62,6 +63,8 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
     amber: getCssVarColor('--amber-500'),
     purple: getCssVarColor('--purple-500'),
   });
+
+  const [chartError, setChartError] = useState<string | null>(null);
 
   useEffect(() => {
     setChartColors({
@@ -86,95 +89,74 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
     return () => {
       charts.forEach(chart => {
         if (chart) {
-          chart.destroy();
+          try {
+            chart.destroy();
+          } catch (error) {
+            console.warn('Error destroying chart:', error);
+          }
         }
       });
     };
   }, []);
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          padding: 20,
-          usePointStyle: true,
-          pointStyle: 'circle',
-        },
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-        },
-        bodyFont: {
-          size: 13,
-        },
-        cornerRadius: 8,
-      },
-    },
+  // Error boundary for chart rendering
+  const renderChart = (chartComponent: React.ReactNode) => {
+    // No try/catch here; React error boundaries should handle errors
+    return chartComponent;
   };
 
-  const lineChartOptions = {
-    ...chartOptions,
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
-        },
-      },
-    },
-    elements: {
-      line: {
-        tension: 0.4,
-      },
-      point: {
-        radius: 4,
-        hoverRadius: 6,
-      },
-    },
-  };
+  if (chartError) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Financial Charts</h3>
+        <div className="text-center py-8 text-red-500">
+          <p>{chartError}</p>
+          <button
+            onClick={() => setChartError(null)}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Prepare net worth history data
+  // Defensive: Ensure arrays for .map usage
+  const safeNetWorthHistory = Array.isArray(netWorthHistory) ? netWorthHistory : [];
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeLiabilities = Array.isArray(liabilities) ? liabilities : [];
+
+  // Prepare chart data
   const netWorthData = {
-    labels: netWorthHistory.map(item => item.date),
+    labels: safeNetWorthHistory.map(d => d.date),
     datasets: [
       {
         label: 'Net Worth',
-        data: netWorthHistory.map(item => item.value),
+        data: safeNetWorthHistory.map(d => d.value),
         borderColor: chartColors.primary,
-        backgroundColor: toRgba(chartColors.primary, 0.12), // 12% opacity
+        backgroundColor: toRgba(chartColors.primary, 0.1),
+        tension: 0.4,
         fill: true,
       },
     ],
   };
 
-  // Prepare cash flow data
   const cashFlowData = {
     labels: ['Income', 'Expenses', 'Savings'],
     datasets: [
       {
         data: [monthlyIncome, monthlyExpenses, monthlySavings],
         backgroundColor: [chartColors.green, chartColors.rose, chartColors.blue],
-        borderWidth: 0,
       },
     ],
   };
 
-  // Prepare asset allocation data
   const assetAllocationData = {
-    labels: [...accounts.map(acc => acc.name), ...manualAssets.map(asset => asset.name)],
+    labels: safeAccounts.map(acc => acc.name),
     datasets: [
       {
-        data: [...accounts.map(acc => acc.balance), ...manualAssets.map(asset => asset.amount)],
+        data: safeAccounts.map(acc => acc.balance),
         backgroundColor: [
           chartColors.blue,
           chartColors.green,
@@ -182,116 +164,205 @@ export function ChartsSection({ overview }: ChartsSectionProps) {
           chartColors.purple,
           chartColors.rose,
         ],
-        borderWidth: 0,
       },
     ],
   };
 
-  // Prepare liability breakdown data
   const liabilityBreakdownData = {
-    labels: liabilities.map(liability => liability.name),
+    labels: safeLiabilities.map(l => l.name),
     datasets: [
       {
-        data: liabilities.map(liability => liability.amount),
+        data: safeLiabilities.map(l => l.amount),
         backgroundColor: [
           chartColors.rose,
           chartColors.amber,
           chartColors.purple,
           chartColors.blue,
+          chartColors.green,
         ],
-        borderWidth: 0,
       },
     ],
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.08, type: 'spring', stiffness: 80 },
-    }),
-  };
-
   return (
-    <div className="space-y-8">
-      {/* Net Worth History */}
-      <motion.div
-        className="bg-card/80 backdrop-blur rounded-xl shadow-lg p-6 border border-border/40 hover:shadow-xl transition-shadow duration-200"
-        initial="hidden"
-        animate="visible"
-        custom={0}
-        variants={cardVariants}
-        tabIndex={0}
-      >
-        <h3 className="text-lg font-bold mb-4 text-foreground flex items-center gap-2">
-          Net Worth History
-          <span className="text-xs text-muted-foreground font-normal">(trend over time)</span>
-        </h3>
-        <div className="h-[300px]">
-          <Line data={netWorthData} options={lineChartOptions} ref={netWorthChartRef} />
-        </div>
-      </motion.div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Monthly Cash Flow */}
-        <motion.div
-          className="bg-card/80 backdrop-blur rounded-xl shadow-lg p-6 border border-border/40 hover:shadow-xl transition-shadow duration-200"
-          initial="hidden"
-          animate="visible"
-          custom={1}
-          variants={cardVariants}
-          tabIndex={0}
-        >
-          <h3 className="text-lg font-bold mb-4 text-foreground flex items-center gap-2">
-            Monthly Cash Flow
-            <span className="text-xs text-muted-foreground font-normal">(income vs. expenses)</span>
-          </h3>
-          <div className="h-[300px]">
-            <Pie data={cashFlowData} options={chartOptions} ref={cashFlowChartRef} />
+    <TooltipProvider>
+      <div className="space-y-8">
+        {/* Net Worth Trend */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              Net Worth Trend
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Your net worth over time, showing growth and trends.</p>
+                </TooltipContent>
+              </UITooltip>
+            </h2>
+            <TrendingUp className="h-5 w-5 text-blue-600" />
           </div>
-        </motion.div>
+          <div className="h-64">
+            {renderChart(
+              <Line
+                data={netWorthData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    y: {
+                      ticks: {
+                        callback: (tickValue: string | number, _index: number, _ticks: Tick[]) => {
+                          if (typeof tickValue === 'number') {
+                            return formatCurrency(tickValue);
+                          }
+                          return tickValue;
+                        },
+                      },
+                    },
+                  },
+                }}
+                ref={netWorthChartRef}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Cash Flow */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              Monthly Cash Flow
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Breakdown of your monthly income, expenses, and savings.</p>
+                </TooltipContent>
+              </UITooltip>
+            </h2>
+            <PieChart className="h-5 w-5 text-green-500" />
+          </div>
+          <div className="h-64">
+            {renderChart(
+              <Pie
+                data={cashFlowData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                      callbacks: {
+                        label: (context: TooltipItem<ChartType>) => {
+                          const value = context.raw as number;
+                          const total = monthlyIncome + monthlyExpenses + monthlySavings;
+                          const percentage = total > 0 ? (value / total) * 100 : 0;
+                          return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                        },
+                      },
+                    },
+                  },
+                }}
+                ref={cashFlowChartRef}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Asset Allocation */}
-        <motion.div
-          className="bg-card/80 backdrop-blur rounded-xl shadow-lg p-6 border border-border/40 hover:shadow-xl transition-shadow duration-200"
-          initial="hidden"
-          animate="visible"
-          custom={2}
-          variants={cardVariants}
-          tabIndex={0}
-        >
-          <h3 className="text-lg font-bold mb-4 text-foreground flex items-center gap-2">
-            Asset Allocation
-            <span className="text-xs text-muted-foreground font-normal">(portfolio breakdown)</span>
-          </h3>
-          <div className="h-[300px]">
-            <Pie data={assetAllocationData} options={chartOptions} ref={assetAllocationChartRef} />
+        {accounts.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center">
+                Asset Allocation
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The distribution of your assets across different accounts.</p>
+                  </TooltipContent>
+                </UITooltip>
+              </h2>
+              <PieChart className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="h-64">
+              {renderChart(
+                <Pie
+                  data={assetAllocationData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'bottom' },
+                      tooltip: {
+                        callbacks: {
+                          label: (context: TooltipItem<ChartType>) => {
+                            const value = context.raw as number;
+                            const total = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+                            const percentage = total > 0 ? (value / total) * 100 : 0;
+                            return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  ref={assetAllocationChartRef}
+                />
+              )}
+            </div>
           </div>
-        </motion.div>
+        )}
 
         {/* Liability Breakdown */}
-        <motion.div
-          className="bg-card/80 backdrop-blur rounded-xl shadow-lg p-6 border border-border/40 hover:shadow-xl transition-shadow duration-200"
-          initial="hidden"
-          animate="visible"
-          custom={3}
-          variants={cardVariants}
-          tabIndex={0}
-        >
-          <h3 className="text-lg font-bold mb-4 text-foreground flex items-center gap-2">
-            Liability Breakdown
-            <span className="text-xs text-muted-foreground font-normal">(debts & obligations)</span>
-          </h3>
-          <div className="h-[300px]">
-            <Pie
-              data={liabilityBreakdownData}
-              options={chartOptions}
-              ref={liabilityBreakdownChartRef}
-            />
+        {liabilities.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center">
+                Liability Breakdown
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The distribution of your debts across different liabilities.</p>
+                  </TooltipContent>
+                </UITooltip>
+              </h2>
+              <PieChart className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="h-64">
+              {renderChart(
+                <Pie
+                  data={liabilityBreakdownData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'bottom' },
+                      tooltip: {
+                        callbacks: {
+                          label: (context: TooltipItem<ChartType>) => {
+                            const value = context.raw as number;
+                            const total = liabilities.reduce((sum, l) => sum + l.amount, 0);
+                            const percentage = total > 0 ? (value / total) * 100 : 0;
+                            return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  ref={liabilityBreakdownChartRef}
+                />
+              )}
+            </div>
           </div>
-        </motion.div>
+        )}
       </div>
-    </div>
+    </TooltipProvider>
   );
-}
+});

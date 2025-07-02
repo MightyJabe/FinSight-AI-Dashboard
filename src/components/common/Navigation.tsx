@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  MessageCircle,
   PlusCircle,
   Settings,
   Users,
@@ -18,11 +19,12 @@ import { useAuth } from '@/lib/auth';
 import { auth as firebaseAuth } from '@/lib/firebase';
 
 const primaryNavigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Accounts', href: '/accounts', icon: Users },
-  { name: 'Transactions', href: '/transactions', icon: ListChecks },
-  { name: 'Insights', href: '/insights', icon: BarChart3 },
-  { name: 'Add Manual Data', href: '/manual-data', icon: PlusCircle },
+  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Accounts & Balances', href: '/accounts', icon: Users },
+  { name: 'Spending & Budget', href: '/transactions', icon: ListChecks },
+  { name: 'AI Insights', href: '/insights', icon: BarChart3 },
+  { name: 'AI Chat', href: '/chat', icon: MessageCircle },
+  { name: 'Add Data', href: '/manual-data', icon: PlusCircle },
 ];
 
 const secondaryNavigationItems = [

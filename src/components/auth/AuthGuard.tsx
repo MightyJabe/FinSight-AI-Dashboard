@@ -1,11 +1,10 @@
 'use client';
 
-import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { auth } from '@/lib/firebase';
+import { useSession } from '@/components/providers/SessionProvider';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,38 +12,32 @@ interface AuthGuardProps {
 }
 
 /**
- *
+ * Component that protects routes requiring authentication
  */
 export function AuthGuard({ children, requireEmailVerification = false }: AuthGuardProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth) {
-      console.error('Firebase auth is not initialized');
-      router.push('/login');
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, user => {
+    if (!loading) {
       if (!user) {
         router.push('/login');
       } else if (requireEmailVerification && !user.emailVerified) {
         router.push('/verify-email');
-      } else {
-        setIsLoading(false);
       }
-    });
+    }
+  }, [user, loading, router, requireEmailVerification]);
 
-    return () => unsubscribe();
-  }, [router, requireEmailVerification]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner message="Loading..." />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return <>{children}</>;

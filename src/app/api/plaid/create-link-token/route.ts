@@ -8,24 +8,39 @@ import { PLAID_COUNTRY_CODES, PLAID_PRODUCTS, plaidClient } from '@/lib/plaid';
 /**
  *
  */
-async function getUserIdFromSession(): Promise<string | null> {
-  const sessionCookie = cookies().get('session')?.value;
-  if (!sessionCookie) return null;
-  try {
-    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-    return decodedClaims.uid;
-  } catch (error) {
-    console.error('Error verifying session cookie for link token creation:', error);
-    return null;
+async function getUserIdFromRequest(request: Request): Promise<string | null> {
+  // Try to get user ID from Authorization header first
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const idToken = authHeader.substring(7);
+      const decodedToken = await auth.verifyIdToken(idToken);
+      return decodedToken.uid;
+    } catch (error) {
+      console.error('Error verifying ID token:', error);
+    }
   }
+
+  // Fallback to session cookie
+  const sessionCookie = cookies().get('session')?.value;
+  if (sessionCookie) {
+    try {
+      const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+      return decodedClaims.uid;
+    } catch (error) {
+      console.error('Error verifying session cookie for link token creation:', error);
+    }
+  }
+
+  return null;
 }
 
 /**
  * Creates a Plaid Link token for the authenticated user.
  */
-export async function POST(_request: Request) {
+export async function POST(request: Request) {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized: User session is invalid or missing.' },
@@ -51,13 +66,13 @@ export async function POST(_request: Request) {
       throw new Error('Plaid link_token was not created successfully.');
     }
 
-    return NextResponse.json({ link_token: tokenResponse.data.link_token });
+    return NextResponse.json({ linkToken: tokenResponse.data.link_token });
   } catch (error: unknown) {
     console.error('Error creating link token:', error);
     let errorMessage = 'An unknown error occurred while creating link token.';
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

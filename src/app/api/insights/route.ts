@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { auth, db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
-import { getTransactions } from '@/lib/plaid';
+import { getAccountBalances, getTransactions } from '@/lib/plaid';
 
 import { OpenAIInsights, openAIInsightsSchema } from './schemas';
 
@@ -28,10 +28,23 @@ interface ManualLiability {
   name: string;
 }
 
+interface PlaidAccount {
+  account_id: string;
+  name: string;
+  balances: {
+    available: number | null;
+    current: number | null;
+    limit: number | null;
+  };
+  type: string;
+  subtype: string;
+}
+
 interface FinancialData {
   transactions: Transaction[];
   manualAssets: ManualAsset[];
   manualLiabilities: ManualLiability[];
+  plaidAccounts: PlaidAccount[];
   plaidDataAvailable: boolean;
 }
 
@@ -137,12 +150,14 @@ async function cacheInsights(
  */
 async function fetchFinancialData(userId: string, accessToken?: string): Promise<FinancialData> {
   let transactions: Transaction[] = [];
+  let plaidAccounts: PlaidAccount[] = [];
   let plaidDataAvailable = false;
 
   if (accessToken) {
     try {
+      // Fetch transactions for the last 30 days to match dashboard calculation
       const endDate = formatISO(new Date(), { representation: 'date' });
-      const startDate = formatISO(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), {
+      const startDate = formatISO(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), {
         representation: 'date',
       });
       const plaidTransactions = await getTransactions(accessToken, startDate, endDate);
@@ -152,9 +167,32 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
         date: txn.date,
         category: txn.category || [],
       }));
+
+      // Log transaction data for debugging
+      logger.info('Fetched Plaid transactions for insights', {
+        userId,
+        transactionCount: transactions.length,
+        totalAmount: transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        dateRange: { startDate, endDate },
+      });
+
+      // Fetch account balances
+      const plaidAccountBalances = await getAccountBalances(accessToken);
+      plaidAccounts = plaidAccountBalances.map(account => ({
+        account_id: account.account_id,
+        name: account.name,
+        balances: {
+          available: account.balances.available,
+          current: account.balances.current,
+          limit: account.balances.limit,
+        },
+        type: account.type,
+        subtype: account.subtype ?? '',
+      }));
+
       plaidDataAvailable = true;
     } catch (error) {
-      logger.error('Error fetching Plaid transactions', {
+      logger.error('Error fetching Plaid data', {
         userId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -178,7 +216,7 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
     ...doc.data(),
   })) as ManualLiability[];
 
-  return { transactions, manualAssets, manualLiabilities, plaidDataAvailable };
+  return { transactions, manualAssets, manualLiabilities, plaidAccounts, plaidDataAvailable };
 }
 
 /**
@@ -187,7 +225,8 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
 function calculateFinancialMetrics(
   transactions: Transaction[],
   manualAssets: ManualAsset[],
-  manualLiabilities: ManualLiability[]
+  manualLiabilities: ManualLiability[],
+  plaidAccounts: PlaidAccount[]
 ): CalculatedMetrics {
   const spendingByCategory = transactions.reduce(
     (acc, txn) => {
@@ -207,8 +246,22 @@ function calculateFinancialMetrics(
     {} as Record<string, number>
   );
 
-  const totalAssets = manualAssets.reduce((sum, a) => sum + a.amount, 0);
-  const totalLiabilities = manualLiabilities.reduce((sum, l) => sum + l.amount, 0);
+  // Calculate manual assets and liabilities
+  const manualAssetsTotal = manualAssets.reduce((sum, a) => sum + a.amount, 0);
+  const manualLiabilitiesTotal = manualLiabilities.reduce((sum, l) => sum + l.amount, 0);
+
+  // Calculate Plaid account balances - match dashboard calculation
+  const plaidAssetsTotal = plaidAccounts.reduce((sum, account) => {
+    // Use available balance if present, otherwise current balance (same as dashboard)
+    const balance = account.balances.available ?? account.balances.current ?? 0;
+    // Include ALL balances (positive and negative) as they are
+    return sum + balance;
+  }, 0);
+
+  // For net worth calculation, we don't separate Plaid assets/liabilities
+  // We just use the total balance (which can be positive or negative)
+  const totalAssets = manualAssetsTotal + Math.max(0, plaidAssetsTotal);
+  const totalLiabilities = manualLiabilitiesTotal + Math.max(0, -plaidAssetsTotal);
   const netWorth = totalAssets - totalLiabilities;
 
   return { netWorth, totalAssets, totalLiabilities, spendingByCategory, monthlySpending };
@@ -375,13 +428,26 @@ export async function GET(request: Request) {
       }
     }
 
-    const userDoc = await db.collection('users').doc(userId).get();
-    const userData = userDoc.data();
-    const accessToken = userData?.plaidAccessToken;
+    // Fetch Plaid access tokens from the plaidItems subcollection
+    const plaidItemsSnapshot = await db
+      .collection('users')
+      .doc(userId)
+      .collection('plaidItems')
+      .get();
 
-    const { transactions, manualAssets, manualLiabilities, plaidDataAvailable } =
+    const plaidAccessTokens = plaidItemsSnapshot.docs.map(doc => doc.data().accessToken);
+
+    // Use the first access token (or undefined if none exist)
+    const accessToken = plaidAccessTokens.length > 0 ? plaidAccessTokens[0] : undefined;
+
+    const { transactions, manualAssets, manualLiabilities, plaidAccounts, plaidDataAvailable } =
       await fetchFinancialData(userId, accessToken);
-    const metrics = calculateFinancialMetrics(transactions, manualAssets, manualLiabilities);
+    const metrics = calculateFinancialMetrics(
+      transactions,
+      manualAssets,
+      manualLiabilities,
+      plaidAccounts
+    );
 
     const openAIMessages = prepareOpenAIPrompt(metrics, plaidDataAvailable);
     const openAIResponse = await generateChatCompletion(openAIMessages);

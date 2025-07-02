@@ -34,7 +34,7 @@ interface InsightsPageData {
  *
  */
 export default function InsightsPage() {
-  const { user, loading: authLoading } = useSession();
+  const { user: _user, firebaseUser, loading: authLoading } = useSession();
   const [insightsData, setInsightsData] = useState<InsightsPageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,13 +52,13 @@ export default function InsightsPage() {
           return;
         }
 
-        if (!user) {
+        if (!firebaseUser) {
           setError('Please log in to view insights');
           setLoading(false);
           return;
         }
 
-        const token = await user.getIdToken();
+        const token = await firebaseUser.getIdToken();
         const response = await fetch(`/api/insights${forceRefresh ? '?force=true' : ''}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -97,7 +97,7 @@ export default function InsightsPage() {
         setRefreshing(false);
       }
     },
-    [authLoading, user, refreshing]
+    [authLoading, firebaseUser, refreshing]
   );
 
   useEffect(() => {
@@ -163,7 +163,12 @@ export default function InsightsPage() {
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">Financial Insights</h1>
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900">AI Insights</h1>
+            <p className="mt-2 text-lg text-gray-600">
+              Get personalized financial recommendations and insights powered by AI.
+            </p>
+          </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing || loading} // Disable if refreshing or initial loading

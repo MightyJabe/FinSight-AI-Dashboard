@@ -5,23 +5,48 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 import { auth } from '@/lib/firebase';
 
+interface SerializableUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  emailVerified: boolean;
+}
+
 interface SessionContextType {
-  user: User | null;
+  user: SerializableUser | null;
+  firebaseUser: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType>({
   user: null,
+  firebaseUser: null,
   loading: true,
   signOut: async () => {},
 });
 
 /**
+ *
+ */
+function serializeUser(user: User | null): SerializableUser | null {
+  if (!user) return null;
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    emailVerified: user.emailVerified,
+  };
+}
+
+/**
  * Provider component that manages the user's session state
  */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SerializableUser | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,12 +64,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Get initial user state
     const currentUser = auth.currentUser;
     if (currentUser) {
-      setUser(currentUser);
+      setUser(serializeUser(currentUser));
+      setFirebaseUser(currentUser);
       setLoading(false);
     }
 
     const unsubscribe = onAuthStateChanged(auth, async user => {
-      setUser(user);
+      setUser(serializeUser(user));
+      setFirebaseUser(user);
       setLoading(false);
 
       if (user) {
@@ -87,7 +114,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SessionContext.Provider value={{ user, loading, signOut }}>{children}</SessionContext.Provider>
+    <SessionContext.Provider value={{ user, firebaseUser, loading, signOut }}>
+      {children}
+    </SessionContext.Provider>
   );
 }
 

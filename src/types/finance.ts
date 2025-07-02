@@ -64,6 +64,10 @@ export interface Overview {
   netWorthHistory: Array<{ date: string; value: number }>;
   budgetCategories: BudgetCategory[];
   spendingByCategory: SpendingCategory[];
+  totalCashAssets: number;
+  emergencyFundStatus: number;
+  savingsRate: number;
+  debtToIncomeRatio: number;
 }
 
 export interface Insight {
@@ -72,4 +76,46 @@ export interface Insight {
   type: 'financial_health' | 'spending_pattern' | 'investment' | 'budget';
   score?: number;
   recommendations?: string[];
+}
+
+export interface Budget {
+  monthlyExpenses: number;
+  budgetCategories: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    spent: number;
+  }>;
+  spendingByCategory: Array<{
+    category: string;
+    amount: number;
+  }>;
+}
+
+export interface InvestmentAccounts {
+  accounts: Array<{
+    id: string;
+    name: string;
+    balance: number;
+    type: string;
+    performance: {
+      daily: number;
+      monthly: number;
+      yearly: number;
+    };
+  }>;
+}
+
+export interface Liabilities {
+  accounts: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    type: string;
+    interestRate: number;
+    minimumPayment: number;
+    remainingPayments: number;
+    payoffDate: string;
+  }>;
+  totalDebt: number;
 }

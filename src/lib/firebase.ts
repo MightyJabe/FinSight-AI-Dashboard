@@ -2,9 +2,6 @@ import { getConfig } from './config';
 
 const { firebase: firebaseEnv } = getConfig();
 
-console.log('FIREBASE API KEY:', firebaseEnv.apiKey);
-console.log('FIREBASE CONFIG:', firebaseEnv);
-
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';

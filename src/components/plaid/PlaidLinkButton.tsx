@@ -19,10 +19,9 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const { open, ready } = usePlaidLink({
     token: linkToken,
-    onSuccess: async (public_token, metadata) => {
+    onSuccess: async public_token => {
       try {
         setLoading(true);
-        console.log('Plaid Link success:', { public_token, metadata });
 
         // Get the current user's ID token
         const user = auth.currentUser;
@@ -56,19 +55,13 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
         setLoading(false);
       }
     },
-    onExit: (err, metadata) => {
-      console.log('Plaid Link exit:', { err, metadata });
+    onExit: err => {
       if (err) {
         console.error('Plaid Link error:', err);
         toast.error('Failed to connect bank account. Please try again.');
       }
     },
   });
-
-  // Debug logging for ready state and link token
-  useEffect(() => {
-    console.log('Plaid Link state:', { ready, linkToken: !!linkToken });
-  }, [ready, linkToken]);
 
   const handleClick = async () => {
     try {

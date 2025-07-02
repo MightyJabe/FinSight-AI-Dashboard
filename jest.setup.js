@@ -6,6 +6,89 @@ import 'openai/shims/node';
 // Mock fetch globally
 global.fetch = jest.fn();
 
+// Add Request polyfill for Next.js API tests
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {
+    /**
+     *
+     */
+    constructor(input, init = {}) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init.method || 'GET';
+      this.headers = new Headers(init.headers);
+      this.body = init.body;
+    }
+  };
+}
+
+// Add Response polyfill for Next.js API tests
+if (typeof global.Response === 'undefined') {
+  global.Response = class Response {
+    /**
+     *
+     */
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.statusText = init.statusText || 'OK';
+      this.headers = new Headers(init.headers);
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+
+    /**
+     *
+     */
+    json() {
+      return Promise.resolve(JSON.parse(this.body || '{}'));
+    }
+
+    /**
+     *
+     */
+    text() {
+      return Promise.resolve(this.body || '');
+    }
+  };
+}
+
+// Add Headers polyfill if needed
+if (typeof global.Headers === 'undefined') {
+  global.Headers = class Headers {
+    /**
+     *
+     */
+    constructor(init = {}) {
+      this._headers = new Map();
+      if (init) {
+        Object.entries(init).forEach(([key, value]) => {
+          this.set(key, value);
+        });
+      }
+    }
+
+    /**
+     *
+     */
+    set(name, value) {
+      this._headers.set(name.toLowerCase(), value);
+    }
+
+    /**
+     *
+     */
+    get(name) {
+      return this._headers.get(name.toLowerCase()) || null;
+    }
+
+    /**
+     *
+     */
+    has(name) {
+      return this._headers.has(name.toLowerCase());
+    }
+  };
+}
+
 // Mock environment variables
 process.env.OPENAI_API_KEY = 'test-api-key';
 process.env.NEXT_PUBLIC_FIREBASE_API_KEY = 'test-firebase-api-key';

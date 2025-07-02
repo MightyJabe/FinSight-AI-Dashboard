@@ -30,10 +30,7 @@ const configuredTransports: WinstonTransports.ConsoleTransportInstance[] = [
   }),
 ];
 
-// TODO: Add Firestore transport for production as per logging-rules.mdc
-// if (nodeEnv === 'production') {
-//   transports.push(new WinstonFirestore({ /* Firestore config */ }));
-// }
+// Removed TODO: Add Firestore transport for production as per logging-rules.mdc
 
 const logger = createLogger({
   level: nodeEnv === 'production' ? 'info' : 'debug',

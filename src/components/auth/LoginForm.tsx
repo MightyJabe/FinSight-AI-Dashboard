@@ -32,12 +32,6 @@ export function LoginForm({ onSubmit }: { onSubmit?: (data: LoginFormValues) => 
   }, []);
 
   const onFormSubmit = async (data: LoginFormValues) => {
-    console.log('Form submitted with data:', {
-      email: data.email,
-      hasPassword: !!data.password,
-      passwordLength: data.password.length,
-    });
-
     if (onSubmit) {
       try {
         await onSubmit(data);

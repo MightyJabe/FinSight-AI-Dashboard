@@ -1,8 +1,14 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { auth, db } from '@/lib/firebase-admin';
 import { plaidClient } from '@/lib/plaid';
+
+// Zod schema for input validation
+const removeItemSchema = z.object({
+  itemId: z.string().min(1, 'itemId is required'),
+});
 
 /**
  *
@@ -33,14 +39,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { itemId } = body;
-
-    if (!itemId || typeof itemId !== 'string') {
+    const parsed = removeItemSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing or invalid itemId in request body' },
+        {
+          success: false,
+          errors: parsed.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+    const { itemId } = parsed.data;
 
     const itemDocRef = db.collection('users').doc(userId).collection('plaidItems').doc(itemId);
     const itemDoc = await itemDocRef.get();
@@ -55,7 +64,6 @@ export async function POST(request: Request) {
     if (accessToken) {
       try {
         await plaidClient.itemRemove({ access_token: accessToken });
-        console.log(`Successfully removed Plaid item ${itemId} from Plaid.`);
       } catch (plaidError: unknown) {
         // Log the error but proceed with removing from Firestore, as the token might be already invalid
         // or the item doesn't exist on Plaid's side anymore.
@@ -68,7 +76,6 @@ export async function POST(request: Request) {
 
     // Step 2: Delete the item from Firestore
     await itemDocRef.delete();
-    console.log(`Successfully deleted Plaid item ${itemId} from Firestore for user ${userId}.`);
 
     return NextResponse.json({ message: 'Plaid item unlinked successfully.', itemId });
   } catch (error: unknown) {

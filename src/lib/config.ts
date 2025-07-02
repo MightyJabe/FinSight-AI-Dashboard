@@ -121,24 +121,3 @@ export function getConfig(): Config {
   }
   return config;
 }
-
-// Debug logging (optional, consider removing for production)
-if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
-  console.log('Initialized app config (values indicate presence, not actual keys for security):', {
-    firebase: {
-      apiKey: !!config.firebase.apiKey,
-      authDomain: !!config.firebase.authDomain,
-      projectId: !!config.firebase.projectId,
-    },
-    plaid: {
-      clientId: !!config.plaid.clientId,
-      environment: config.plaid.environment,
-    },
-    openai: {
-      apiKey: !!config.openai.apiKey,
-    },
-    firebaseAdmin: {
-      projectId: !!config.firebaseAdmin.projectId,
-    },
-  });
-}

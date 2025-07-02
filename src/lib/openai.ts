@@ -36,9 +36,6 @@ export async function generateChatCompletion(
   config: OpenAIConfig = {}
 ): Promise<ChatCompletionResponse> {
   try {
-    console.log('OpenAI API Key available:', !!openaiEnvVars.apiKey);
-    console.log('Messages:', JSON.stringify(messages, null, 2));
-
     if (!openaiEnvVars.apiKey) {
       console.warn('OpenAI API key is missing. Using fallback response.');
       return {
@@ -57,8 +54,6 @@ export async function generateChatCompletion(
       frequency_penalty: config.frequencyPenalty ?? 0,
       presence_penalty: config.presencePenalty ?? 0,
     });
-
-    console.log('OpenAI Response:', JSON.stringify(completion, null, 2));
 
     const response = completion.choices[0]?.message;
     if (!response) {
