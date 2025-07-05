@@ -44,6 +44,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [showConversationList, setShowConversationList] = useState(false);
+  const [hasLoadedInitialConversation, setHasLoadedInitialConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -118,8 +119,6 @@ export default function ChatPage() {
             setCurrentConversationId(data.conversationId);
             // Reload conversations to show the new one
             await loadConversations();
-            // Immediately load the new conversation so the UI switches to it
-            await loadConversation(data.conversationId);
           }
         }
       } catch (error) {
@@ -128,29 +127,38 @@ export default function ChatPage() {
         setIsLoading(false);
       }
     },
-    [
-      firebaseUser,
-      setIsLoading,
-      setMessages,
-      setCurrentConversationId,
-      setShowConversationList,
-      loadConversations,
-      currentConversationId,
-    ]
+    [firebaseUser, loadConversations]
   );
 
-  // Auto-load most recent conversation
+  // Auto-load most recent conversation only once when first loading
   useEffect(() => {
-    if (conversations.length > 0 && !currentConversationId && messages.length === 0) {
+    if (
+      conversations.length > 0 &&
+      !currentConversationId &&
+      !hasLoadedInitialConversation &&
+      !isLoadingConversations
+    ) {
+      console.log('Auto-loading most recent conversation');
       const mostRecent = conversations[0]; // Already sorted by updatedAt desc
-      loadConversation(mostRecent.id);
+      if (mostRecent) {
+        loadConversation(mostRecent.id);
+      }
+      setHasLoadedInitialConversation(true);
     }
-  }, [conversations, currentConversationId, messages.length, loadConversation]);
+  }, [
+    conversations,
+    currentConversationId,
+    hasLoadedInitialConversation,
+    isLoadingConversations,
+    loadConversation,
+  ]);
 
   const startNewConversation = () => {
+    console.log('Starting new conversation');
     setMessages([]);
     setCurrentConversationId(null);
     setShowConversationList(false);
+    setInput(''); // Clear any input
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,8 +227,6 @@ export default function ChatPage() {
         setCurrentConversationId(data.conversationId);
         // Reload conversations to show the new one
         await loadConversations();
-        // Immediately load the new conversation so the UI switches to it
-        await loadConversation(data.conversationId);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -281,10 +287,13 @@ export default function ChatPage() {
                 Ask me anything about your finances. Your conversations are saved for future
                 reference.
               </p>
-              {getCurrentConversationTitle() && (
+              {currentConversationId && getCurrentConversationTitle() && (
                 <p className="mt-1 text-sm text-gray-500">
                   Current: {getCurrentConversationTitle()}
                 </p>
+              )}
+              {!currentConversationId && conversations.length > 0 && (
+                <p className="mt-1 text-sm text-green-600 font-medium">📝 New conversation ready</p>
               )}
             </div>
             <div className="flex gap-2">
@@ -383,12 +392,16 @@ export default function ChatPage() {
                   <p className="text-lg font-medium mb-2">
                     {conversations.length === 0
                       ? 'Welcome to AI Financial Assistant!'
-                      : 'Start a new conversation'}
+                      : !currentConversationId
+                        ? 'New Conversation Started!'
+                        : 'Start a new conversation'}
                   </p>
                   <p className="text-sm mb-6">
                     {conversations.length === 0
                       ? 'Ask me anything about your finances to get started.'
-                      : 'Ask me anything about your finances!'}
+                      : !currentConversationId
+                        ? 'You are starting fresh! Ask me anything about your finances.'
+                        : 'Ask me anything about your finances!'}
                   </p>
                   <div className="space-y-2 text-sm max-w-md mx-auto">
                     <p className="flex items-center gap-2">

@@ -1,3 +1,5 @@
+'use client';
+
 import { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 
@@ -21,3 +23,4 @@ export function useAuth() {
 
   return { user, loading };
 }
+

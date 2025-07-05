@@ -128,6 +128,92 @@ const tools = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'analyze_debt_to_income_ratio',
+      description: 'Calculate debt-to-income ratio and provide recommendations',
+      parameters: {
+        type: 'object',
+        properties: {
+          annual_income: {
+            type: 'number',
+            description:
+              'Annual income (optional, will estimate from transaction data if not provided)',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'analyze_cash_flow',
+      description: 'Analyze cash flow patterns and provide projections',
+      parameters: {
+        type: 'object',
+        properties: {
+          months: {
+            type: 'number',
+            description: 'Number of months to analyze (default: 6)',
+          },
+          projection_months: {
+            type: 'number',
+            description: 'Number of months to project forward (default: 3)',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'analyze_spending_patterns',
+      description: 'Analyze spending patterns and identify trends, anomalies, and opportunities',
+      parameters: {
+        type: 'object',
+        properties: {
+          analysis_period: {
+            type: 'string',
+            enum: ['3_months', '6_months', '1_year'],
+            description: 'Period to analyze spending patterns',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'calculate_emergency_fund_status',
+      description: 'Calculate emergency fund adequacy and recommendations',
+      parameters: {
+        type: 'object',
+        properties: {
+          target_months: {
+            type: 'number',
+            description: 'Target months of expenses to save (default: 6)',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'analyze_financial_health_score',
+      description: 'Calculate comprehensive financial health score with detailed breakdown',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
 ];
 
 // Function implementations
@@ -241,7 +327,7 @@ async function getSpendingByCategory(
   try {
     // Calculate date range based on period
     const now = new Date();
-    let startDate: Date;
+    let startDate: Date = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     switch (period) {
       case 'week':
@@ -257,7 +343,8 @@ async function getSpendingByCategory(
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
       default:
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Default to month
+        break;
     }
 
     // Get transactions from Plaid
@@ -271,8 +358,8 @@ async function getSpendingByCategory(
         try {
           const transactions = await getTransactions(
             accessToken,
-            startDate.toISOString().split('T')[0],
-            now.toISOString().split('T')[0]
+            startDate.toISOString().split('T')[0] as string,
+            now.toISOString().split('T')[0] as string
           );
 
           transactions.forEach(txn => {
@@ -334,8 +421,8 @@ async function getRecentTransactions(
         try {
           const transactions = await getTransactions(
             accessToken,
-            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            new Date().toISOString().split('T')[0]
+            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as string,
+            new Date().toISOString().split('T')[0] as string
           );
 
           transactions.forEach(txn => {
@@ -400,8 +487,8 @@ async function getMonthlySummary(
         try {
           const transactions = await getTransactions(
             accessToken,
-            startOfMonth.toISOString().split('T')[0],
-            endOfMonth.toISOString().split('T')[0]
+            startOfMonth.toISOString().split('T')[0] as string,
+            endOfMonth.toISOString().split('T')[0] as string
           );
 
           transactions.forEach(txn => {
@@ -422,6 +509,663 @@ async function getMonthlySummary(
     return { income, expenses, savings };
   } catch (error) {
     logger.error('Error getting monthly summary', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Analyze debt-to-income ratio and provide recommendations
+ */
+async function analyzeDebtToIncomeRatio(
+  userId: string,
+  annualIncome?: number
+): Promise<{
+  debtToIncomeRatio: number;
+  monthlyDebtPayments: number;
+  monthlyIncome: number;
+  recommendation: string;
+  riskLevel: 'low' | 'medium' | 'high';
+}> {
+  try {
+    // Get monthly income from transactions if not provided
+    let monthlyIncome = annualIncome ? annualIncome / 12 : 0;
+
+    if (!monthlyIncome) {
+      // Estimate income from the last 3 months of transactions
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+      const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
+      let totalIncome = 0;
+
+      for (const itemDoc of plaidItemsSnapshot.docs) {
+        const plaidItem = itemDoc.data();
+        const accessToken = plaidItem.accessToken;
+        if (accessToken) {
+          try {
+            const transactions = await getTransactions(
+              accessToken,
+              threeMonthsAgo.toISOString().split('T')[0] as string,
+              new Date().toISOString().split('T')[0] as string
+            );
+
+            transactions.forEach(txn => {
+              if (txn.amount > 0) {
+                totalIncome += txn.amount;
+              }
+            });
+          } catch (error) {
+            logger.error('Error fetching transactions for DTI analysis', { userId, error });
+          }
+        }
+      }
+
+      monthlyIncome = totalIncome / 3;
+    }
+
+    // Calculate monthly debt payments from liabilities
+    const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
+    let monthlyDebtPayments = 0;
+
+    liabilitiesSnapshot.docs.forEach(doc => {
+      const liability = doc.data();
+      // Estimate monthly payment as 3% of total debt (conservative estimate)
+      monthlyDebtPayments += (liability.amount || 0) * 0.03;
+    });
+
+    const debtToIncomeRatio = monthlyIncome > 0 ? (monthlyDebtPayments / monthlyIncome) * 100 : 0;
+
+    let recommendation = '';
+    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+
+    if (debtToIncomeRatio <= 20) {
+      recommendation = 'Excellent debt-to-income ratio! You have good financial flexibility.';
+      riskLevel = 'low';
+    } else if (debtToIncomeRatio <= 36) {
+      recommendation =
+        'Good debt-to-income ratio, but consider paying down debt to improve financial health.';
+      riskLevel = 'medium';
+    } else {
+      recommendation = 'High debt-to-income ratio. Focus on debt reduction strategies immediately.';
+      riskLevel = 'high';
+    }
+
+    return {
+      debtToIncomeRatio,
+      monthlyDebtPayments,
+      monthlyIncome,
+      recommendation,
+      riskLevel,
+    };
+  } catch (error) {
+    logger.error('Error analyzing debt-to-income ratio', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Analyze cash flow patterns and provide projections
+ */
+async function analyzeCashFlow(
+  userId: string,
+  months = 6,
+  projectionMonths = 3
+): Promise<{
+  historicalCashFlow: Array<{ month: string; income: number; expenses: number; netFlow: number }>;
+  projectedCashFlow: Array<{
+    month: string;
+    projectedIncome: number;
+    projectedExpenses: number;
+    projectedNetFlow: number;
+  }>;
+  trends: {
+    incomeGrowth: number;
+    expenseGrowth: number;
+    volatility: number;
+  };
+  recommendations: string[];
+}> {
+  try {
+    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
+    const historicalData: Array<{
+      month: string;
+      income: number;
+      expenses: number;
+      netFlow: number;
+    }> = [];
+
+    // Analyze historical cash flow
+    for (let i = months - 1; i >= 0; i--) {
+      const monthDate = new Date();
+      monthDate.setMonth(monthDate.getMonth() - i);
+      const monthStr = monthDate.toISOString().substring(0, 7);
+
+      const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+      let monthlyIncome = 0;
+      let monthlyExpenses = 0;
+
+      for (const itemDoc of plaidItemsSnapshot.docs) {
+        const plaidItem = itemDoc.data();
+        const accessToken = plaidItem.accessToken;
+        if (accessToken) {
+          try {
+            const transactions = await getTransactions(
+              accessToken,
+              startOfMonth.toISOString().split('T')[0] as string,
+              endOfMonth.toISOString().split('T')[0] as string
+            );
+
+            transactions.forEach(txn => {
+              if (txn.amount > 0) {
+                monthlyIncome += txn.amount;
+              } else {
+                monthlyExpenses += Math.abs(txn.amount);
+              }
+            });
+          } catch (error) {
+            logger.error('Error fetching transactions for cash flow analysis', { userId, error });
+          }
+        }
+      }
+
+      historicalData.push({
+        month: monthStr,
+        income: monthlyIncome,
+        expenses: monthlyExpenses,
+        netFlow: monthlyIncome - monthlyExpenses,
+      });
+    }
+
+    // Calculate trends
+    const incomes = historicalData.map(d => d.income);
+    const expenses = historicalData.map(d => d.expenses);
+
+    const incomeGrowth =
+      incomes.length > 1 ? ((incomes[incomes.length - 1]! - incomes[0]!) / incomes[0]!) * 100 : 0;
+    const expenseGrowth =
+      expenses.length > 1 ? ((expenses[expenses.length - 1]! - expenses[0]!) / expenses[0]!) * 100 : 0;
+
+    const avgIncome = incomes.reduce((a, b) => a + b, 0) / incomes.length;
+    const avgExpenses = expenses.reduce((a, b) => a + b, 0) / expenses.length;
+
+    const volatility =
+      (Math.sqrt(
+        incomes.reduce((sum, income) => sum + Math.pow(income - avgIncome, 2), 0) / incomes.length
+      ) /
+        avgIncome) *
+      100;
+
+    // Generate projections
+    const projectedCashFlow: Array<{
+      month: string;
+      projectedIncome: number;
+      projectedExpenses: number;
+      projectedNetFlow: number;
+    }> = [];
+
+    for (let i = 1; i <= projectionMonths; i++) {
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + i);
+      const monthStr = futureDate.toISOString().substring(0, 7);
+
+      const projectedIncome = avgIncome * (1 + incomeGrowth / 100 / 12);
+      const projectedExpenses = avgExpenses * (1 + expenseGrowth / 100 / 12);
+
+      projectedCashFlow.push({
+        month: monthStr,
+        projectedIncome,
+        projectedExpenses,
+        projectedNetFlow: projectedIncome - projectedExpenses,
+      });
+    }
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+
+    if (incomeGrowth < 0) {
+      recommendations.push(
+        'Income is declining. Consider diversifying income sources or negotiating a raise.'
+      );
+    }
+
+    if (expenseGrowth > incomeGrowth) {
+      recommendations.push(
+        'Expenses are growing faster than income. Review and optimize your spending.'
+      );
+    }
+
+    if (volatility > 20) {
+      recommendations.push(
+        'Income volatility is high. Build a larger emergency fund for stability.'
+      );
+    }
+
+    const avgNetFlow =
+      historicalData.reduce((sum, d) => sum + d.netFlow, 0) / historicalData.length;
+    if (avgNetFlow < 0) {
+      recommendations.push(
+        'Average monthly cash flow is negative. Focus on expense reduction or income increase.'
+      );
+    }
+
+    return {
+      historicalCashFlow: historicalData,
+      projectedCashFlow,
+      trends: {
+        incomeGrowth,
+        expenseGrowth,
+        volatility,
+      },
+      recommendations,
+    };
+  } catch (error) {
+    logger.error('Error analyzing cash flow', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Analyze spending patterns and identify trends, anomalies, and opportunities
+ */
+async function analyzeSpendingPatterns(
+  userId: string,
+  analysisPeriod: '3_months' | '6_months' | '1_year' = '6_months'
+): Promise<{
+  categoryTrends: Array<{
+    category: string;
+    trend: number;
+    avgMonthly: number;
+    volatility: number;
+  }>;
+  anomalies: Array<{ date: string; amount: number; category: string; description: string }>;
+  opportunities: Array<{ category: string; potentialSavings: number; recommendation: string }>;
+  seasonalPatterns: Array<{
+    month: string;
+    averageSpending: number;
+    categories: Record<string, number>;
+  }>;
+}> {
+  try {
+    const monthsToAnalyze =
+      analysisPeriod === '3_months' ? 3 : analysisPeriod === '6_months' ? 6 : 12;
+
+    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
+    const categoryData: Record<
+      string,
+      Array<{
+        month: string;
+        amount: number;
+        transactions: Array<{ date: string; amount: number; name: string }>;
+      }>
+    > = {};
+    const seasonalData: Record<
+      string,
+      { totalSpending: number; categories: Record<string, number> }
+    > = {};
+
+    // Collect spending data by category and month
+    for (let i = monthsToAnalyze - 1; i >= 0; i--) {
+      const monthDate = new Date();
+      monthDate.setMonth(monthDate.getMonth() - i);
+      const monthStr = monthDate.toISOString().substring(0, 7);
+
+      const startOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const endOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+      seasonalData[monthStr] = { totalSpending: 0, categories: {} };
+
+      for (const itemDoc of plaidItemsSnapshot.docs) {
+        const plaidItem = itemDoc.data();
+        const accessToken = plaidItem.accessToken;
+        if (accessToken) {
+          try {
+            const transactions = await getTransactions(
+              accessToken,
+              startOfMonth.toISOString().split('T')[0] as string,
+              endOfMonth.toISOString().split('T')[0] as string
+            );
+
+            transactions.forEach(txn => {
+              if (txn.amount < 0) {
+                // Only expenses
+                const category = txn.category?.[0] || 'Uncategorized';
+                const amount = Math.abs(txn.amount);
+
+                if (!categoryData[category]) {
+                  categoryData[category] = [];
+                }
+
+                let monthEntry = categoryData[category].find(m => m.month === monthStr);
+                if (!monthEntry) {
+                  monthEntry = { month: monthStr, amount: 0, transactions: [] };
+                  categoryData[category].push(monthEntry);
+                }
+
+                monthEntry.amount += amount;
+                monthEntry.transactions.push({
+                  date: txn.date,
+                  amount,
+                  name: txn.name,
+                });
+
+                seasonalData[monthStr]!.totalSpending += amount;
+                seasonalData[monthStr]!.categories[category] =
+                  (seasonalData[monthStr]!.categories[category] || 0) + amount;
+              }
+            });
+          } catch (error) {
+            logger.error('Error fetching transactions for spending pattern analysis', {
+              userId,
+              error,
+            });
+          }
+        }
+      }
+    }
+
+    // Analyze category trends
+    const categoryTrends: Array<{
+      category: string;
+      trend: number;
+      avgMonthly: number;
+      volatility: number;
+    }> = [];
+
+    Object.entries(categoryData).forEach(([category, monthlyData]) => {
+      const amounts = monthlyData.map(d => d.amount);
+      const avgMonthly = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+
+      // Calculate trend (percentage change from first to last month)
+      const trend =
+        amounts.length > 1 ? ((amounts[amounts.length - 1]! - amounts[0]!) / amounts[0]!) * 100 : 0;
+
+      // Calculate volatility (coefficient of variation)
+      const variance =
+        amounts.reduce((sum, amount) => sum + Math.pow(amount - avgMonthly, 2), 0) / amounts.length;
+      const volatility = (Math.sqrt(variance) / avgMonthly) * 100;
+
+      categoryTrends.push({
+        category,
+        trend,
+        avgMonthly,
+        volatility,
+      });
+    });
+
+    // Identify anomalies (transactions 2+ standard deviations from category average)
+    const anomalies: Array<{
+      date: string;
+      amount: number;
+      category: string;
+      description: string;
+    }> = [];
+
+    Object.entries(categoryData).forEach(([category, monthlyData]) => {
+      const allTransactions = monthlyData.flatMap(m => m.transactions);
+      const amounts = allTransactions.map(t => t.amount);
+      const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+      const stdDev = Math.sqrt(
+        amounts.reduce((sum, amount) => sum + Math.pow(amount - avgAmount, 2), 0) / amounts.length
+      );
+
+      allTransactions.forEach(txn => {
+        if (txn.amount > avgAmount + 2 * stdDev) {
+          anomalies.push({
+            date: txn.date,
+            amount: txn.amount,
+            category,
+            description: `Unusually high ${category} expense: ${txn.name}`,
+          });
+        }
+      });
+    });
+
+    // Identify savings opportunities
+    const opportunities: Array<{
+      category: string;
+      potentialSavings: number;
+      recommendation: string;
+    }> = [];
+
+    categoryTrends.forEach(trend => {
+      if (trend.trend > 10 && trend.avgMonthly > 100) {
+        // Growing categories with significant spending
+        opportunities.push({
+          category: trend.category,
+          potentialSavings: trend.avgMonthly * 0.15, // Assume 15% reduction potential
+          recommendation: `${trend.category} spending has increased by ${trend.trend.toFixed(1)}%. Consider reviewing and optimizing these expenses.`,
+        });
+      }
+
+      if (trend.volatility > 50 && trend.avgMonthly > 200) {
+        // High volatility categories
+        opportunities.push({
+          category: trend.category,
+          potentialSavings: trend.avgMonthly * 0.1, // Assume 10% reduction through better planning
+          recommendation: `${trend.category} spending is highly volatile. Better budgeting could reduce unnecessary expenses.`,
+        });
+      }
+    });
+
+    // Format seasonal patterns
+    const seasonalPatterns = Object.entries(seasonalData).map(([month, data]) => ({
+      month,
+      averageSpending: data.totalSpending,
+      categories: data.categories,
+    }));
+
+    return {
+      categoryTrends: categoryTrends.sort((a, b) => b.avgMonthly - a.avgMonthly),
+      anomalies: anomalies.sort((a, b) => b.amount - a.amount).slice(0, 10), // Top 10 anomalies
+      opportunities: opportunities.sort((a, b) => b.potentialSavings - a.potentialSavings),
+      seasonalPatterns,
+    };
+  } catch (error) {
+    logger.error('Error analyzing spending patterns', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Calculate emergency fund adequacy and recommendations
+ */
+async function calculateEmergencyFundStatus(
+  userId: string,
+  targetMonths = 6
+): Promise<{
+  currentEmergencyFund: number;
+  monthlyExpenses: number;
+  monthsCovered: number;
+  targetAmount: number;
+  shortfall: number;
+  recommendation: string;
+  riskLevel: 'low' | 'medium' | 'high';
+}> {
+  try {
+    // Get current liquid assets (emergency fund)
+    const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
+    let currentEmergencyFund = 0;
+
+    assetsSnapshot.docs.forEach(doc => {
+      const asset = doc.data();
+      // Assume savings accounts and cash are emergency fund
+      if (
+        asset.type &&
+        (asset.type.toLowerCase().includes('savings') || asset.type.toLowerCase().includes('cash'))
+      ) {
+        currentEmergencyFund += asset.amount || 0;
+      }
+    });
+
+    // If no specific emergency fund accounts, use 50% of liquid assets
+    if (currentEmergencyFund === 0) {
+      assetsSnapshot.docs.forEach(doc => {
+        const asset = doc.data();
+        currentEmergencyFund += (asset.amount || 0) * 0.5;
+      });
+    }
+
+    // Calculate monthly expenses from recent transactions
+    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
+    let monthlyExpenses = 0;
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    for (const itemDoc of plaidItemsSnapshot.docs) {
+      const plaidItem = itemDoc.data();
+      const accessToken = plaidItem.accessToken;
+      if (accessToken) {
+        try {
+          const transactions = await getTransactions(
+            accessToken,
+            thirtyDaysAgo.toISOString().split('T')[0] as string,
+            new Date().toISOString().split('T')[0] as string
+          );
+
+          transactions.forEach(txn => {
+            if (txn.amount < 0) {
+              monthlyExpenses += Math.abs(txn.amount);
+            }
+          });
+        } catch (error) {
+          logger.error('Error fetching transactions for emergency fund analysis', {
+            userId,
+            error,
+          });
+        }
+      }
+    }
+
+    const monthsCovered = monthlyExpenses > 0 ? currentEmergencyFund / monthlyExpenses : 0;
+    const targetAmount = monthlyExpenses * targetMonths;
+    const shortfall = Math.max(0, targetAmount - currentEmergencyFund);
+
+    let recommendation = '';
+    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+
+    if (monthsCovered >= targetMonths) {
+      recommendation = `Excellent! You have ${monthsCovered.toFixed(1)} months of expenses saved. Your emergency fund is well-funded.`;
+      riskLevel = 'low';
+    } else if (monthsCovered >= 3) {
+      recommendation = `Good progress! You have ${monthsCovered.toFixed(1)} months of expenses saved. Consider building it up to ${targetMonths} months.`;
+      riskLevel = 'medium';
+    } else {
+      recommendation = `Emergency fund needs attention. You only have ${monthsCovered.toFixed(1)} months of expenses saved. This is a financial priority.`;
+      riskLevel = 'high';
+    }
+
+    return {
+      currentEmergencyFund,
+      monthlyExpenses,
+      monthsCovered,
+      targetAmount,
+      shortfall,
+      recommendation,
+      riskLevel,
+    };
+  } catch (error) {
+    logger.error('Error calculating emergency fund status', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Calculate comprehensive financial health score
+ */
+async function analyzeFinancialHealthScore(userId: string): Promise<{
+  overallScore: number;
+  breakdown: {
+    emergencyFund: { score: number; weight: number };
+    debtToIncome: { score: number; weight: number };
+    savingsRate: { score: number; weight: number };
+    netWorthGrowth: { score: number; weight: number };
+    budgetAdherence: { score: number; weight: number };
+  };
+  recommendations: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+}> {
+  try {
+    // Get emergency fund score
+    const emergencyFundData = await calculateEmergencyFundStatus(userId);
+    const emergencyFundScore = Math.min(100, (emergencyFundData.monthsCovered / 6) * 100);
+
+    // Get debt-to-income score
+    const dtiData = await analyzeDebtToIncomeRatio(userId);
+    const dtiScore = Math.max(0, 100 - dtiData.debtToIncomeRatio * 2); // Lower DTI = higher score
+
+    // Calculate savings rate score
+    const cashFlowData = await analyzeCashFlow(userId, 3, 1);
+    const recentMonths = cashFlowData.historicalCashFlow.slice(-3);
+    const avgSavingsRate =
+      recentMonths.reduce((sum, month) => {
+        const rate = month.income > 0 ? (month.netFlow / month.income) * 100 : 0;
+        return sum + rate;
+      }, 0) / recentMonths.length;
+
+    const savingsRateScore = Math.min(100, Math.max(0, avgSavingsRate * 5)); // 20% savings rate = 100 score
+
+    // Calculate net worth growth score (simplified)
+    const netWorthData = await getNetWorth(userId);
+    const netWorthGrowthScore = netWorthData.netWorth > 0 ? 75 : 25; // Simplified for now
+
+    // Calculate budget adherence score (simplified)
+    const spendingData = await analyzeSpendingPatterns(userId, '3_months');
+    const avgVolatility =
+      spendingData.categoryTrends.reduce((sum, cat) => sum + cat.volatility, 0) /
+      spendingData.categoryTrends.length;
+    const budgetAdherenceScore = Math.max(0, 100 - avgVolatility); // Lower volatility = better adherence
+
+    // Calculate weighted overall score
+    const breakdown = {
+      emergencyFund: { score: emergencyFundScore, weight: 0.25 },
+      debtToIncome: { score: dtiScore, weight: 0.25 },
+      savingsRate: { score: savingsRateScore, weight: 0.25 },
+      netWorthGrowth: { score: netWorthGrowthScore, weight: 0.15 },
+      budgetAdherence: { score: budgetAdherenceScore, weight: 0.1 },
+    };
+
+    const overallScore = Object.values(breakdown).reduce((sum, component) => {
+      return sum + component.score * component.weight;
+    }, 0);
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+
+    if (emergencyFundScore < 50) {
+      recommendations.push('Priority: Build your emergency fund to cover 3-6 months of expenses.');
+    }
+
+    if (dtiScore < 60) {
+      recommendations.push('Focus on reducing debt to improve your debt-to-income ratio.');
+    }
+
+    if (savingsRateScore < 40) {
+      recommendations.push('Increase your savings rate by reducing expenses or increasing income.');
+    }
+
+    if (budgetAdherenceScore < 60) {
+      recommendations.push('Work on more consistent budgeting to reduce spending volatility.');
+    }
+
+    // Determine risk level
+    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+    if (overallScore < 40) {
+      riskLevel = 'high';
+    } else if (overallScore < 70) {
+      riskLevel = 'medium';
+    }
+
+    return {
+      overallScore,
+      breakdown,
+      recommendations,
+      riskLevel,
+    };
+  } catch (error) {
+    logger.error('Error analyzing financial health score', { userId, error });
     throw error;
   }
 }
@@ -548,6 +1292,10 @@ export async function POST(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      logger.error('Missing or invalid Authorization token');
+      return NextResponse.json({ error: 'Unauthorized - Missing token' }, { status: 401 });
+    }
     let decodedToken;
     try {
       decodedToken = await auth.verifyIdToken(idToken);
@@ -558,7 +1306,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Invalid token' }, { status: 401 });
     }
 
-    const userId = decodedToken.uid;
+    const userId = decodedToken.uid as string;
+    if (!userId) {
+      logger.error('User ID is missing from decoded token');
+      return NextResponse.json({ error: 'Unauthorized - Invalid user ID' }, { status: 401 });
+    }
 
     // Validate request body
     const body = await request.json();
@@ -582,7 +1334,26 @@ export async function POST(request: NextRequest) {
     const messages = [
       {
         role: 'system' as const,
-        content: `You are a helpful financial assistant for FinSight AI. You can answer questions about the user's finances by using the available tools. Always provide clear, helpful responses and format numbers as currency when appropriate. If you don't have access to the requested data, explain what information would be needed.`,
+        content: `You are an expert financial advisor and AI assistant for FinSight AI with deep expertise in personal finance, investment strategy, and financial planning.
+
+Your capabilities include:
+- Comprehensive financial analysis using real-time data
+- Advanced calculations for debt-to-income ratios, cash flow projections, and financial health scoring
+- Spending pattern analysis with anomaly detection and trend identification
+- Emergency fund optimization and risk assessment
+- Personalized investment and savings strategies
+
+Guidelines for responses:
+1. Always use the available tools to access real financial data when answering questions
+2. Provide specific, actionable advice with dollar amounts and timeframes
+3. Explain complex financial concepts in simple terms
+4. Format all monetary values as currency (e.g., $1,234.56)
+5. When making recommendations, explain the reasoning and potential impact
+6. If you don't have access to specific data, explain what information would help provide better advice
+7. Prioritize high-impact, low-effort improvements first
+8. Consider the user's complete financial picture when giving advice
+
+Remember: You have access to sophisticated financial analysis tools. Use them to provide insights that go beyond basic budgeting advice.`,
       },
       ...history,
       { role: 'user' as const, content: message },
@@ -592,10 +1363,12 @@ export async function POST(request: NextRequest) {
     let completion;
     try {
       completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages,
         tools,
         tool_choice: 'auto',
+        temperature: 0.7,
+        max_tokens: 2000,
       });
     } catch (openaiError) {
       logger.error('OpenAI API error', {
@@ -658,21 +1431,21 @@ export async function POST(request: NextRequest) {
           let result;
           switch (functionName) {
             case 'get_net_worth':
-              result = await getNetWorth(userId);
+              result = await getNetWorth(userId!);
               break;
             case 'get_account_balances':
-              result = await getAccountBalancesData(userId);
+              result = await getAccountBalancesData(userId!);
               break;
             case 'get_spending_by_category':
               result = await getSpendingByCategory(
-                userId,
+                userId!,
                 functionArgs.period,
                 functionArgs.category
               );
               break;
             case 'get_recent_transactions':
               result = await getRecentTransactions(
-                userId,
+                userId!,
                 functionArgs.limit,
                 functionArgs.category,
                 functionArgs.amount_min,
@@ -680,7 +1453,26 @@ export async function POST(request: NextRequest) {
               );
               break;
             case 'get_monthly_summary':
-              result = await getMonthlySummary(userId, functionArgs.month);
+              result = await getMonthlySummary(userId!, functionArgs.month);
+              break;
+            case 'analyze_debt_to_income_ratio':
+              result = await analyzeDebtToIncomeRatio(userId!, functionArgs.annual_income);
+              break;
+            case 'analyze_cash_flow':
+              result = await analyzeCashFlow(
+                userId,
+                functionArgs.months,
+                functionArgs.projection_months
+              );
+              break;
+            case 'analyze_spending_patterns':
+              result = await analyzeSpendingPatterns(userId!, functionArgs.analysis_period);
+              break;
+            case 'calculate_emergency_fund_status':
+              result = await calculateEmergencyFundStatus(userId!, functionArgs.target_months);
+              break;
+            case 'analyze_financial_health_score':
+              result = await analyzeFinancialHealthScore(userId!);
               break;
             default:
               result = { error: `Unknown function: ${functionName}` };
@@ -704,8 +1496,10 @@ export async function POST(request: NextRequest) {
       // Get final response with tool results
       try {
         const finalCompletion = await openai.chat.completions.create({
-          model: 'gpt-4',
+          model: 'gpt-4o',
           messages: [...messages, responseMessage, ...toolResults],
+          temperature: 0.7,
+          max_tokens: 2000,
         });
 
         finalResponse =
@@ -756,6 +1550,9 @@ export async function GET(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json({ error: 'Unauthorized - Missing token' }, { status: 401 });
+    }
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
@@ -764,7 +1561,7 @@ export async function GET(request: NextRequest) {
 
     if (conversationId) {
       // Get specific conversation
-      const messages = await getConversation(userId, conversationId);
+      const messages = await getConversation(userId!, conversationId);
       if (messages) {
         return NextResponse.json({ messages, conversationId });
       } else {
@@ -772,7 +1569,7 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Get all conversations
-      const conversations = await getUserConversations(userId);
+      const conversations = await getUserConversations(userId!);
       return NextResponse.json({ conversations });
     }
   } catch (error) {

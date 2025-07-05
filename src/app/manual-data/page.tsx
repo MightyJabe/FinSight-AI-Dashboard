@@ -62,7 +62,7 @@ export default function ManualDataPage() {
     type: 'expense',
     amount: '',
     category: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0] as string,
     recurrence: 'none',
     description: '',
     accountId: '',
@@ -74,6 +74,7 @@ export default function ManualDataPage() {
       const fetchLiquidAccounts = async () => {
         try {
           setLoading(true);
+          if (!firebaseUser) return;
           const response = await fetch('/api/liquid-assets', {
             headers: {
               Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
@@ -110,11 +111,12 @@ export default function ManualDataPage() {
 
     setLoading(true);
     try {
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch('/api/manual-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           type: 'manualAssets',
@@ -144,11 +146,12 @@ export default function ManualDataPage() {
 
     setLoading(true);
     try {
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch('/api/manual-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           type: 'manualLiabilities',
@@ -182,11 +185,12 @@ export default function ManualDataPage() {
 
     setLoading(true);
     try {
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch('/api/manual-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           type: 'transactions',
@@ -204,7 +208,7 @@ export default function ManualDataPage() {
         type: 'expense',
         amount: '',
         category: '',
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0] as string,
         recurrence: 'none',
         description: '',
         accountId: '',
@@ -412,7 +416,7 @@ export default function ManualDataPage() {
             <select
               id="transactionAccount"
               value={transactionForm.accountId}
-              onChange={e => setTransactionForm({ ...transactionForm, accountId: e.target.value })}
+              onChange={e => setTransactionForm({ ...transactionForm, accountId: e.target.value || '' })}
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               required
               disabled={loading || liquidAccounts.length === 0}

@@ -3,375 +3,114 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/MightyJade/finsight-ai-dashboard/ci.yml?branch=main)](https://github.com/MightyJade/finsight-ai-dashboard/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-14.1.0-black)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-blue)](https://tailwindcss.com)
 
-## Table of Contents
-
-- [Description](#description)
-- [Features](#features)
-- [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Setup](#environment-setup)
-- [Development](#development)
-  - [Local Development](#local-development)
-  - [Testing](#testing)
-  - [Code Style](#code-style)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Security](#security)
-- [Contributing](#contributing)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
-- [Contact](#contact)
-- [Directory Structure & Best Practices](#directory-structure-&-best-practices)
-- [Guidelines](#guidelines)
-
-## Description
-
-FinSight AI Dashboard is an intelligent financial management platform that brings together all your financial accounts into one unified dashboard. Powered by GPT-4, it provides personalized insights, budget recommendations, and investment optimizations to help you make better financial decisions.
-
-### Key Features
-
-- Multi-account financial data aggregation
-- AI-powered financial insights
-- Real-time budget tracking
-- Investment portfolio optimization
-- Cash flow analysis and forecasting
-- Risk assessment and alerts
-- Personalized financial goal tracking
+An intelligent financial management platform that aggregates all your financial accounts into one unified dashboard. Powered by GPT-4 for personalized insights, budget recommendations, and investment optimizations.
 
 ## Features
 
-### Financial Management
-
-- Real-time account balance tracking
-- Transaction categorization
-- Budget planning and monitoring
-- Investment portfolio analysis
-- Cash flow forecasting
-- Financial goal tracking
-
-### AI-Powered Insights
-
-- Personalized financial recommendations
-- Spending pattern analysis
-- Investment opportunity identification
-- Risk assessment
-- Market trend analysis
-- Automated financial advice
-
-### Security & Privacy
-
-- End-to-end encryption
-- Multi-factor authentication
-- Regular security audits
-- GDPR compliance
-- Data retention policies
-- Secure API key management
+- **Multi-Account Dashboard** - Connect and view all financial accounts in one place
+- **AI-Powered Insights** - GPT-4 analyzes your finances for personalized recommendations
+- **Smart Budgeting** - Real-time tracking with intelligent spending analysis
+- **Investment Optimization** - Portfolio analysis and opportunity identification
+- **Cash Flow Forecasting** - Predict future financial states and plan ahead
+- **Secure & Private** - Bank-level encryption with multi-factor authentication
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18.17.0 or later
-- npm 9.6.7 or later
-- Git
-- Firebase account
-- Plaid developer account
-- OpenAI API key
+- Node.js 18.17+ and npm 9.6+
+- Accounts: [Firebase](https://firebase.google.com/), [Plaid](https://plaid.com/), [OpenAI](https://openai.com/)
 
 ### Installation
 
-1. Clone the repository:
-
 ```bash
+# Clone and install
 git clone https://github.com/MightyJade/finsight-ai-dashboard.git
 cd finsight-ai-dashboard
-```
-
-2. Install dependencies:
-
-```bash
 npm install
-```
 
-### Environment Setup
-
-1. Copy the environment template:
-
-```bash
+# Setup environment
 cp .env.example .env.local
-```
+# Edit .env.local with your API keys
 
-2. Configure your environment variables in `.env.local`:
-
-```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-
-# Plaid Configuration
-PLAID_CLIENT_ID=your_client_id
-PLAID_SECRET=your_secret
-PLAID_ENV=sandbox
-
-# OpenAI Configuration
-OPENAI_API_KEY=your_api_key
-
-# Application Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
-```
-
-## Development
-
-### Local Development
-
-```bash
-# Start development server
+# Start development
 npm run dev
-
-# Run tests
-npm test
-
-# Run type checking
-npm run type-check
-
-# Run linting
-npm run lint
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
 ```
 
-### Testing
+Visit [http://localhost:3000](http://localhost:3000) to see your app.
+
+## Development Commands
 
 ```bash
-# Run unit tests
-npm test
-
-# Run integration tests
-npm run test:integration
-
-# Run E2E tests
-npm run test:e2e
-
-# Run all tests with coverage
-npm run test:coverage
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run test         # Run tests
+npm run lint         # Check code quality
+npm run type-check   # TypeScript validation
 ```
 
-### Code Style
+### Quality Checks (run before committing)
 
-- Follow the TypeScript style guide
-- Use Prettier for code formatting
-- Follow ESLint rules
-- Write meaningful commit messages
-- Include tests for new features
-
-## API Documentation
-
-### Authentication Endpoints
-
-```typescript
-POST / api / auth / login;
-POST / api / auth / register;
-POST / api / auth / logout;
-GET / api / auth / session;
+```bash
+npm run lint && npm run type-check && npm run test:all && npm run build
 ```
 
-### Financial Data Endpoints
+## Documentation
 
-```typescript
-POST / api / plaid / link - token;
-POST / api / plaid / exchange - token;
-GET / api / accounts;
-GET / api / transactions;
-GET / api / balance;
+- **[project.md](project.md)** - Technical architecture and design details
+- **[CLAUDE.md](CLAUDE.md)** - AI assistant guidelines for development
+- **[.cursor/rules/](/.cursor/rules/)** - Detailed development rules and patterns
+- **[API Documentation](docs/API.md)** - API endpoints and usage
+
+## Environment Variables
+
+See `.env.example` for required variables. Key integrations:
+
+- **Firebase** - Authentication and database
+- **Plaid** - Financial account aggregation
+- **OpenAI** - AI-powered insights
+
+## Project Structure
+
 ```
-
-### AI Insights Endpoints
-
-```typescript
-POST /api/insights/generate
-GET /api/insights
-PUT /api/insights/:id
+src/
+├── app/          # Next.js app router
+├── components/   # React components
+├── lib/          # Core configurations
+├── hooks/        # Custom React hooks
+├── utils/        # Utility functions
+└── types/        # TypeScript types
 ```
-
-For detailed API documentation, see [API.md](docs/API.md).
-
-## Deployment
-
-### Environments
-
-- Development: `dev.finsight.ai`
-- Staging: `staging.finsight.ai`
-- Production: `finsight.ai`
-
-### Deployment Process
-
-1. Push to main branch
-2. GitHub Actions runs tests
-3. Vercel deploys to staging
-4. Manual approval for production
-5. Vercel deploys to production
-
-## Security
-
-### Security Measures
-
-- JWT-based authentication
-- Refresh token rotation
-- Rate limiting
-- Input validation
-- API key rotation
-- Regular security audits
-
-### Reporting Security Issues
-
-Please report security issues to security@finsight.ai
 
 ## Contributing
 
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md).
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### Plaid Integration
+- **Plaid "Invalid credentials"** - Verify credentials in `.env.local` and check environment (sandbox/development)
+- **Firebase auth errors** - Add your domain to Firebase Auth settings
+- **OpenAI rate limits** - Check API usage and implement proper rate limiting
+- **Module not found** - Run `npm install` and clear Next.js cache
 
-- **Error**: "Invalid client_id or secret"
-
-  - Solution: Verify your Plaid credentials in `.env.local`
-  - Check if you're using the correct environment (sandbox/development)
-
-- **Error**: "Link token creation failed"
-  - Solution: Ensure your Plaid account is properly configured
-  - Check if you have the necessary permissions
-
-#### Firebase Authentication
-
-- **Error**: "Firebase auth domain mismatch"
-  - Solution: Add your domain to Firebase Auth settings
-  - Update `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` in `.env.local`
-
-#### OpenAI Integration
-
-- **Error**: "Rate limit exceeded"
-  - Solution: Check your OpenAI API usage
-  - Implement proper rate limiting in your code
-
-#### Development Server
-
-- **Error**: "Module not found"
-  - Solution: Run `npm install` to ensure all dependencies are installed
-  - Clear Next.js cache with `npm run clean`
+For detailed troubleshooting, see [project.md](project.md).
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+## Support
 
-Maintainer: [Your Name](mailto:your.email@example.com)
-
-Project Link: [https://github.com/MightyJade/finsight-ai-dashboard](https://github.com/MightyJade/finsight-ai-dashboard)
-
-## Directory Structure & Best Practices
-
-```
-src/
-  app/                # Next.js app directory (routes, pages, API)
-    api/              # API routes (kebab-case filenames, Zod validation)
-    (auth)/           # Auth-related pages and route handlers
-    dashboard/        # Dashboard page and related routes
-    layout.tsx        # App layout
-    globals.css       # Global styles (Tailwind @apply, global typography, theme variables)
-  components/         # React components
-    ui/               # Basic, reusable UI elements (e.g., Button, Input, Card)
-    features/         # Components specific to a feature or domain (e.g., FinancialSummary, BudgetPlanner)
-    layouts/          # Page and section layout components (e.g., DashboardLayout, AuthLayout)
-    plaid/            # Plaid-specific components (e.g., PlaidLinkButton.tsx)
-    providers/        # Context providers (e.g., SessionProvider, ThemeProvider)
-  lib/                # Library initializations, core configuration, and SDK instantiations
-    config.ts         # Environment configuration and validation
-    firebase.ts       # Firebase initialization and core services (Auth, Firestore)
-    plaid.ts          # Plaid client initialization
-    logger.ts         # Winston logger configuration
-  services/           # API/data-fetching logic (e.g., financeService.ts, userService.ts)
-  store/              # Zustand state management
-    slices/           # Individual store slices (e.g., userSlice.ts, accountSlice.ts)
-    hooks.ts          # Custom hooks for accessing store state and actions
-    index.ts          # Root store configuration and export
-  types/              # TypeScript types/interfaces (e.g., user.ts, transaction.ts, api.ts, zod.ts)
-  utils/              # Utility functions (e.g., formatters.ts, validators.ts, dateUtils.ts, constants.ts)
-public/               # Static assets (images, fonts, etc.)
-tests/
-  __fixtures__/       # Mock data for tests
-  __mocks__/          # Manual mocks for libraries
-  e2e/                # End-to-end tests (e.g., Cypress)
-  integration/        # Integration tests
-  unit/               # Unit tests
-
-# Project Root
-.cursor/              # Cursor rules and configuration
-.github/              # GitHub Actions workflows
-.husky/               # Git hooks
-.vscode/              # VSCode settings
-docs/                 # Extended documentation (API.md, ADRs)
-.env.example          # Example environment variables
-.env.local            # Local environment variables (GIT_IGNORED)
-.eslintrc.json        # ESLint configuration
-.gitignore            # Git ignore rules
-.prettierrc.json      # Prettier configuration
-CONTRIBUTING.md       # Contribution guidelines
-LICENSE               # Project license
-next.config.mjs       # Next.js configuration
-package.json          # Project dependencies and scripts
-project.md            # Technical design document
-README.md             # This file
-stylelint.config.js   # Stylelint configuration
-tsconfig.json         # TypeScript configuration
-```
-
-## Guidelines
-
-- **Types**: Shared types/interfaces in `src/types/`. Prefer interfaces for public APIs, type aliases for unions/intersections. Use `src/types/db.ts` for Firestore types and `src/types/zod.ts` for shared Zod schemas.
-- **Services**: API/data-fetching in `src/services/`. Encapsulate external API calls and business logic.
-- **Utils**: Generic, pure utility functions in `src/utils/`. `src/utils/constants.ts` for app-wide constants.
-- **Components**:
-  - Organize by scope: `ui/` (generic), `features/` (domain-specific), `layouts/`, `providers/`.
-  - PascalCase naming. Props interfaces (e.g., `MyComponentProps`).
-  - Prefer smaller, focused components. Adhere to accessibility (`a11y-rules.mdc`).
-- **State Management (Zustand)**: Global state in `src/store/`. Slices in `src/store/slices/`, hooks in `src/store/hooks.ts`. Follow `zustand-rules.mdc`.
-- **Styling (Tailwind CSS)**: Primarily utility classes. Global styles in `src/app/globals.css`. Theme consistency via `tailwind.config.js`. Refer to `curser-rules.mdc` (Color and Global Style Consistency section).
-- **Data Fetching**: Use Next.js Server Components for initial data. Client-side fetching via services, potentially with React Query or SWR.
-- **Error Handling & Logging**: Global error boundaries. Structured, user-friendly errors. Log via centralized logger (`src/lib/logger.ts`) as per `logging-rules.mdc`.
-- **Environment Variables**: Secrets in `.env.local` (not committed), accessed via `src/lib/config.ts`.
-- **Linting/Formatting**: ESLint, Prettier, Stylelint. Fix warnings before commit. `npm run lint`, `npm run format`.
-- **Testing**: Unit, integration, E2E tests in `tests/`. Aim for >80% coverage (`npm run test:coverage`). Follow `curser-rules.mdc` (Testing section).
-- **Documentation**: Keep `README.md`, `project.md`, and JSDoc for complex logic current. Document ADRs in `docs/`.
-- **Firebase**: Use `src/lib/firebase/` for SDK setup and core wrappers. Follow `firebase-rules.mdc`.
-- **API Routes (`src/app/api/`)**: Kebab-case filenames. Input validation with Zod (`api-rules.mdc`). Secure and well-documented.
-- **Security**: Follow guidelines in `curser-rules.mdc` (Security section), `firebase-rules.mdc`, and `api-rules.mdc`.
-- **Accessibility (A11y)**: Prioritize accessibility in all UI development. Refer to `a11y-rules.mdc`.
-
----
-
-**Contributions should follow this structure and best practices for maintainability and scalability.**
+- **Documentation**: [project.md](project.md)
+- **Issues**: [GitHub Issues](https://github.com/MightyJade/finsight-ai-dashboard/issues)
+- **Security**: Report to security@finsight.ai

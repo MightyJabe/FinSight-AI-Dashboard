@@ -296,36 +296,63 @@ User's Financial Snapshot:
 Important Note: Detailed transaction data (spending, income) from linked bank accounts is currently unavailable or incomplete. Therefore, insights regarding spending patterns will be general. Insights will primarily focus on net worth, assets, and liabilities. For more detailed spending analysis and personalized budgeting advice, please ensure bank accounts are linked and transactions are up to date.`;
   }
 
+  // Calculate additional advanced metrics
+  const monthlyExpenses =
+    metrics.totalLiabilities > 0
+      ? metrics.totalLiabilities * 0.03
+      : Object.values(metrics.monthlySpending).reduce((a, b) => a + b, 0) /
+        Object.keys(metrics.monthlySpending).length;
+  const emergencyFundMonths = monthlyExpenses > 0 ? metrics.totalAssets / monthlyExpenses : 0;
+  const debtToAssetRatio =
+    metrics.totalAssets > 0 ? (metrics.totalLiabilities / metrics.totalAssets) * 100 : 0;
+
   promptContent += `
 
-Based on this data, provide 3-5 distinct and actionable insights. Each insight should help the user improve their financial health.
+Advanced Financial Metrics:
+- Emergency Fund Coverage: ${emergencyFundMonths.toFixed(1)} months of expenses
+- Debt-to-Asset Ratio: ${debtToAssetRatio.toFixed(1)}%
+- Estimated Monthly Expenses: $${monthlyExpenses.toLocaleString()}`;
 
-Focus Areas for Insights:
-1.  **Spending Analysis & Savings (if transaction data is available):** Identify specific unusual spending patterns or concrete opportunities for savings. Suggest small, manageable changes.
-2.  **Debt Management:** If liabilities exist, offer specific strategies for debt reduction (e.g., prioritizing high-interest debt).
-3.  **Wealth Building & Investments:** Provide general suggestions for growing assets or improving investment strategies suitable for the user's current financial picture (e.g., diversification, emergency fund adequacy).
-4.  **Financial Health & Risk Assessment:** Highlight key indicators of financial health or potential risks evident from the data.
+  promptContent += `
+
+You are an expert financial advisor with deep knowledge of personal finance best practices. Based on this comprehensive financial data, provide 4-6 sophisticated and highly actionable insights that will meaningfully improve the user's financial health.
+
+Advanced Focus Areas for Insights:
+1. **Cash Flow & Liquidity Analysis:** Analyze emergency fund adequacy, cash flow patterns, and liquidity risk. Provide specific recommendations for optimizing cash positions.
+2. **Debt Optimization Strategy:** If debt exists, provide detailed debt payoff strategies including avalanche vs. snowball methods, refinancing opportunities, and debt consolidation analysis.
+3. **Spending Pattern Intelligence:** Identify subtle spending trends, seasonal patterns, and behavioral insights. Suggest micro-optimizations and behavioral changes.
+4. **Investment & Growth Strategy:** Analyze asset allocation opportunities, tax-advantaged account utilization, and wealth-building strategies appropriate for their financial situation.
+5. **Risk Management & Protection:** Assess financial vulnerabilities, insurance gaps, and recommend protective measures.
+6. **Financial Health Score & Benchmarking:** Compare their metrics to optimal ranges and provide specific improvement strategies.
 
 For each insight, provide:
-- A clear "title".
-- A concise "description" explaining the observation and its implication.
-- A list of 1-3 highly specific, small, and actionable "actionItems". Example: "Transfer $50 to your emergency fund this week" instead of "Save more money".
-- A "priority" (high, medium, low) based on urgency and potential impact.
+- A clear, engaging "title" that captures the key opportunity or concern
+- A detailed "description" that explains the analysis, implications, and why this matters for their financial future
+- A list of 2-4 highly specific, time-bound, and actionable "actionItems" with dollar amounts and deadlines where appropriate
+- A "priority" (high, medium, low) based on potential financial impact and urgency
 
-Also include an overall "summary" of the user's financial situation and a few general "nextSteps" the user could consider.
+Requirements for actionItems:
+- Include specific dollar amounts when relevant (e.g., "Transfer $500 to emergency fund by month-end")
+- Set realistic timeframes (e.g., "within 30 days", "by next month")
+- Focus on high-impact, low-effort actions first
+- Provide concrete next steps, not general advice
+
+Also include:
+- A comprehensive "summary" that synthesizes their overall financial position and trajectory
+- Strategic "nextSteps" that outline a 3-6 month financial improvement roadmap
 
 Format your entire response STRICTLY as a single JSON object with the following structure (no markdown, no conversational text outside the JSON values):
 {
   "insights": [
     {
-      "title": "string (concise and informative)",
-      "description": "string (clear explanation and implication)",
-      "actionItems": ["string (specific, small, actionable step)"],
+      "title": "string (engaging and specific)",
+      "description": "string (detailed analysis and implications)",
+      "actionItems": ["string (specific, time-bound, measurable action)"],
       "priority": "high" | "medium" | "low"
     }
   ],
-  "summary": "string (brief overview of financial health)",
-  "nextSteps": ["string (general recommendations for further action)"]
+  "summary": "string (comprehensive financial health assessment)",
+  "nextSteps": ["string (strategic 3-6 month roadmap items)"]
 }`;
 
   return [{ role: 'system', content: promptContent }];
@@ -400,8 +427,14 @@ export async function GET(request: Request) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      return new NextResponse('Unauthorized - Missing token', { status: 401 });
+    }
     const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = decodedToken.uid as string;
+    if (!userId) {
+      return new NextResponse('Unauthorized - Invalid user ID', { status: 401 });
+    }
 
     const url = new URL(request.url);
     const parsedQuery = insightsQuerySchema.safeParse({

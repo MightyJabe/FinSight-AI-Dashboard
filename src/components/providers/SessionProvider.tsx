@@ -4,6 +4,7 @@ import { browserLocalPersistence, onAuthStateChanged, setPersistence, User } fro
 import { createContext, useContext, useEffect, useState } from 'react';
 
 import { auth } from '@/lib/firebase';
+import logger from '@/lib/logger';
 
 interface SerializableUser {
   uid: string;
@@ -51,14 +52,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!auth) {
-      console.error('Firebase auth is not initialized');
+      logger.error('Firebase auth is not initialized');
       setLoading(false);
       return;
     }
 
     // Enable persistence
     setPersistence(auth, browserLocalPersistence).catch(error => {
-      console.error('Error setting persistence:', error);
+      logger.error('Error setting persistence:', { error });
     });
 
     // Get initial user state
@@ -91,7 +92,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             throw new Error('Failed to create session');
           }
         } catch (error) {
-          console.error('Error creating session:', error);
+          logger.error('Error creating session:', { error });
         }
       }
     });
@@ -109,7 +110,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       // Sign out from Firebase
       await auth.signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', { error });
     }
   };
 

@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   /**
    *
    */
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to your error reporting service
     console.error('Error caught by boundary:', error, errorInfo);
     toast.error('Something went wrong. Please try again.');
@@ -43,7 +43,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   /**
    *
    */
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">

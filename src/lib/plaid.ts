@@ -6,14 +6,14 @@ const { plaid: plaidEnvVars } = getConfig();
 
 const PLAID_CLIENT_ID = plaidEnvVars.clientId;
 const PLAID_SECRET = plaidEnvVars.secret; // Changed from PLAID_SECRET_KEY to PLAID_SECRET
-const PLAID_ENV = plaidEnvVars.environment;
+const PLAID_ENV = plaidEnvVars.environment || 'sandbox';
 
 if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   throw new Error('PLAID_CLIENT_ID and PLAID_SECRET must be set in environment variables.');
 }
 
 const plaidConfig = new Configuration({
-  basePath: PlaidEnvironments[PLAID_ENV as keyof typeof PlaidEnvironments],
+  basePath: (PlaidEnvironments[PLAID_ENV as keyof typeof PlaidEnvironments] || PlaidEnvironments.sandbox) as string,
   baseOptions: {
     headers: {
       'PLAID-CLIENT-ID': PLAID_CLIENT_ID,

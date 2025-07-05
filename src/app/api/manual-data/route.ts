@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
 
     // Verify the token
     const token = authHeader.split('Bearer ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized - Missing token' }, { status: 401 });
+    }
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
@@ -110,6 +113,9 @@ export async function POST(request: NextRequest) {
 
     // Verify the token
     const token = authHeader.split('Bearer ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized - Missing token' }, { status: 401 });
+    }
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
 

@@ -1,7 +1,8 @@
 import { endOfMonth, formatISO, startOfMonth, subDays, subMonths } from 'date-fns';
 import { NextResponse } from 'next/server';
 
-import { auth, db } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { db } from '@/lib/firebase-admin';
 import { getAccountBalances, getTransactions } from '@/lib/plaid';
 
 export const dynamic = 'force-dynamic';
@@ -12,14 +13,12 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: Request) {
   try {
-    // Get the Firebase ID token from the Authorization header
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Validate authentication token
+    const authResult = await validateAuthToken(request);
+    if (authResult.error) {
+      return authResult.error;
     }
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId!;
 
     // Get the user's Plaid access token from Firestore
     const accessTokenDoc = await db

@@ -86,31 +86,42 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       rightIcon,
       children,
       asChild = false,
+      disabled,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
+    const isButton = !asChild;
+
+    // If icon-only, require aria-label
+    const isIconOnly = !children && (size === 'icon' || size === 'icon-sm' || size === 'icon-lg');
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, fullWidth, isLoading, className }))}
         ref={ref}
+        type={isButton ? (props.type as 'button' | 'submit' | 'reset') || 'button' : undefined}
+        aria-busy={isLoading || undefined}
+        aria-disabled={disabled || isLoading || undefined}
+        disabled={isButton ? Boolean(disabled || isLoading) : undefined}
+        role={!isButton ? 'button' : undefined}
+        tabIndex={!isButton && (disabled || isLoading) ? -1 : undefined}
+        {...(isIconOnly && { 'aria-label': props['aria-label'] })}
         {...props}
       >
-        {asChild ? (
-          children
-        ) : (
-          <>
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              </div>
-            )}
-            {leftIcon && <span className="mr-2">{leftIcon}</span>}
-            {children}
-            {rightIcon && <span className="ml-2">{rightIcon}</span>}
-          </>
+        {isLoading && (
+          <span
+            className="absolute inset-0 flex items-center justify-center"
+            aria-live="polite"
+            aria-label="Loading"
+          >
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          </span>
         )}
+        {leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {children}
+        {rightIcon && <span className="ml-2">{rightIcon}</span>}
       </Comp>
     );
   }

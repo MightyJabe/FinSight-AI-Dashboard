@@ -45,7 +45,7 @@ describe('OpenAI Integration Tests', () => {
       ],
     });
 
-    expect(response.choices[0].message.content).toBe('Test insight');
+    expect(response.choices[0]?.message.content).toBe('Test insight');
   });
 
   it('should handle API errors gracefully', async () => {

@@ -6,6 +6,11 @@ import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// Validate Firebase configuration
+if (!firebaseEnv.apiKey || !firebaseEnv.authDomain || !firebaseEnv.projectId || !firebaseEnv.appId || !firebaseEnv.storageBucket || !firebaseEnv.messagingSenderId) {
+  throw new Error('Firebase configuration is incomplete. Please check your environment variables.');
+}
+
 // Firebase configuration
 const firebaseConfig = {
   apiKey: firebaseEnv.apiKey,
@@ -17,7 +22,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 

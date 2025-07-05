@@ -15,6 +15,9 @@ export async function POST(request: Request) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json({ error: 'Invalid token format' }, { status: 401 });
+    }
 
     // Create a session cookie
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days

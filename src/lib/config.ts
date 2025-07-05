@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import logger from './logger';
+
 // Environment variables validation schema
 const envSchema = z.object({
   // Firebase Client
@@ -63,10 +65,9 @@ if (typeof process !== 'undefined' && process.env) {
   if (result.success) {
     parsedEnv = result.data;
   } else {
-    console.error(
-      'Failed to parse environment variables. Zod validation errors:',
-      result.error.format()
-    );
+    logger.error('Failed to parse environment variables. Zod validation errors:', {
+      errors: result.error.format(),
+    });
   }
 }
 
@@ -112,7 +113,7 @@ export function getConfig(): Config {
       !config.firebase.projectId ||
       !config.firebase.appId
     ) {
-      console.error(
+      logger.error(
         'Firebase client configuration is incomplete. Check .env.local and ensure values are not empty and correctly set.'
       );
       // Optionally, throw an error or display a message to the user

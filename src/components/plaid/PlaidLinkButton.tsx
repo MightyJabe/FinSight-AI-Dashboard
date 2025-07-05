@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { usePlaidLink } from 'react-plaid-link';
 
 import { auth } from '@/lib/firebase';
+import logger from '@/lib/logger';
 
 interface PlaidLinkButtonProps {
   onSuccess?: () => void;
@@ -42,14 +43,14 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Token exchange error:', errorData);
+          logger.error('Token exchange error:', { errorData });
           throw new Error('Failed to exchange token');
         }
 
         toast.success('Successfully connected bank account!');
         onSuccess?.();
       } catch (error) {
-        console.error('Error exchanging token:', error);
+        logger.error('Error exchanging token:', { error });
         toast.error('Failed to connect bank account. Please try again.');
       } finally {
         setLoading(false);
@@ -57,7 +58,7 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
     },
     onExit: err => {
       if (err) {
-        console.error('Plaid Link error:', err);
+        logger.error('Plaid Link error:', { err });
         toast.error('Failed to connect bank account. Please try again.');
       }
     },
@@ -81,13 +82,13 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
       });
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Link token error:', errorData);
+        logger.error('Link token error:', { errorData });
         throw new Error('Failed to create link token');
       }
       const { linkToken: newLinkToken } = await response.json();
       setLinkToken(newLinkToken);
     } catch (error) {
-      console.error('Error creating link token:', error);
+      logger.error('Error creating link token:', { error });
       toast.error('Failed to connect bank account. Please try again.');
     } finally {
       setLoading(false);

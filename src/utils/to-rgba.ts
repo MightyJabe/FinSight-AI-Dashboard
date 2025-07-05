@@ -13,7 +13,7 @@ export function toRgba(color: string, alpha: number): string {
   }
   // Match both rgb(99,102,241) and rgb(99 102 241)
   const rgbMatch = color.match(/rgb\(([^)]+)\)/);
-  if (rgbMatch) {
+  if (rgbMatch && rgbMatch[1]) {
     const parts = rgbMatch[1].trim().split(/[ ,]+/);
     return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha})`;
   }

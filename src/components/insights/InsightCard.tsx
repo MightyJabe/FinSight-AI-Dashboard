@@ -16,7 +16,7 @@ interface InsightCardProps {
 }
 
 const priorityStyles: Record<
-  string,
+  'high' | 'medium' | 'low',
   { bg: string; text: string; border: string; badgeBg: string; badgeText: string }
 > = {
   high: {

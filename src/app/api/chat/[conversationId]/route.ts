@@ -18,8 +18,14 @@ export async function DELETE(
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json({ error: 'Unauthorized - Missing token' }, { status: 401 });
+    }
     const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = decodedToken.uid as string;
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - Invalid user ID' }, { status: 401 });
+    }
 
     const { conversationId } = params;
 

@@ -83,71 +83,80 @@ export function Navigation() {
       </div>
 
       <div className="flex-grow overflow-y-auto p-4 space-y-1">
-        {primaryNavigationItems.map(item => {
-          const isActive =
-            pathname === item.href ||
-            (item.href === '/dashboard' && pathname.startsWith('/dashboard'));
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                isActive
-                  ? 'bg-primary/10 text-primary shadow-sm'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-              }`}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <item.icon
-                className={`h-5 w-5 transition-transform duration-200 ${
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground group-hover:text-accent-foreground'
-                }`}
-                aria-hidden="true"
-              />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          );
-        })}
+        <ul>
+          {primaryNavigationItems.map(item => {
+            const isActive =
+              pathname === item.href ||
+              (item.href === '/dashboard' && pathname.startsWith('/dashboard'));
+            return (
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    isActive
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <item.icon
+                    className={`h-5 w-5 transition-transform duration-200 ${
+                      isActive
+                        ? 'text-primary'
+                        : 'text-muted-foreground group-hover:text-accent-foreground'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       <div className="mt-auto p-4 border-t space-y-1">
-        {secondaryNavigationItems.map(item => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                isActive
-                  ? 'bg-accent/80 text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-              }`}
-              aria-current={isActive ? 'page' : undefined}
+        <ul>
+          {secondaryNavigationItems.map(item => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    isActive
+                      ? 'bg-accent/80 text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <item.icon
+                    className={`h-5 w-5 transition-transform duration-200 ${
+                      isActive
+                        ? 'text-accent-foreground'
+                        : 'text-muted-foreground group-hover:text-accent-foreground'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+          <li>
+            <button
+              aria-label="Logout"
+              onClick={handleLogout}
+              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
-              <item.icon
-                className={`h-5 w-5 transition-transform duration-200 ${
-                  isActive
-                    ? 'text-accent-foreground'
-                    : 'text-muted-foreground group-hover:text-accent-foreground'
-                }`}
+              <LogOut
+                className="h-5 w-5 text-muted-foreground group-hover:text-red-600"
                 aria-hidden="true"
               />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          );
-        })}
-        <button
-          onClick={handleLogout}
-          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-        >
-          <LogOut
-            className="h-5 w-5 text-muted-foreground group-hover:text-red-600"
-            aria-hidden="true"
-          />
-          <span className="truncate">Logout</span>
-        </button>
+              <span className="truncate">Logout</span>
+            </button>
+          </li>
+        </ul>
       </div>
 
       <div className="p-4 border-t">

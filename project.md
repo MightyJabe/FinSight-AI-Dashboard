@@ -304,4 +304,314 @@ tsconfig.json         # TypeScript configuration
 - Staging: `.env.staging`
 - Production: `.env.production`
 
+## Environment Variables Documentation
+
+### Required Environment Variables
+
+#### Firebase Configuration
+
+**Client SDK (Frontend)**
+- `NEXT_PUBLIC_FIREBASE_API_KEY` - Firebase API key
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` - Firebase auth domain (*.firebaseapp.com)
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID` - Firebase project ID
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket (*.appspot.com)
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID
+- `NEXT_PUBLIC_FIREBASE_APP_ID` - Firebase app ID
+- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` - Optional: Google Analytics measurement ID
+
+**Admin SDK (Backend)**
+- `FIREBASE_PROJECT_ID` - Firebase project ID
+- `FIREBASE_CLIENT_EMAIL` - Service account email
+- `FIREBASE_PRIVATE_KEY` - Service account private key (multi-line string)
+
+#### Plaid Configuration
+
+- `PLAID_CLIENT_ID` - Plaid client ID from dashboard
+- `PLAID_SECRET` - Plaid secret key for chosen environment
+- `PLAID_ENV` - Environment: "sandbox", "development", or "production"
+- `PLAID_PRODUCTS` - Comma-separated list: transactions,auth,identity,balance,investments
+- `PLAID_COUNTRY_CODES` - Comma-separated list: US,CA,GB,ES,FR,NL,IE
+- `PLAID_REDIRECT_URI` - Optional: OAuth redirect URI
+- `PLAID_WEBHOOK_URL` - Optional: Webhook endpoint URL
+
+#### OpenAI Configuration
+
+- `OPENAI_API_KEY` - OpenAI API key
+- `OPENAI_TEMPERATURE` - Model temperature (e.g., "0.5")
+- `OPENAI_MAX_TOKENS` - Max tokens per request (e.g., "2000")
+- `OPENAI_MODEL` - Model name (e.g., "gpt-4-turbo")
+
+#### Application Configuration
+
+- `NEXT_PUBLIC_APP_URL` - Base URL for the application
+- `NEXT_PUBLIC_API_URL` - API base URL (if different from app URL)
+
+### Environment Setup
+
+1. Copy `.env.example` to `.env.local`
+2. Fill in all required values
+3. Ensure `.env.local` is in `.gitignore`
+4. Never commit environment files with actual values
+
+## Detailed Directory Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth group route - login, signup, reset-password, verify-email
+│   │   ├── login/         # Login page
+│   │   ├── signup/        # Registration page
+│   │   ├── reset-password/ # Password reset flow
+│   │   └── verify-email/  # Email verification page
+│   ├── api/               # API routes (kebab-case naming)
+│   │   ├── accounts/      # Financial account endpoints
+│   │   ├── auth/          # Authentication endpoints
+│   │   ├── chat/          # AI chat endpoints
+│   │   ├── insights/      # AI insights endpoints
+│   │   ├── liquid-assets/ # Asset management endpoints
+│   │   ├── manual-data/   # Manual data entry endpoints
+│   │   ├── plaid/         # Plaid integration endpoints
+│   │   │   ├── create-link-token/
+│   │   │   ├── exchange-public-token/
+│   │   │   ├── remove-item/
+│   │   │   └── transactions/
+│   │   └── transactions/  # Transaction endpoints
+│   ├── accounts/          # Accounts management page
+│   ├── chat/              # AI chat interface
+│   ├── dashboard/         # Main dashboard
+│   ├── help/              # Help documentation
+│   ├── insights/          # Financial insights page
+│   ├── manual-data/       # Manual data entry
+│   ├── settings/          # User settings
+│   ├── transactions/      # Transaction history
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/
+│   ├── auth/              # Authentication components
+│   │   ├── AuthGuard.tsx  # Route protection
+│   │   ├── LoginForm.tsx  # Login form
+│   │   ├── SignupForm.tsx # Registration form
+│   │   └── SocialAuth.tsx # Social login buttons
+│   ├── common/            # Shared components
+│   │   ├── ErrorBoundary.tsx
+│   │   ├── ErrorMessage.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Header.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── Logo.tsx
+│   │   └── Navigation.tsx
+│   ├── dashboard/         # Dashboard-specific components
+│   │   ├── AIInsights.tsx
+│   │   ├── AssetsSection.tsx
+│   │   ├── BudgetSection.tsx
+│   │   ├── ChartsSection.tsx
+│   │   ├── DashboardContent.tsx
+│   │   ├── DebtPayoffTimeline.tsx
+│   │   ├── FabModal.tsx
+│   │   ├── FinancialHealthScore.tsx
+│   │   ├── InvestmentPerformance.tsx
+│   │   ├── LiabilitiesSection.tsx
+│   │   ├── NetWorthDisplay.tsx
+│   │   ├── OverviewCards.tsx
+│   │   ├── RecentTransactions.tsx
+│   │   └── UndoToast.tsx
+│   ├── insights/          # Insights components
+│   │   ├── InsightCard.tsx
+│   │   ├── MetricDisplay.tsx
+│   │   ├── PlaidDataWarning.tsx
+│   │   └── SpendingByCategoryDisplay.tsx
+│   ├── layout/            # Layout components
+│   │   ├── ClientLayout.tsx
+│   │   ├── ClientWrapper.tsx
+│   │   └── MainLayout.tsx
+│   ├── plaid/             # Plaid integration
+│   │   └── PlaidLinkButton.tsx
+│   ├── providers/         # Context providers
+│   │   ├── SessionProvider.tsx
+│   │   └── SWRProvider.tsx
+│   ├── transactions/      # Transaction components
+│   │   ├── CategoryBreakdown.tsx
+│   │   ├── DateRangeSelector.tsx
+│   │   └── TransactionsList.tsx
+│   ├── ui/                # Base UI components
+│   │   ├── Button.tsx
+│   │   ├── Tabs.tsx
+│   │   └── Tooltip.tsx
+│   └── widgets/           # Reusable widgets
+│       └── NetWorthWidget.tsx
+├── hooks/                 # Custom React hooks
+│   ├── use-dashboard-data.ts
+│   ├── use-net-worth.ts
+│   ├── use-transactions.ts
+│   └── use-user.ts
+├── lib/                   # Core library code
+│   ├── auth.ts           # Authentication utilities
+│   ├── config.ts         # Environment configuration
+│   ├── finance.ts        # Financial calculations
+│   ├── firebase-admin.ts # Firebase Admin SDK
+│   ├── firebase.ts       # Firebase Client SDK
+│   ├── logger.ts         # Winston logger setup
+│   ├── openai.ts         # OpenAI client
+│   └── plaid.ts          # Plaid client
+├── middleware/            # Next.js middleware
+│   ├── rate-limit.ts     # Rate limiting middleware
+│   └── index.ts          # Main middleware
+├── tests/                 # Test files
+│   ├── api/              # API route tests
+│   │   └── insights.test.ts
+│   ├── components/       # Component tests
+│   │   ├── InsightsPage.test.tsx
+│   │   └── ui/
+│   │       └── Tabs.test.tsx
+│   └── openai/           # OpenAI integration tests
+│       └── openai.test.ts
+├── types/                 # TypeScript types
+│   └── finance.ts        # Financial data types
+└── utils/                 # Utility functions
+    ├── category-color.ts # Category color mapping
+    ├── chart-data.ts     # Chart data formatting
+    ├── format-date.ts    # Date formatting
+    ├── format.ts         # General formatting
+    ├── get-css-var-color.ts # CSS variable utilities
+    ├── tailwind.ts       # Tailwind utilities
+    └── to-rgba.ts        # Color conversion
+```
+
+## Development Best Practices
+
+### Code Organization
+
+1. **Feature-based Structure**: Group related components, hooks, and utilities by feature
+2. **Barrel Exports**: Use index.ts files for cleaner imports
+3. **Separation of Concerns**: Keep business logic in services/lib, UI logic in components
+4. **Type Safety**: Define all data structures with TypeScript interfaces
+
+### API Development
+
+1. **Input Validation**: All API routes must use Zod schemas
+2. **Error Handling**: Return consistent error response format
+3. **Authentication**: Verify JWT tokens on protected routes
+4. **Rate Limiting**: Implement per-user and per-IP limits
+5. **Logging**: Log all API requests and errors
+
+### Component Development
+
+1. **Composition**: Build complex components from simple ones
+2. **Props Interface**: Always define TypeScript interfaces for props
+3. **Error Boundaries**: Wrap feature components in error boundaries
+4. **Loading States**: Handle loading, error, and empty states
+5. **Accessibility**: Include ARIA labels and keyboard navigation
+
+### State Management
+
+1. **SWR for Server State**: Use SWR for data fetching and caching
+2. **React Hooks for Local State**: useState, useReducer for component state
+3. **Context for Global State**: Authentication, theme, user preferences
+4. **Avoid Prop Drilling**: Use context or component composition
+
+### Testing Strategy
+
+1. **Unit Tests**: Test utilities, hooks, and pure functions
+2. **Integration Tests**: Test API routes with mocked dependencies
+3. **Component Tests**: Test user interactions and state changes
+4. **E2E Tests**: Test critical user flows (login, transactions, etc.)
+5. **Coverage Target**: Maintain >80% code coverage
+
+## Troubleshooting Guide
+
+### Common Development Issues
+
+#### Build Errors
+
+**Module not found**
+```bash
+# Clear Next.js cache
+rm -rf .next
+npm install
+npm run build
+```
+
+**TypeScript errors**
+```bash
+# Check for type errors
+npm run type-check
+# Generate missing types
+npm run generate-types
+```
+
+#### Runtime Errors
+
+**Firebase Auth Errors**
+- Verify Firebase configuration in `.env.local`
+- Check domain is added to Firebase Auth settings
+- Ensure service account has proper permissions
+
+**Plaid Connection Issues**
+- Verify Plaid environment matches credentials
+- Check if products are enabled in Plaid dashboard
+- Ensure redirect URI is registered (for OAuth)
+
+**OpenAI Rate Limits**
+- Implement exponential backoff
+- Cache AI responses when appropriate
+- Monitor usage in OpenAI dashboard
+
+#### Database Issues
+
+**Firestore Permission Denied**
+- Check security rules in Firebase console
+- Verify user authentication state
+- Ensure indexes are created for complex queries
+
+**Data Sync Issues**
+- Check Plaid webhook configuration
+- Verify background jobs are running
+- Monitor Firestore usage limits
+
+### Performance Optimization
+
+1. **Code Splitting**: Use dynamic imports for large components
+2. **Image Optimization**: Use Next.js Image component
+3. **Bundle Analysis**: Run `npm run analyze` to check bundle size
+4. **Caching Strategy**: Implement proper cache headers
+5. **Database Queries**: Use composite indexes for complex queries
+
+### Security Checklist
+
+1. **Authentication**: Verify JWT on every protected route
+2. **Authorization**: Check user permissions for data access
+3. **Input Validation**: Sanitize all user inputs
+4. **SQL Injection**: Use parameterized queries (N/A for Firestore)
+5. **XSS Prevention**: Sanitize rendered content
+6. **CSRF Protection**: Use Next.js built-in CSRF protection
+7. **Rate Limiting**: Implement on all public endpoints
+8. **Secrets Management**: Never commit secrets, use env vars
+
+## Monitoring and Logging
+
+### Application Monitoring
+
+- **Performance**: Vercel Analytics for web vitals
+- **Errors**: Sentry for error tracking
+- **Uptime**: Vercel monitoring
+- **API Metrics**: Custom logging with Winston
+
+### Log Levels
+
+```typescript
+logger.error('Critical error', { error, userId, context });
+logger.warn('Warning condition', { warning, metadata });
+logger.info('Information', { action, userId });
+logger.debug('Debug information', { data });
+```
+
+### Metrics to Track
+
+1. **User Metrics**: Signups, logins, active users
+2. **Financial Metrics**: Accounts linked, transactions synced
+3. **AI Usage**: Insights generated, tokens used
+4. **Performance**: API response times, database query times
+5. **Errors**: Error rates by endpoint, error types
+
 > For detailed development roadmap and future plans, please refer to [ROADMAP.md](ROADMAP.md).
