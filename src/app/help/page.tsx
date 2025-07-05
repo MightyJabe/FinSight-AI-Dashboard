@@ -102,14 +102,13 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className="pl-72">
-      <div className="container max-w-4xl py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Help & Support</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Get help with using FinSight AI and find answers to common questions.
-          </p>
-        </div>
+    <div className="max-w-full">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Help & Support</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Get help with using FinSight AI and find answers to common questions.
+        </p>
+      </div>
 
         {/* Getting Started */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
@@ -193,7 +192,6 @@ export default function HelpPage() {
               ))}
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

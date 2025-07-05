@@ -20,7 +20,7 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const { open, ready } = usePlaidLink({
     token: linkToken,
-    onSuccess: async public_token => {
+    onSuccess: async (public_token: string) => {
       try {
         setLoading(true);
 
@@ -56,7 +56,7 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
         setLoading(false);
       }
     },
-    onExit: err => {
+    onExit: (err: any) => {
       if (err) {
         logger.error('Plaid Link error:', { err });
         toast.error('Failed to connect bank account. Please try again.');

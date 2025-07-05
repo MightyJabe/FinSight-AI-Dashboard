@@ -227,14 +227,14 @@ export default function ManualDataPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <header className="mb-8">
+    <div className="max-w-full">
+      <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Add Financial Data</h1>
         <p className="mt-2 text-lg text-gray-600">
           Add accounts, transactions, and other financial information that isn&apos;t connected to
           your bank.
         </p>
-      </header>
+      </div>
 
       {/* Tabs */}
       <div className="flex mb-8 border-b">

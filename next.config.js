@@ -57,7 +57,7 @@ const nextConfig = {
     ];
   },
   
-  // Bundle analyzer
+  // Bundle analyzer (disabled webpack optimization causing vendor.js issues)
   webpack: (config, { isServer }) => {
     if (process.env.ANALYZE) {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
@@ -70,39 +70,12 @@ const nextConfig = {
       );
     }
     
-    // Optimize chunks
-    config.optimization = {
-      ...config.optimization,
-      moduleIds: 'deterministic',
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /node_modules/,
-            priority: 20
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 10,
-            reuseExistingChunk: true,
-            enforce: true
-          }
-        }
-      }
-    };
-    
     return config;
   },
   
   // Experimental features for performance
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false, // Disabled to fix vendor.js exports error
     scrollRestoration: true,
   },
   

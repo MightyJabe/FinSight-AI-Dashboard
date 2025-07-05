@@ -47,14 +47,14 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
 
   // Authenticated layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased">
+    <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased overflow-x-hidden">
       <SWRProvider>
         <ErrorBoundary>
-          <div className="flex min-h-screen">
+          <div className="lg:flex min-h-screen overflow-x-hidden">
             <Navigation />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 w-full">
               <Header />
-              <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8">{children}</main>
+              <main className="flex-1 w-full max-w-none px-4 py-8 pt-16 lg:pt-8 lg:px-8 overflow-x-hidden">{children}</main>
               <Footer />
               <Toaster position="top-right" />
             </div>

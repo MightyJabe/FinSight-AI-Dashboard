@@ -7,8 +7,10 @@ import {
   ListChecks,
   LogOut,
   MessageCircle,
+  Moon,
   PlusCircle,
   Settings,
+  Sun,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -17,6 +19,7 @@ import { useState } from 'react';
 
 import { useAuth } from '@/lib/auth';
 import { auth as firebaseAuth } from '@/lib/firebase';
+import { useTheme } from '@/hooks/useTheme';
 
 const primaryNavigationItems = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -40,6 +43,7 @@ export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -68,11 +72,37 @@ export function Navigation() {
   const displayEmail = user?.email || 'No email available';
 
   return (
-    <nav
-      className="fixed left-0 top-0 h-full w-72 border-r bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 flex flex-col"
-      role="navigation"
-      aria-label="Main navigation"
-    >
+    <>
+      {/* Mobile menu overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      
+      {/* Mobile menu button */}
+      <button
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-background border shadow-sm"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle navigation"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {isOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
+
+      <nav
+        className={`fixed left-0 top-0 h-full w-72 border-r bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 flex flex-col transition-transform duration-300 z-50 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } lg:relative lg:z-auto`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
       <div className="p-6 border-b">
         <Link
           href={user ? '/dashboard' : '/'}
@@ -156,6 +186,20 @@ export function Navigation() {
               <span className="truncate">Logout</span>
             </button>
           </li>
+          <li>
+            <button
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              onClick={toggleTheme}
+              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true" />
+              ) : (
+                <Moon className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true" />
+              )}
+              <span className="truncate">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+          </li>
         </ul>
       </div>
 
@@ -183,6 +227,7 @@ export function Navigation() {
           <div className="text-sm text-muted-foreground">Not signed in</div>
         )}
       </div>
-    </nav>
+      </nav>
+    </>
   );
 }

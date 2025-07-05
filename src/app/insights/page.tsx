@@ -160,24 +160,28 @@ export default function InsightsPage() {
         : null;
 
   return (
-    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900">AI Insights</h1>
-            <p className="mt-2 text-lg text-gray-600">
-              Get personalized financial recommendations and insights powered by AI.
-            </p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || loading} // Disable if refreshing or initial loading
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-start sm:self-center"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing || loading ? 'animate-spin' : ''}`} />
-            {refreshing || loading ? 'Refreshing...' : 'Refresh Insights'}
-          </button>
-        </div>
+    <div className="max-w-full">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">AI Insights</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Get personalized financial recommendations and insights powered by AI.
+        </p>
+      </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Your Financial Insights</h2>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing || loading} // Disable if refreshing or initial loading
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-start sm:self-center"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing || loading ? 'animate-spin' : ''}`} />
+                {refreshing || loading ? 'Refreshing...' : 'Refresh Insights'}
+              </button>
+            </div>
 
         {insightsData.plaidDataAvailable === false && <PlaidDataWarning />}
 
@@ -234,10 +238,11 @@ export default function InsightsPage() {
           )}
         </div>
 
-        <SpendingByCategoryDisplay
-          spendingData={insightsData.metrics.spendingByCategory}
-          isLoading={loading}
-        />
+            <SpendingByCategoryDisplay
+              spendingData={insightsData.metrics.spendingByCategory}
+              isLoading={loading}
+            />
+        </div>
       </div>
     </div>
   );

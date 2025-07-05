@@ -2,21 +2,39 @@
 
 import { ArrowUpDown, Filter } from 'lucide-react';
 import { useState } from 'react';
-
-import type { Transaction } from '@/lib/finance';
+import { useSession } from '@/components/providers/SessionProvider';
+import { CategoryEditor } from './CategoryEditor';
 import { formatCurrency } from '@/utils/format';
 
+// Enhanced transaction interface
+interface EnhancedTransaction {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  aiCategory?: string;
+  aiConfidence?: number;
+  date: string;
+  description: string;
+  account: string;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface TransactionsListProps {
-  transactions: Transaction[];
+  transactions: EnhancedTransaction[];
 }
 
 /**
  *
  */
 export function TransactionsList({ transactions: initialTransactions }: TransactionsListProps) {
-  const [sortField, setSortField] = useState<keyof Transaction>('date');
+  const { firebaseUser } = useSession();
+  const [sortField, setSortField] = useState<keyof EnhancedTransaction>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [updatingCategories, setUpdatingCategories] = useState<Set<string>>(new Set());
 
   // Get unique categories
   const categories = ['all', ...new Set(initialTransactions.map(t => t.category))];
@@ -50,12 +68,51 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
       return 0;
     });
 
-  const handleSort = (field: keyof Transaction) => {
+  const handleSort = (field: keyof EnhancedTransaction) => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('desc');
+    }
+  };
+
+  const handleCategoryUpdate = async (transactionId: string, newCategory: string, transactionType: 'income' | 'expense') => {
+    if (!firebaseUser) return;
+
+    setUpdatingCategories(prev => new Set(prev).add(transactionId));
+
+    try {
+      const idToken = await firebaseUser.getIdToken();
+      const response = await fetch('/api/transactions/update-category', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId,
+          category: newCategory,
+          type: transactionType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update category');
+      }
+
+      // Trigger a refresh of the parent component
+      window.dispatchEvent(new CustomEvent('transaction-updated'));
+      
+    } catch (error) {
+      console.error('Error updating category:', error);
+      // You could add a toast notification here
+    } finally {
+      setUpdatingCategories(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(transactionId);
+        return newSet;
+      });
     }
   };
 
@@ -126,9 +183,16 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
                 <td className="px-4 py-3">{new Date(transaction.date).toLocaleDateString()}</td>
                 <td className="px-4 py-3 font-medium">{transaction.description}</td>
                 <td className="px-4 py-3">
-                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs">
-                    {transaction.category}
-                  </span>
+                  <CategoryEditor
+                    currentCategory={transaction.category}
+                    aiCategory={transaction.aiCategory}
+                    aiConfidence={transaction.aiConfidence}
+                    transactionType={transaction.type}
+                    onCategoryChange={(newCategory) => 
+                      handleCategoryUpdate(transaction.id, newCategory, transaction.type)
+                    }
+                    disabled={updatingCategories.has(transaction.id)}
+                  />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>

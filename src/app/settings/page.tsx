@@ -76,14 +76,13 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="pl-72">
-      <div className="container max-w-4xl py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Settings</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Manage your account preferences and app configuration.
-          </p>
-        </div>
+    <div className="max-w-full">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Settings</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Manage your account preferences and app configuration.
+        </p>
+      </div>
 
         <div className="space-y-8">
           {settingsSections.map(section => (
@@ -141,7 +140,6 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

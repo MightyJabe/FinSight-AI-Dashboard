@@ -4,7 +4,22 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
-import type { Transaction } from '@/lib/finance';
+
+// Extended transaction interface with AI categorization data
+interface EnhancedTransaction {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  aiCategory?: string;
+  aiConfidence?: number;
+  date: string;
+  description: string;
+  account: string;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface PlaidTransaction {
   transaction_id: string;
@@ -33,7 +48,7 @@ interface ManualTransaction {
  */
 export default function TransactionsPage() {
   const { user: _user, firebaseUser, loading: authLoading } = useSession();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<EnhancedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,14 +62,19 @@ export default function TransactionsPage() {
       // Get the ID token
       const idToken = await firebaseUser.getIdToken();
 
-      // Fetch both Plaid and manual transactions
-      const [plaidResponse, manualResponse] = await Promise.all([
+      // Fetch Plaid, manual transactions, and AI categorized data
+      const [plaidResponse, manualResponse, categorizedResponse] = await Promise.all([
         fetch('/api/plaid/transactions', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
         }),
         fetch('/api/manual-data?type=transactions', {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }),
+        fetch('/api/transactions/categorized', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
@@ -74,19 +94,33 @@ export default function TransactionsPage() {
         manualResponse.json(),
       ]);
 
+      // Get categorized data
+      let categorizedData: any = { categorizedTransactions: {} };
+      if (categorizedResponse.ok) {
+        const catData = await categorizedResponse.json();
+        if (catData.success) {
+          categorizedData = catData.data;
+        }
+      }
+
       // Map Plaid transactions to our internal format
-      const plaidTransactions = plaidData.transactions.map((t: PlaidTransaction) => ({
-        id: t.transaction_id,
-        date: t.date,
-        description: t.name,
-        amount: t.amount,
-        category: t.category?.[0] || 'Uncategorized',
-        account: t.account_name,
-        accountId: t.account_id,
-        type: t.amount > 0 ? 'income' : 'expense',
-        createdAt: t.date,
-        updatedAt: t.date,
-      }));
+      const plaidTransactions = plaidData.transactions.map((t: PlaidTransaction) => {
+        const categorizedInfo = categorizedData.categorizedTransactions[t.transaction_id];
+        return {
+          id: t.transaction_id,
+          date: t.date,
+          description: t.name,
+          amount: t.amount,
+          category: categorizedInfo?.aiCategory || t.category?.[0] || 'Uncategorized',
+          aiCategory: categorizedInfo?.aiCategory,
+          aiConfidence: categorizedInfo?.aiConfidence,
+          account: t.account_name,
+          accountId: t.account_id,
+          type: categorizedInfo?.type || (t.amount > 0 ? 'income' : 'expense'),
+          createdAt: t.date,
+          updatedAt: t.date,
+        };
+      });
 
       // Map manual transactions to our internal format
       const manualTransactions = manualData.map((t: ManualTransaction) => ({
@@ -118,6 +152,14 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
+
+    // Listen for transaction updates
+    const handleTransactionUpdate = () => {
+      setTimeout(() => fetchTransactions(), 500); // Small delay to ensure data is saved
+    };
+    
+    window.addEventListener('transaction-updated', handleTransactionUpdate);
+    return () => window.removeEventListener('transaction-updated', handleTransactionUpdate);
   }, [fetchTransactions]);
 
   if (authLoading || loading) {
@@ -129,15 +171,15 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="pl-72">
-      <div className="container max-w-7xl py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Track your spending, analyze patterns, and manage your budget across all accounts.
-          </p>
-        </div>
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+    <div className="max-w-full">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Track your spending, analyze patterns, and manage your budget across all accounts.
+        </p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-6">
           <TransactionsContent transactions={transactions} />
         </div>
       </div>

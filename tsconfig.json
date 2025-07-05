@@ -23,6 +23,8 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "removeComments": true,
+    "skipDefaultLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "plugins": [
       {
         "name": "next"

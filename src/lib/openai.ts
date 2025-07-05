@@ -4,10 +4,15 @@ import { getConfig } from './config';
 
 const { openai: openaiEnvVars } = getConfig();
 
-// Initialize OpenAI client with API key from environment variables
-const openai = new OpenAI({
-  apiKey: openaiEnvVars.apiKey,
-});
+// Initialize OpenAI client only on server-side
+let openai: OpenAI | null = null;
+
+if (typeof window === 'undefined') {
+  // Server-side only
+  openai = new OpenAI({
+    apiKey: openaiEnvVars.apiKey,
+  });
+}
 
 // Type for chat completion response
 export type ChatCompletionResponse = {
@@ -36,8 +41,8 @@ export async function generateChatCompletion(
   config: OpenAIConfig = {}
 ): Promise<ChatCompletionResponse> {
   try {
-    if (!openaiEnvVars.apiKey) {
-      console.warn('OpenAI API key is missing. Using fallback response.');
+    if (!openai || !openaiEnvVars.apiKey) {
+      console.warn('OpenAI API key is missing or client not initialized. Using fallback response.');
       return {
         content:
           'I notice you have not connected your bank account yet. To get personalized financial insights, please connect your bank account through Plaid. In the meantime, here are some general financial tips:\n\n1. Start building an emergency fund with 3-6 months of expenses\n2. Pay off high-interest debt as quickly as possible\n3. Consider investing in a diversified portfolio\n4. Review your spending habits and look for areas to save\n5. Set up automatic savings and bill payments',
@@ -82,4 +87,5 @@ export async function generateChatCompletion(
   }
 }
 
+// Export openai client (may be null on client-side)
 export { openai };

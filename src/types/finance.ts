@@ -4,9 +4,13 @@ export interface Transaction {
   id: string;
   type: 'income' | 'expense';
   amount: number;
-  category: string | string[];
+  category: string;
   date: string;
-  description?: string;
+  description: string;
+  account: string;
+  accountId: string;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
   recurrence?: string;
 }
 

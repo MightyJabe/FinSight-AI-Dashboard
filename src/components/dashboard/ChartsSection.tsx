@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipItem,
 } from 'chart.js';
-import { HelpCircle, PieChart, TrendingUp } from 'lucide-react';
+import { HelpCircle, PieChart, TrendingUp, Maximize2 } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
 
@@ -41,12 +41,13 @@ ChartJS.register(
 
 interface ChartsSectionProps {
   overview: Overview;
+  isInteractive?: boolean;
 }
 
 /**
  * Optimized charts section with memoization and proper cleanup
  */
-export const ChartsSection = memo(function ChartsSection({ overview }: ChartsSectionProps) {
+export const ChartsSection = memo(function ChartsSection({ overview, isInteractive = true }: ChartsSectionProps) {
   const { netWorthHistory, monthlyIncome, monthlyExpenses, monthlySavings, accounts, liabilities } =
     overview;
 
@@ -65,6 +66,8 @@ export const ChartsSection = memo(function ChartsSection({ overview }: ChartsSec
   });
 
   const [chartError, setChartError] = useState<string | null>(null);
+  const [expandedChart, setExpandedChart] = useState<string | null>(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
 
   useEffect(() => {
     setChartColors({
@@ -186,24 +189,56 @@ export const ChartsSection = memo(function ChartsSection({ overview }: ChartsSec
 
   return (
     <TooltipProvider>
-      <div className="space-y-8">
+      <div className={`grid gap-6 ${expandedChart ? 'grid-cols-1' : 'lg:grid-cols-2'} transition-all duration-300`}>
         {/* Net Worth Trend */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 transition-all duration-200 ${
+          expandedChart === 'networth' ? 'col-span-full' : ''
+        }`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center">
-              Net Worth Trend
-              <UITooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Your net worth over time, showing growth and trends.</p>
-                </TooltipContent>
-              </UITooltip>
-            </h2>
-            <TrendingUp className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-gray-100">
+                Net Worth Trend
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-1 h-4 w-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Your net worth over time, showing growth and trends.</p>
+                  </TooltipContent>
+                </UITooltip>
+              </h2>
+              {isInteractive && (
+                <div className="flex items-center gap-2">
+                  {(['7d', '30d', '90d', '1y'] as const).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setSelectedTimeRange(range)}
+                      className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                        selectedTimeRange === range
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              {isInteractive && (
+                <button
+                  onClick={() => setExpandedChart(expandedChart === 'networth' ? null : 'networth')}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title={expandedChart === 'networth' ? 'Collapse' : 'Expand'}
+                >
+                  <Maximize2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="h-64">
+          <div className={`${expandedChart === 'networth' ? 'h-96' : 'h-64'} transition-all duration-300`}>
             {renderChart(
               <Line
                 data={netWorthData}

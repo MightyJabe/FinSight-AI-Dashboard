@@ -29,7 +29,7 @@ export function BudgetSection({ budgetCategories = [] }: BudgetSectionProps) {
     visible: (i: number) => ({
       opacity: 1,
       y: 0,
-      transition: { delay: i * 0.08, type: 'spring', stiffness: 80 },
+      transition: { delay: i * 0.08, type: 'spring' as const, stiffness: 80 },
     }),
   };
 
