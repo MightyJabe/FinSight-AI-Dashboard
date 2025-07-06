@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { 
-  navigateToPage, 
-  waitForPageLoad, 
-  mockAuthentication, 
+import {
+  navigateToPage,
+  waitForPageLoad,
+  mockAuthentication,
   mockAPIResponse,
-  waitForElement,
-  expectElementToContainText 
+  expectElementToContainText,
 } from './utils/test-helpers';
 
 test.describe('Dashboard', () => {
@@ -21,8 +20,8 @@ test.describe('Dashboard', () => {
         totalBalance: 15000,
         monthlySpending: 3500,
         accountsCount: 3,
-        lastUpdated: new Date().toISOString()
-      }
+        lastUpdated: new Date().toISOString(),
+      },
     });
 
     await navigateToPage(page, '/dashboard');
@@ -47,25 +46,27 @@ test.describe('Dashboard', () => {
             type: 'depository',
             subtype: 'checking',
             balance: 5000,
-            institution: 'Test Bank'
+            institution: 'Test Bank',
           },
           {
-            id: 'acc_2', 
+            id: 'acc_2',
             name: 'Test Savings',
             type: 'depository',
             subtype: 'savings',
             balance: 10000,
-            institution: 'Test Bank'
-          }
-        ]
-      }
+            institution: 'Test Bank',
+          },
+        ],
+      },
     });
 
     await navigateToPage(page, '/dashboard');
     await waitForPageLoad(page);
 
     // Look for balance information
-    const balanceElements = page.locator(':has-text("$"), :has-text("balance"), :has-text("Balance")');
+    const balanceElements = page.locator(
+      ':has-text("$"), :has-text("balance"), :has-text("Balance")'
+    );
     await expect(balanceElements.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -77,26 +78,28 @@ test.describe('Dashboard', () => {
           {
             id: 'txn_1',
             name: 'Grocery Store',
-            amount: 85.50,
+            amount: 85.5,
             date: '2024-01-15',
-            category: ['Food and Drink', 'Groceries']
+            category: ['Food and Drink', 'Groceries'],
           },
           {
             id: 'txn_2',
             name: 'Gas Station',
-            amount: 45.00,
+            amount: 45.0,
             date: '2024-01-14',
-            category: ['Transportation', 'Gas Stations']
-          }
-        ]
-      }
+            category: ['Transportation', 'Gas Stations'],
+          },
+        ],
+      },
     });
 
     await navigateToPage(page, '/dashboard');
     await waitForPageLoad(page);
 
     // Look for transaction elements
-    const transactionSection = page.locator(':has-text("Recent"), :has-text("Transactions"), .transaction');
+    const transactionSection = page.locator(
+      ':has-text("Recent"), :has-text("Transactions"), .transaction'
+    );
     await expect(transactionSection.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -107,10 +110,10 @@ test.describe('Dashboard', () => {
         categories: [
           { category: 'Food and Drink', amount: 850, percentage: 35 },
           { category: 'Transportation', amount: 650, percentage: 27 },
-          { category: 'Entertainment', amount: 450, percentage: 18 }
+          { category: 'Entertainment', amount: 450, percentage: 18 },
         ],
-        totalSpent: 2400
-      }
+        totalSpent: 2400,
+      },
     });
 
     await navigateToPage(page, '/dashboard');
@@ -126,7 +129,9 @@ test.describe('Dashboard', () => {
     await waitForPageLoad(page);
 
     // Test navigation to transactions
-    const transactionsLink = page.locator('a[href*="transactions"], a:has-text("Transactions"), a:has-text("View all")');
+    const transactionsLink = page.locator(
+      'a[href*="transactions"], a:has-text("Transactions"), a:has-text("View all")'
+    );
     if (await transactionsLink.first().isVisible()) {
       await transactionsLink.first().click();
       await waitForPageLoad(page);
@@ -141,17 +146,19 @@ test.describe('Dashboard', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: {} })
+        body: JSON.stringify({ success: true, data: {} }),
       });
     });
 
     await navigateToPage(page, '/dashboard');
 
     // Look for loading indicators
-    const loadingElements = page.locator('.animate-spin, .loading, :has-text("Loading"), .skeleton');
-    
+    const loadingElements = page.locator(
+      '.animate-spin, .loading, :has-text("Loading"), .skeleton'
+    );
+
     // At least one loading element should be visible initially
-    const hasLoadingElement = await loadingElements.count() > 0;
+    const hasLoadingElement = (await loadingElements.count()) > 0;
     if (hasLoadingElement) {
       await expect(loadingElements.first()).toBeVisible();
     }
@@ -166,16 +173,13 @@ test.describe('Dashboard', () => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, error: 'Server error' })
+        body: JSON.stringify({ success: false, error: 'Server error' }),
       });
     });
 
     await navigateToPage(page, '/dashboard');
     await waitForPageLoad(page);
 
-    // Look for error messages or retry buttons
-    const errorElements = page.locator('.error, :has-text("Error"), :has-text("Try again"), :has-text("Retry")');
-    
     // Should handle errors gracefully without crashing
     const pageContent = page.locator('main, body');
     await expect(pageContent).toBeVisible();
@@ -187,10 +191,12 @@ test.describe('Dashboard', () => {
     await waitForPageLoad(page);
 
     // Check mobile navigation
-    const mobileMenu = page.locator('button[aria-label*="menu"], button[aria-label*="Menu"], .lg\\:hidden button');
+    const mobileMenu = page.locator(
+      'button[aria-label*="menu"], button[aria-label*="Menu"], .lg\\:hidden button'
+    );
     if (await mobileMenu.isVisible()) {
       await expect(mobileMenu).toBeVisible();
-      
+
       // Test mobile menu functionality
       await mobileMenu.click();
       const navigation = page.locator('nav, [role="navigation"]');
@@ -207,14 +213,16 @@ test.describe('Dashboard', () => {
     await waitForPageLoad(page);
 
     // Look for refresh button
-    const refreshButton = page.locator('button:has-text("Refresh"), button[aria-label*="refresh"], button:has([data-testid*="refresh"])');
-    
+    const refreshButton = page.locator(
+      'button:has-text("Refresh"), button[aria-label*="refresh"], button:has([data-testid*="refresh"])'
+    );
+
     if (await refreshButton.isVisible()) {
       await refreshButton.click();
-      
+
       // Should trigger loading state
       const loadingElements = page.locator('.animate-spin, .loading, :has-text("Loading")');
-      if (await loadingElements.count() > 0) {
+      if ((await loadingElements.count()) > 0) {
         await expect(loadingElements.first()).toBeVisible();
       }
     }

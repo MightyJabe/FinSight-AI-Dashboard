@@ -11,8 +11,8 @@ jest.mock('@/lib/ai-categorization', () => ({
       type: 'expense',
       amount: 45.67,
       description: 'WHOLE FOODS',
-      date: '2024-01-15'
-    }
+      date: '2024-01-15',
+    },
   ]),
 }));
 
@@ -24,27 +24,29 @@ const mockDoc = {
     data: () => ({
       id: 'txn_123',
       aiCategory: 'Groceries',
-      amount: 45.67
-    })
-  })
+      amount: 45.67,
+    }),
+  }),
 };
 
 const mockCollection = {
   add: jest.fn().mockResolvedValue({ id: 'doc_123' }),
   get: jest.fn().mockResolvedValue({
-    docs: [{
-      id: 'txn_123',
-      data: () => ({
+    docs: [
+      {
         id: 'txn_123',
-        aiCategory: 'Groceries',
-        amount: 45.67,
-        description: 'WHOLE FOODS',
-        date: '2024-01-15',
-        type: 'expense'
-      })
-    }]
+        data: () => ({
+          id: 'txn_123',
+          aiCategory: 'Groceries',
+          amount: 45.67,
+          description: 'WHOLE FOODS',
+          date: '2024-01-15',
+          type: 'expense',
+        }),
+      },
+    ],
   }),
-  doc: jest.fn(() => mockDoc)
+  doc: jest.fn(() => mockDoc),
 };
 
 const mockFirestore = {
@@ -53,18 +55,18 @@ const mockFirestore = {
       collection: jest.fn(() => mockCollection),
       get: jest.fn().mockResolvedValue({
         exists: true,
-        data: () => ({ overview: { transactions: [] } })
+        data: () => ({ overview: { transactions: [] } }),
       }),
-      set: jest.fn().mockResolvedValue({})
-    }))
-  }))
+      set: jest.fn().mockResolvedValue({}),
+    })),
+  })),
 };
 
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
-    email: 'test@example.com'
+    email: 'test@example.com',
   }),
   firestore: mockFirestore,
 }));
@@ -77,7 +79,6 @@ import { GET as getSpendingAnalysis } from '@/app/api/transactions/spending-anal
 
 describe('Transactions API Endpoints', () => {
   const validToken = 'Bearer valid-token';
-  const userId = 'test-user-id';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -88,9 +89,9 @@ describe('Transactions API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/categorize', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await POST(request);
@@ -105,8 +106,8 @@ describe('Transactions API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/categorize', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await POST(request);
@@ -125,9 +126,9 @@ describe('Transactions API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/categorize', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await POST(request);
@@ -144,8 +145,8 @@ describe('Transactions API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/categorized', {
         method: 'GET',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await getCategorized(request);
@@ -158,7 +159,7 @@ describe('Transactions API Endpoints', () => {
 
     it('should reject requests without authorization', async () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/categorized', {
-        method: 'GET'
+        method: 'GET',
       });
 
       const response = await getCategorized(request);
@@ -176,16 +177,16 @@ describe('Transactions API Endpoints', () => {
         transactionId: 'txn_123',
         category: 'Dining Out',
         confidence: 100,
-        reasoning: 'User manual override'
+        reasoning: 'User manual override',
       };
 
       const request = new NextRequest('http://localhost:3000/api/transactions/update-category', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await updateCategory(request);
@@ -199,16 +200,16 @@ describe('Transactions API Endpoints', () => {
     it('should validate required fields', async () => {
       const requestBody = {
         // Missing transactionId
-        category: 'Dining Out'
+        category: 'Dining Out',
       };
 
       const request = new NextRequest('http://localhost:3000/api/transactions/update-category', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await updateCategory(request);
@@ -222,23 +223,23 @@ describe('Transactions API Endpoints', () => {
     it('should handle non-existent transaction', async () => {
       // Mock Firestore to return non-existent document
       mockDoc.get.mockResolvedValueOnce({
-        exists: false
+        exists: false,
       });
 
       const requestBody = {
         transactionId: 'non-existent',
         category: 'Dining Out',
         confidence: 100,
-        reasoning: 'User manual override'
+        reasoning: 'User manual override',
       };
 
       const request = new NextRequest('http://localhost:3000/api/transactions/update-category', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await updateCategory(request);
@@ -255,8 +256,8 @@ describe('Transactions API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/spending-analysis', {
         method: 'GET',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await getSpendingAnalysis(request);
@@ -273,14 +274,14 @@ describe('Transactions API Endpoints', () => {
     it('should handle empty transaction data', async () => {
       // Mock empty transactions
       mockCollection.get.mockResolvedValueOnce({
-        docs: []
+        docs: [],
       });
 
       const request = new NextRequest('http://localhost:3000/api/transactions/spending-analysis', {
         method: 'GET',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await getSpendingAnalysis(request);
@@ -294,7 +295,7 @@ describe('Transactions API Endpoints', () => {
 
     it('should reject requests without authorization', async () => {
       const request = new NextRequest('http://localhost:3000/api/transactions/spending-analysis', {
-        method: 'GET'
+        method: 'GET',
       });
 
       const response = await getSpendingAnalysis(request);

@@ -15,9 +15,34 @@ describe('<InsightsPage />', () => {
     // Default to authenticated user
     mockUseSession.mockReturnValue({
       user: {
-        getIdToken: jest.fn().mockResolvedValue('test-token'),
+        uid: 'test-uid',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        photoURL: null,
+        emailVerified: true,
       },
+      firebaseUser: {
+        uid: 'test-uid',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        photoURL: null,
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {
+          creationTime: '2024-01-01T00:00:00.000Z',
+          lastSignInTime: '2024-01-01T00:00:00.000Z',
+        },
+        providerData: [],
+        refreshToken: 'refresh-token',
+        tenantId: null,
+        delete: jest.fn(),
+        getIdToken: jest.fn().mockResolvedValue('test-token'),
+        getIdTokenResult: jest.fn(),
+        reload: jest.fn(),
+        toJSON: jest.fn(),
+      } as any,
       loading: false,
+      signOut: jest.fn(),
     });
     // Default successful fetch mock for all calls
     (global.fetch as jest.Mock).mockImplementationOnce(() =>
@@ -48,13 +73,23 @@ describe('<InsightsPage />', () => {
   });
 
   test('should display loading state initially', () => {
-    mockUseSession.mockReturnValueOnce({ user: null, loading: true });
+    mockUseSession.mockReturnValueOnce({
+      user: null,
+      firebaseUser: null,
+      loading: true,
+      signOut: jest.fn(),
+    });
     render(<InsightsPage />);
     expect(screen.getByText('Loading insights...')).toBeInTheDocument();
   });
 
   test('should display error message if user is not logged in', async () => {
-    mockUseSession.mockReturnValue({ user: null, loading: false });
+    mockUseSession.mockReturnValue({
+      user: null,
+      firebaseUser: null,
+      loading: false,
+      signOut: jest.fn(),
+    });
     render(<InsightsPage />);
     await waitFor(() => {
       expect(screen.getByText('Please log in to view insights')).toBeInTheDocument();

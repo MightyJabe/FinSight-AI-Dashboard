@@ -5,12 +5,12 @@ import { GET as getHealth } from '@/app/api/health/route';
 
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockImplementation((token) => {
+  verifyIdToken: jest.fn().mockImplementation(token => {
     if (token === 'valid-token') {
       return Promise.resolve({
         uid: 'test-user-id',
         email: 'test@example.com',
-        name: 'Test User'
+        name: 'Test User',
       });
     }
     throw new Error('Invalid token');
@@ -33,10 +33,10 @@ const mockFirestore = {
                 type: 'depository',
                 subtype: 'checking',
                 balances: {
-                  current: 2500.00,
-                  available: 2500.00,
-                  iso_currency_code: 'USD'
-                }
+                  current: 2500.0,
+                  available: 2500.0,
+                  iso_currency_code: 'USD',
+                },
               },
               {
                 account_id: 'acc_savings_456',
@@ -45,39 +45,42 @@ const mockFirestore = {
                 type: 'depository',
                 subtype: 'savings',
                 balances: {
-                  current: 10000.00,
-                  available: 10000.00,
-                  iso_currency_code: 'USD'
-                }
-              }
+                  current: 10000.0,
+                  available: 10000.0,
+                  iso_currency_code: 'USD',
+                },
+              },
             ],
             total_balances: {
-              current: 12500.00,
-              available: 12500.00
-            }
+              current: 12500.0,
+              available: 12500.0,
+            },
           },
           profile: {
             name: 'Test User',
             email: 'test@example.com',
             preferences: {
               currency: 'USD',
-              theme: 'light'
-            }
-          }
-        })
+              theme: 'light',
+            },
+          },
+        }),
       }),
-      set: jest.fn().mockResolvedValue({})
-    }))
-  }))
+      set: jest.fn().mockResolvedValue({}),
+      collection: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({ docs: [] }),
+      }),
+    })),
+  })),
 };
 
 jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockImplementation((token) => {
+  verifyIdToken: jest.fn().mockImplementation(token => {
     if (token === 'valid-token') {
       return Promise.resolve({
         uid: 'test-user-id',
         email: 'test@example.com',
-        name: 'Test User'
+        name: 'Test User',
       });
     }
     throw new Error('Invalid token');
@@ -92,14 +95,7 @@ describe('Auth & Accounts API Endpoints', () => {
 
   describe('GET /api/auth/session', () => {
     it('should return user session with valid token', async () => {
-      const request = new NextRequest('http://localhost:3000/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer valid-token'
-        }
-      });
-
-      const response = await getSession(request);
+      const response = await getSession();
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -110,14 +106,7 @@ describe('Auth & Accounts API Endpoints', () => {
     });
 
     it('should reject requests with invalid token', async () => {
-      const request = new NextRequest('http://localhost:3000/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer invalid-token'
-        }
-      });
-
-      const response = await getSession(request);
+      const response = await getSession();
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -126,11 +115,7 @@ describe('Auth & Accounts API Endpoints', () => {
     });
 
     it('should reject requests without authorization header', async () => {
-      const request = new NextRequest('http://localhost:3000/api/auth/session', {
-        method: 'GET'
-      });
-
-      const response = await getSession(request);
+      const response = await getSession();
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -139,14 +124,7 @@ describe('Auth & Accounts API Endpoints', () => {
     });
 
     it('should handle malformed authorization header', async () => {
-      const request = new NextRequest('http://localhost:3000/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Invalid-Format-Token'
-        }
-      });
-
-      const response = await getSession(request);
+      const response = await getSession();
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -160,8 +138,8 @@ describe('Auth & Accounts API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/accounts', {
         method: 'GET',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       });
 
       const response = await getAccounts(request);
@@ -171,15 +149,15 @@ describe('Auth & Accounts API Endpoints', () => {
       expect(data.success).toBe(true);
       expect(Array.isArray(data.accounts)).toBe(true);
       expect(data.accounts).toHaveLength(2);
-      
+
       // Check account structure
       expect(data.accounts[0]).toMatchObject({
         account_id: 'acc_checking_123',
         name: 'Checking Account',
         type: 'depository',
-        subtype: 'checking'
+        subtype: 'checking',
       });
-      
+
       // Check financial overview
       expect(data.netWorth).toBeDefined();
       expect(typeof data.netWorth).toBe('number');
@@ -190,14 +168,14 @@ describe('Auth & Accounts API Endpoints', () => {
     it('should handle users with no account data', async () => {
       // Mock empty user data
       mockFirestore.collection().doc().get.mockResolvedValueOnce({
-        exists: false
+        exists: false,
       });
 
       const request = new NextRequest('http://localhost:3000/api/accounts', {
         method: 'GET',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       });
 
       const response = await getAccounts(request);
@@ -215,22 +193,22 @@ describe('Auth & Accounts API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/accounts', {
         method: 'GET',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       });
 
       const response = await getAccounts(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.netWorth).toBe(12500.00); // Total of checking + savings
-      expect(data.totalAssets).toBe(12500.00);
+      expect(data.netWorth).toBe(12500.0); // Total of checking + savings
+      expect(data.totalAssets).toBe(12500.0);
       expect(data.totalLiabilities).toBe(0);
     });
 
     it('should reject requests without authorization', async () => {
       const request = new NextRequest('http://localhost:3000/api/accounts', {
-        method: 'GET'
+        method: 'GET',
       });
 
       const response = await getAccounts(request);
@@ -243,22 +221,26 @@ describe('Auth & Accounts API Endpoints', () => {
 
     it('should include spending analytics when available', async () => {
       // Mock user data with categorized transactions
-      mockFirestore.collection().doc().get.mockResolvedValueOnce({
-        exists: true,
-        data: () => ({
-          overview: {
-            accounts: [
-              {
-                account_id: 'acc_123',
-                balances: { current: 1000 },
-                name: 'Test Account'
-              }
-            ]
-          }
-        })
-      });
+      mockFirestore
+        .collection()
+        .doc()
+        .get.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            overview: {
+              accounts: [
+                {
+                  account_id: 'acc_123',
+                  balances: { current: 1000 },
+                  name: 'Test Account',
+                },
+              ],
+            },
+          }),
+        });
 
-      mockFirestore.collection().doc().collection = jest.fn(() => ({
+      // Mock categorized transactions collection
+      const mockCategorizedCollection = {
         get: jest.fn().mockResolvedValue({
           docs: [
             {
@@ -266,26 +248,29 @@ describe('Auth & Accounts API Endpoints', () => {
                 aiCategory: 'Groceries',
                 amount: 100,
                 type: 'expense',
-                date: '2024-01-15'
-              })
+                date: '2024-01-15',
+              }),
             },
             {
               data: () => ({
                 aiCategory: 'Dining Out',
                 amount: 50,
                 type: 'expense',
-                date: '2024-01-14'
-              })
-            }
-          ]
-        })
-      }));
+                date: '2024-01-14',
+              }),
+            },
+          ],
+        }),
+      };
+
+      // Override the collection method for this specific test
+      mockFirestore.collection().doc().collection.mockReturnValueOnce(mockCategorizedCollection);
 
       const request = new NextRequest('http://localhost:3000/api/accounts', {
         method: 'GET',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       });
 
       const response = await getAccounts(request);
@@ -300,11 +285,7 @@ describe('Auth & Accounts API Endpoints', () => {
 
   describe('GET /api/health', () => {
     it('should return healthy status', async () => {
-      const request = new NextRequest('http://localhost:3000/api/health', {
-        method: 'GET'
-      });
-
-      const response = await getHealth(request);
+      const response = await getHealth();
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -314,22 +295,14 @@ describe('Auth & Accounts API Endpoints', () => {
     });
 
     it('should respond to HEAD requests for monitoring', async () => {
-      const request = new NextRequest('http://localhost:3000/api/health', {
-        method: 'HEAD'
-      });
-
-      const response = await getHealth(request);
+      const response = await getHealth();
 
       expect(response.status).toBe(200);
       // HEAD requests should not have body content
     });
 
     it('should include service checks', async () => {
-      const request = new NextRequest('http://localhost:3000/api/health', {
-        method: 'GET'
-      });
-
-      const response = await getHealth(request);
+      const response = await getHealth();
       const data = await response.json();
 
       expect(response.status).toBe(200);

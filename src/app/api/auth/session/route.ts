@@ -30,10 +30,10 @@ export async function POST(request: Request) {
 
     // Create a session cookie
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-    
+
     try {
       const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
-      
+
       // Set the cookie
       cookies().set('session', sessionCookie, {
         maxAge: expiresIn,
@@ -46,17 +46,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     } catch (firebaseError) {
       console.error('Firebase Admin error:', firebaseError);
-      return NextResponse.json({ 
-        error: 'Firebase Admin initialization failed',
-        details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError)
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Firebase Admin initialization failed',
+          details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError),
+        },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error('Error creating session:', error);
-    return NextResponse.json({ 
-      error: 'Failed to create session',
-      details: error instanceof Error ? error.message : String(error)
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to create session',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Gets the current session status
+ */
+export async function GET() {
+  try {
+    const sessionCookie = cookies().get('session')?.value;
+
+    if (!sessionCookie) {
+      return NextResponse.json({ authenticated: false }, { status: 200 });
+    }
+
+    // Verify the session cookie
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie);
+
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        uid: decodedClaims.uid,
+        email: decodedClaims.email,
+        name: decodedClaims.name,
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying session:', error);
+    return NextResponse.json({ authenticated: false }, { status: 200 });
   }
 }
 

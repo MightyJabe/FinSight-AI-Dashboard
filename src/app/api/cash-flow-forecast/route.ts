@@ -30,7 +30,6 @@ const querySchema = z.object({
   includeRecurring: z.string().nullable().optional(),
 });
 
-
 interface ManualTransaction {
   id: string;
   type: 'income' | 'expense';
@@ -72,19 +71,13 @@ export async function GET(request: NextRequest) {
 
     const idToken = authHeader.split('Bearer ')[1];
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing token' }, { status: 401 });
     }
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user token' }, { status: 401 });
     }
 
     // Parse and validate query parameters
@@ -96,17 +89,17 @@ export async function GET(request: NextRequest) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Invalid query parameters',
-          details: parsed.error.formErrors.fieldErrors 
+          details: parsed.error.formErrors.fieldErrors,
         },
         { status: 400 }
       );
     }
 
     const { months: monthsStr, includeRecurring: includeRecurringStr } = parsed.data;
-    
+
     // Manual transformation after validation
     const months = monthsStr && monthsStr !== 'null' ? parseInt(monthsStr) : 6;
     const includeRecurring = includeRecurringStr === 'true';
@@ -114,19 +107,16 @@ export async function GET(request: NextRequest) {
     // Validate months parameter
     if (months < 1 || months > 24) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Months must be between 1 and 24' 
+        {
+          success: false,
+          error: 'Months must be between 1 and 24',
         },
         { status: 400 }
       );
     }
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user ID' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user ID' }, { status: 401 });
     }
 
     logger.info('Generating cash flow forecast', {
@@ -150,32 +140,29 @@ export async function GET(request: NextRequest) {
     const convertedTransactions = transactions.map(convertToTransaction);
 
     // Generate cash flow forecast
-    const forecast = generateCashFlowForecast(
-      convertedTransactions,
-      currentBalance,
-      months
-    );
+    const forecast = generateCashFlowForecast(convertedTransactions, currentBalance, months);
 
     // Add additional insights if requested
     if (includeRecurring) {
       // The forecast already includes recurring transaction analysis
       logger.info('Including recurring transaction analysis in forecast', {
         userId,
-        recurringCount: forecast.insights.recurringTransactions
+        recurringCount: forecast.insights.recurringTransactions,
       });
     }
 
     logger.info('Cash flow forecast generated successfully', {
       userId,
       forecastMonths: forecast.predictions.length,
-      avgConfidence: forecast.predictions.reduce((sum, p) => sum + p.confidence, 0) / forecast.predictions.length
+      avgConfidence:
+        forecast.predictions.reduce((sum, p) => sum + p.confidence, 0) /
+        forecast.predictions.length,
     });
 
     return NextResponse.json({
       success: true,
       data: forecast,
     });
-
   } catch (error) {
     logger.error('Error generating cash flow forecast', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -183,9 +170,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to generate cash flow forecast' 
+      {
+        success: false,
+        error: 'Failed to generate cash flow forecast',
       },
       { status: 500 }
     );
@@ -198,7 +185,7 @@ export async function GET(request: NextRequest) {
 async function fetchUserTransactions(userId: string): Promise<TransactionData[]> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     // Fetch manual transactions
     const manualTransactionsSnapshot = await db
       .collection('users')
@@ -208,22 +195,24 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
       .limit(500) // Limit to recent transactions for performance
       .get();
 
-    const manualTransactions: TransactionData[] = manualTransactionsSnapshot.docs.map(doc => {
-      const data = doc.data() as ManualTransaction;
-      const transactionDate = data.date ?? new Date().toISOString().split('T')[0];
-      return {
-        id: doc.id,
-        date: transactionDate,
-        description: data.description || 'Unknown transaction',
-        amount: data.amount,
-        category: data.category,
-        account: data.accountId,
-        accountId: data.accountId,
-        type: data.type,
-        createdAt: data.createdAt || new Date().toISOString(),
-        updatedAt: data.updatedAt || new Date().toISOString(),
-      };
-    });
+    const manualTransactions: TransactionData[] = manualTransactionsSnapshot.docs.map(
+      (doc: any) => {
+        const data = doc.data() as ManualTransaction;
+        const transactionDate = data.date ?? new Date().toISOString().split('T')[0];
+        return {
+          id: doc.id,
+          date: transactionDate,
+          description: data.description || 'Unknown transaction',
+          amount: data.amount,
+          category: data.category,
+          account: data.accountId,
+          accountId: data.accountId,
+          type: data.type,
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString(),
+        };
+      }
+    );
 
     // Fetch Plaid transactions (you'll need to implement this based on your Plaid integration)
     const plaidTransactions = await fetchPlaidTransactions(userId);
@@ -232,10 +221,7 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
     const allTransactions = [...manualTransactions, ...plaidTransactions];
 
     // Sort by date (most recent first)
-    return allTransactions.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
+    return allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   } catch (error) {
     logger.error('Error fetching user transactions', {
       userId,
@@ -251,7 +237,7 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
 async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     // Get Plaid items for the user
     const plaidItemsSnapshot = await db
       .collection('users')
@@ -299,17 +285,16 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
             date: transactionDate,
             description: t.name || 'Unknown transaction',
             amount: t.amount,
-            category: t.category?.[0] || 'Uncategorized',
+            category: (t as any).category?.[0] || 'Uncategorized', // Plaid category field
             account: t.account_id,
             accountId: t.account_id,
-            type: t.amount > 0 ? 'income' as const : 'expense' as const,
+            type: t.amount > 0 ? ('income' as const) : ('expense' as const),
             createdAt: transactionDate,
             updatedAt: transactionDate,
           };
         });
 
         allTransactions.push(...plaidTransactions);
-
       } catch (plaidError) {
         logger.warn('Failed to fetch transactions for Plaid item', {
           userId,
@@ -321,7 +306,6 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
     }
 
     return allTransactions;
-
   } catch (error) {
     logger.error('Error fetching Plaid transactions', {
       userId,
@@ -329,4 +313,12 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
     });
     return []; // Return empty array on error to not break the forecast
   }
+}
+
+/**
+ * POST /api/cash-flow-forecast - Generate cash flow predictions (alias for GET)
+ */
+export async function POST(request: NextRequest) {
+  // POST method is an alias for GET method for consistency
+  return GET(request);
 }
