@@ -215,7 +215,8 @@ describe('Transactions API Endpoints', () => {
 
     it('should handle non-existent transaction', async () => {
       // Mock Firestore to return non-existent document
-      mockDoc.get.mockResolvedValueOnce({
+      const { firestore } = require('@/lib/firebase-admin');
+      firestore.collection().doc().collection().doc().get.mockResolvedValueOnce({
         exists: false,
       });
 
@@ -266,7 +267,8 @@ describe('Transactions API Endpoints', () => {
 
     it('should handle empty transaction data', async () => {
       // Mock empty transactions
-      mockCollection.get.mockResolvedValueOnce({
+      const { firestore } = require('@/lib/firebase-admin');
+      firestore.collection().doc().collection().get.mockResolvedValueOnce({
         docs: [],
       });
 

@@ -201,7 +201,8 @@ describe('AI Features API Endpoints', () => {
 
     it('should handle insufficient data gracefully', async () => {
       // Mock empty user data
-      mockFirestore
+      const { firestore } = require('@/lib/firebase-admin');
+      firestore
         .collection()
         .doc()
         .get.mockResolvedValueOnce({

@@ -151,7 +151,8 @@ describe('Auth & Accounts API Endpoints', () => {
 
     it('should handle users with no account data', async () => {
       // Mock empty user data
-      mockFirestore.collection().doc().get.mockResolvedValueOnce({
+      const { firestore } = require('@/lib/firebase-admin');
+      firestore.collection().doc().get.mockResolvedValueOnce({
         exists: false,
       });
 
@@ -205,7 +206,8 @@ describe('Auth & Accounts API Endpoints', () => {
 
     it('should include spending analytics when available', async () => {
       // Mock user data with categorized transactions
-      mockFirestore
+      const { firestore } = require('@/lib/firebase-admin');
+      firestore
         .collection()
         .doc()
         .get.mockResolvedValueOnce({
@@ -248,7 +250,7 @@ describe('Auth & Accounts API Endpoints', () => {
       };
 
       // Override the collection method for this specific test
-      mockFirestore.collection().doc().collection.mockReturnValueOnce(mockCategorizedCollection);
+      firestore.collection().doc().collection.mockReturnValueOnce(mockCategorizedCollection);
 
       const request = new NextRequest('http://localhost:3000/api/accounts', {
         method: 'GET',
