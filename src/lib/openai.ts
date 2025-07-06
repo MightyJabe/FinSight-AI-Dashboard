@@ -9,9 +9,15 @@ let openai: OpenAI | null = null;
 
 if (typeof window === 'undefined') {
   // Server-side only
-  openai = new OpenAI({
-    apiKey: openaiEnvVars.apiKey,
-  });
+  // Skip OpenAI initialization in CI build environment
+  if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
+    console.log('Skipping OpenAI initialization in CI build environment');
+    openai = {} as OpenAI;
+  } else {
+    openai = new OpenAI({
+      apiKey: openaiEnvVars.apiKey,
+    });
+  }
 }
 
 // Type for chat completion response

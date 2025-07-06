@@ -10,15 +10,24 @@ import { getAccountBalances, getTransactions } from '@/lib/plaid';
 
 const { openai: openaiEnvVars } = getConfig();
 
-// Validate OpenAI API key
-if (!openaiEnvVars.apiKey) {
-  logger.error('OpenAI API key is missing from environment variables');
-  throw new Error('OpenAI API key is not configured');
-}
+// Initialize OpenAI client conditionally
+let openai: OpenAI | null = null;
 
-const openai = new OpenAI({
-  apiKey: openaiEnvVars.apiKey,
-});
+// Skip OpenAI initialization in CI build environment
+if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
+  console.log('Skipping OpenAI initialization in CI build environment');
+  openai = {} as OpenAI;
+} else {
+  // Validate OpenAI API key
+  if (!openaiEnvVars.apiKey) {
+    logger.error('OpenAI API key is missing from environment variables');
+    throw new Error('OpenAI API key is not configured');
+  }
+
+  openai = new OpenAI({
+    apiKey: openaiEnvVars.apiKey,
+  });
+}
 
 // Zod schema for request validation
 const chatRequestSchema = z.object({
@@ -1490,6 +1499,9 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
     // Call OpenAI with tool calling
     let completion;
     try {
+      if (!openai) {
+        throw new Error('OpenAI client not initialized');
+      }
       completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
