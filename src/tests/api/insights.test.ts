@@ -16,30 +16,13 @@ jest.mock('@/lib/firebase-admin', () => ({
     verifyIdToken: jest.fn().mockResolvedValue({ uid: 'test-user-id' }),
   },
   db: {
-    collection: jest.fn(() => ({
-      doc: jest.fn(() => ({
-        get: jest.fn().mockResolvedValue({
-          exists: true,
-          data: () => ({
-            overview: {
-              manualAssets: [],
-              manualLiabilities: [],
-            },
-          }),
-        }),
-        collection: jest.fn(() => ({
-          get: jest.fn().mockResolvedValue({
-            docs: [], // Empty plaidItems collection
-          }),
-          doc: jest.fn(() => ({
-            set: jest.fn().mockResolvedValue({}),
-            get: jest.fn().mockResolvedValue({
-              exists: false,
-            }),
-          })),
-        })),
-      })),
-    })),
+    collection: jest.fn().mockReturnThis(),
+    doc: jest.fn().mockReturnThis(),
+    get: jest.fn().mockResolvedValue({
+      exists: false,
+      data: () => ({}),
+    }),
+    set: jest.fn().mockResolvedValue({}),
   },
 }));
 
@@ -48,7 +31,8 @@ jest.mock('@/lib/openai', () => ({
 }));
 
 jest.mock('@/lib/plaid', () => ({
-  getTransactions: jest.fn(),
+  getTransactions: jest.fn().mockResolvedValue([]),
+  getAccountBalances: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -71,6 +55,8 @@ const mockDecodedToken: DecodedIdToken = {
   iss: 'test-iss',
   sub: 'test-sub',
 };
+
+// These will be defined after the mock data below
 
 const mockTransactions = [
   {

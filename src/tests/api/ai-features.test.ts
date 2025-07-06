@@ -1,4 +1,15 @@
 import { NextRequest } from 'next/server';
+
+// Mock Plaid module first to avoid environment variable issues
+jest.mock('@/lib/plaid', () => ({
+  plaidClient: {
+    transactionsGet: jest.fn(),
+    accountsGet: jest.fn(),
+  },
+  getTransactions: jest.fn().mockResolvedValue([]),
+  getAccountBalances: jest.fn().mockResolvedValue([]),
+}));
+
 import { POST as budgetRecommendations } from '@/app/api/budget-recommendations/route';
 import { POST as cashFlowForecast } from '@/app/api/cash-flow-forecast/route';
 import { POST as investmentAdvisor } from '@/app/api/investment-advisor/route';

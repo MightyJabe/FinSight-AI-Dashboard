@@ -18,10 +18,12 @@ jest.mock('@/lib/ai-categorization', () => ({
 
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockResolvedValue({
-    uid: 'test-user-id',
-    email: 'test@example.com',
-  }),
+  auth: {
+    verifyIdToken: jest.fn().mockResolvedValue({
+      uid: 'test-user-id',
+      email: 'test@example.com',
+    }),
+  },
   firestore: {
     collection: jest.fn(() => ({
       doc: jest.fn(() => ({

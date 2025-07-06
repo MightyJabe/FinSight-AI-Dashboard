@@ -1,4 +1,18 @@
 import { jest } from '@jest/globals';
+
+// Mock logger and openai before importing ai-categorization
+jest.mock('@/lib/logger', () => ({
+  default: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/openai', () => ({
+  generateChatCompletion: jest.fn(),
+}));
+
 import {
   categorizeTransaction,
   categorizeTransactionsBatch,
