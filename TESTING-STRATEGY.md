@@ -3,6 +3,7 @@
 ## Overview
 
 This project uses a comprehensive testing strategy with two complementary testing frameworks:
+
 - **Jest** for unit and integration testing
 - **Playwright** for end-to-end (E2E) testing
 
@@ -22,12 +23,14 @@ FinSight-AI-Dashboard/
 ## Testing Types
 
 ### 1. Unit Tests (Jest)
+
 **Location:** `src/tests/`  
 **Purpose:** Test individual functions, components, and utilities in isolation  
 **Speed:** Very fast (milliseconds)  
 **When to run:** On every save, pre-commit
 
 Examples:
+
 - Testing a utility function that calculates spending totals
 - Testing a React component renders correctly
 - Testing form validation logic
@@ -35,22 +38,20 @@ Examples:
 ```typescript
 // Example: src/tests/lib/finance.test.ts
 test('calculateTotal should sum transaction amounts', () => {
-  const transactions = [
-    { amount: 10.50 },
-    { amount: 25.00 },
-    { amount: 5.25 }
-  ];
+  const transactions = [{ amount: 10.5 }, { amount: 25.0 }, { amount: 5.25 }];
   expect(calculateTotal(transactions)).toBe(40.75);
 });
 ```
 
 ### 2. Integration Tests (Jest)
+
 **Location:** `src/tests/api/`  
 **Purpose:** Test how different parts work together (API routes, services)  
 **Speed:** Fast (seconds)  
 **When to run:** Pre-commit, CI pipeline
 
 Examples:
+
 - Testing API endpoints with mocked database
 - Testing authentication flows
 - Testing service interactions
@@ -65,12 +66,14 @@ test('GET /api/transactions returns user transactions', async () => {
 ```
 
 ### 3. End-to-End Tests (Playwright)
+
 **Location:** `tests/e2e/`  
 **Purpose:** Test complete user journeys across the entire application  
 **Speed:** Slower (minutes)  
 **When to run:** Pre-merge, nightly builds
 
 Examples:
+
 - User logs in and views dashboard
 - User connects bank account via Plaid
 - User asks AI chat about spending habits
@@ -82,7 +85,7 @@ test('user can view spending breakdown', async ({ page }) => {
   await page.fill('input[type="email"]', 'test@example.com');
   await page.fill('input[type="password"]', 'password123');
   await page.click('button[type="submit"]');
-  
+
   await expect(page).toHaveURL('/dashboard');
   await expect(page.locator('.spending-chart')).toBeVisible();
 });
@@ -91,24 +94,29 @@ test('user can view spending breakdown', async ({ page }) => {
 ## When to Use Each Test Type
 
 ### Use Jest Unit Tests When:
+
 - Testing pure functions (calculations, formatters, validators)
 - Testing React component rendering
 - Testing individual hooks or utilities
 - You need fast feedback during development
 
 ### Use Jest Integration Tests When:
+
 - Testing API endpoints
 - Testing database operations
 - Testing authentication flows
 - Testing service layer logic
 
 ### Use Playwright E2E Tests When:
+
 - Testing critical user paths (login, payment, data viewing)
 - Testing multi-page workflows
 - Testing third-party integrations (Plaid, OpenAI)
 - Ensuring the entire stack works together
 
 ## Testing Commands
+
+### Developer Commands (Local Development)
 
 ```bash
 # Jest Tests
@@ -127,24 +135,44 @@ npm run test:all              # Run Jest tests with coverage
 npm run validate              # Run linting, type-check, and tests
 ```
 
+### CI/CD Commands (Automated Pipelines)
+
+```bash
+# CI-optimized Jest Tests
+npm run test:ci               # Run Jest with CI optimizations (used in GitHub Actions)
+                             # Equivalent to: jest --ci --coverage --maxWorkers=2
+                             # - Enables CI mode for better automation output
+                             # - Limits workers to prevent resource contention
+                             # - Generates coverage reports for codecov
+```
+
+**Key Differences:**
+
+- **Developer commands**: Interactive features, unlimited workers, optimized for local feedback
+- **CI commands**: Non-interactive, resource-limited, optimized for automated environments
+
 ## Testing Best Practices
 
 ### 1. Test Naming
+
 - Unit tests: `[functionName].test.ts`
 - Integration tests: `[endpoint].test.ts`
 - E2E tests: `[feature].spec.ts`
 
 ### 2. Test Organization
+
 - Group related tests using `describe` blocks
 - Use clear, descriptive test names
 - Follow Arrange-Act-Assert pattern
 
 ### 3. Mocking Strategy
+
 - Mock external dependencies (databases, APIs)
 - Use real implementations when possible
 - Keep mocks simple and focused
 
 ### 4. E2E Best Practices
+
 - Use data-testid attributes for reliable selectors
 - Mock external services (Plaid, OpenAI)
 - Test both happy paths and error scenarios
@@ -153,30 +181,39 @@ npm run validate              # Run linting, type-check, and tests
 ## Coverage Goals
 
 ### Unit Tests (Jest)
+
 - **Target:** 80%+ coverage
 - **Critical paths:** 90%+ coverage
 - **Focus on:** Business logic, calculations, data transformations
 
 ### E2E Tests (Playwright)
+
 - **Target:** Cover all critical user journeys
 - **Focus on:** User workflows that generate revenue or handle sensitive data
 - **Examples:** Login, account connection, transaction viewing, AI interactions
 
 ## CI/CD Integration
 
-### Pre-commit
-- Run unit tests for changed files
-- Run linting and type checking
+### Pre-commit (Husky + lint-staged)
 
-### Pull Request
-- Run all unit and integration tests
-- Run E2E tests on critical paths
-- Generate coverage reports
+- Run unit tests for changed files (`jest --findRelatedTests`)
+- Run linting and type checking (`eslint`, `tsc`)
+
+### Pull Request / Push (GitHub Actions)
+
+- Run all unit and integration tests (`npm run test:ci`)
+- Run linting (`npm run lint`) and type checking (`npm run type-check`)
+- Generate coverage reports (codecov integration)
+- Build application (`npm run build`)
+- Run security audit (`npm audit`)
 
 ### Main Branch
-- Run full E2E test suite
+
+- Run full E2E test suite (`npm run test:e2e`)
 - Run performance tests
 - Deploy if all tests pass
+
+**Note:** The CI pipeline uses `npm run test:ci` instead of `npm run test:coverage` for optimized performance in automated environments.
 
 ## Why Both Jest and Playwright?
 
