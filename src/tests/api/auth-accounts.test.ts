@@ -1,5 +1,3 @@
-import { NextRequest } from 'next/server';
-
 // Mock Plaid module first to avoid environment variable issues
 jest.mock('@/lib/plaid', () => ({
   plaidClient: {
