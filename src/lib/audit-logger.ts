@@ -9,34 +9,34 @@ export enum AuditEventType {
   LOGIN_SUCCESS = 'auth:login_success',
   LOGIN_FAILURE = 'auth:login_failure',
   LOGOUT = 'auth:logout',
-  
+
   // Financial data access
   FINANCIAL_DATA_READ = 'financial:data_read',
   FINANCIAL_DATA_WRITE = 'financial:data_write',
   FINANCIAL_DATA_DELETE = 'financial:data_delete',
-  
+
   // Plaid operations
   PLAID_ACCOUNT_LINKED = 'plaid:account_linked',
   PLAID_ACCOUNT_UNLINKED = 'plaid:account_unlinked',
   PLAID_TRANSACTIONS_FETCH = 'plaid:transactions_fetch',
   PLAID_TOKEN_ENCRYPTED = 'plaid:token_encrypted',
   PLAID_TOKEN_DECRYPTED = 'plaid:token_decrypted',
-  
+
   // AI operations
   AI_CATEGORIZATION = 'ai:categorization',
   AI_BUDGET_RECOMMENDATION = 'ai:budget_recommendation',
   AI_CASH_FLOW_FORECAST = 'ai:cash_flow_forecast',
   AI_INVESTMENT_ADVICE = 'ai:investment_advice',
-  
+
   // Security events
   ENCRYPTION_OPERATION = 'security:encryption',
   DECRYPTION_OPERATION = 'security:decryption',
   RATE_LIMIT_EXCEEDED = 'security:rate_limit_exceeded',
   UNAUTHORIZED_ACCESS = 'security:unauthorized_access',
-  
+
   // System events
   SYSTEM_ERROR = 'system:error',
-  SYSTEM_CONFIG_CHANGE = 'system:config_change'
+  SYSTEM_CONFIG_CHANGE = 'system:config_change',
 }
 
 /**
@@ -46,7 +46,7 @@ export enum AuditSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -77,12 +77,12 @@ export interface AuditLogEntry {
  */
 class AuditLogger {
   private collectionName = 'audit_logs';
-  
+
   /**
    * Log an audit event
    */
-  async log(entry: { 
-    eventType: AuditEventType; 
+  async log(entry: {
+    eventType: AuditEventType;
     severity: AuditSeverity;
     userId?: string;
     userEmail?: string;
@@ -105,9 +105,9 @@ class AuditLogger {
         eventType: entry.eventType,
         severity: entry.severity,
         timestamp: new Date(),
-        success: entry.success ?? true
+        success: entry.success ?? true,
       };
-      
+
       // Add only defined optional fields
       if (entry.userId !== undefined) auditEntry.userId = entry.userId;
       if (entry.userEmail !== undefined) auditEntry.userEmail = entry.userEmail;
@@ -122,10 +122,10 @@ class AuditLogger {
       if (entry.details !== undefined) auditEntry.details = entry.details;
       if (entry.errorMessage !== undefined) auditEntry.errorMessage = entry.errorMessage;
       if (entry.metadata !== undefined) auditEntry.metadata = entry.metadata;
-      
+
       // Store in Firestore for persistence and querying
       await db.collection(this.collectionName).add(auditEntry);
-      
+
       // Also log to application logger for real-time monitoring
       const logLevel = this.getSeverityLogLevel(entry.severity);
       logger[logLevel]('Audit log entry', {
@@ -134,15 +134,14 @@ class AuditLogger {
         userId: entry.userId,
         resource: entry.resource,
         success: entry.success,
-        details: entry.details
+        details: entry.details,
       });
-      
     } catch (error) {
       // Critical: audit logging failure should be logged but not fail the operation
       logger.error('Failed to write audit log', { error, eventType: entry.eventType });
     }
   }
-  
+
   /**
    * Log financial data access
    */
@@ -164,15 +163,15 @@ class AuditLogger {
     const eventTypeMap = {
       read: AuditEventType.FINANCIAL_DATA_READ,
       write: AuditEventType.FINANCIAL_DATA_WRITE,
-      delete: AuditEventType.FINANCIAL_DATA_DELETE
+      delete: AuditEventType.FINANCIAL_DATA_DELETE,
     };
-    
+
     const logEntry: any = {
       eventType: eventTypeMap[params.operation],
       severity: params.operation === 'delete' ? AuditSeverity.HIGH : AuditSeverity.MEDIUM,
       userId: params.userId,
       resource: params.resource,
-      success: params.success
+      success: params.success,
     };
 
     if (params.userEmail) logEntry.userEmail = params.userEmail;
@@ -187,7 +186,7 @@ class AuditLogger {
 
     await this.log(logEntry);
   }
-  
+
   /**
    * Log Plaid operations
    */
@@ -209,17 +208,17 @@ class AuditLogger {
       unlink: AuditEventType.PLAID_ACCOUNT_UNLINKED,
       fetch_transactions: AuditEventType.PLAID_TRANSACTIONS_FETCH,
       encrypt_token: AuditEventType.PLAID_TOKEN_ENCRYPTED,
-      decrypt_token: AuditEventType.PLAID_TOKEN_DECRYPTED
+      decrypt_token: AuditEventType.PLAID_TOKEN_DECRYPTED,
     };
-    
+
     const logEntry: any = {
       eventType: eventTypeMap[params.operation],
-      severity: ['link', 'unlink', 'encrypt_token', 'decrypt_token'].includes(params.operation) 
-        ? AuditSeverity.HIGH 
+      severity: ['link', 'unlink', 'encrypt_token', 'decrypt_token'].includes(params.operation)
+        ? AuditSeverity.HIGH
         : AuditSeverity.MEDIUM,
       userId: params.userId,
       resource: 'plaid_account',
-      success: params.success
+      success: params.success,
     };
 
     if (params.userEmail) logEntry.userEmail = params.userEmail;
@@ -231,13 +230,13 @@ class AuditLogger {
     if (params.details || params.institutionName) {
       logEntry.details = {
         ...params.details,
-        institutionName: params.institutionName
+        institutionName: params.institutionName,
       };
     }
 
     await this.log(logEntry);
   }
-  
+
   /**
    * Log security events
    */
@@ -258,7 +257,7 @@ class AuditLogger {
     const logEntry: any = {
       eventType: params.eventType,
       severity: params.severity,
-      success: params.success
+      success: params.success,
     };
 
     if (params.userId) logEntry.userId = params.userId;
@@ -273,14 +272,18 @@ class AuditLogger {
 
     await this.log(logEntry);
   }
-  
+
   /**
    * Log AI operations
    */
   async logAIOperation(params: {
     userId: string;
     userEmail?: string;
-    operation: 'categorization' | 'budget_recommendation' | 'cash_flow_forecast' | 'investment_advice';
+    operation:
+      | 'categorization'
+      | 'budget_recommendation'
+      | 'cash_flow_forecast'
+      | 'investment_advice';
     dataProcessed?: number;
     ipAddress?: string;
     userAgent?: string;
@@ -293,15 +296,15 @@ class AuditLogger {
       categorization: AuditEventType.AI_CATEGORIZATION,
       budget_recommendation: AuditEventType.AI_BUDGET_RECOMMENDATION,
       cash_flow_forecast: AuditEventType.AI_CASH_FLOW_FORECAST,
-      investment_advice: AuditEventType.AI_INVESTMENT_ADVICE
+      investment_advice: AuditEventType.AI_INVESTMENT_ADVICE,
     };
-    
+
     const logEntry: any = {
       eventType: eventTypeMap[params.operation],
       severity: AuditSeverity.MEDIUM,
       userId: params.userId,
       resource: 'ai_service',
-      success: params.success
+      success: params.success,
     };
 
     if (params.userEmail) logEntry.userEmail = params.userEmail;
@@ -312,13 +315,13 @@ class AuditLogger {
     if (params.details || params.dataProcessed) {
       logEntry.details = {
         ...params.details,
-        dataProcessed: params.dataProcessed
+        dataProcessed: params.dataProcessed,
       };
     }
 
     await this.log(logEntry);
   }
-  
+
   /**
    * Query audit logs (for admin/compliance purposes)
    */
@@ -332,40 +335,41 @@ class AuditLogger {
   }): Promise<AuditLogEntry[]> {
     try {
       let query = db.collection(this.collectionName).orderBy('timestamp', 'desc');
-      
+
       if (params.userId) {
         query = query.where('userId', '==', params.userId);
       }
-      
+
       if (params.eventType) {
         query = query.where('eventType', '==', params.eventType);
       }
-      
+
       if (params.severity) {
         query = query.where('severity', '==', params.severity);
       }
-      
+
       if (params.startDate) {
         query = query.where('timestamp', '>=', params.startDate);
       }
-      
+
       if (params.endDate) {
         query = query.where('timestamp', '<=', params.endDate);
       }
-      
+
       if (params.limit) {
         query = query.limit(params.limit);
       }
-      
+
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLogEntry & { id: string }));
-      
+      return snapshot.docs.map(
+        (doc: any) => ({ id: doc.id, ...doc.data() }) as AuditLogEntry & { id: string }
+      );
     } catch (error) {
       logger.error('Failed to query audit logs', { error, params });
       throw error;
     }
   }
-  
+
   /**
    * Get appropriate log level for severity
    */
@@ -390,7 +394,7 @@ export const auditLogger = new AuditLogger();
 
 // Export helper functions for common operations
 export async function logFinancialAccess(
-  userId: string, 
+  userId: string,
   operation: 'read' | 'write' | 'delete',
   resource: string,
   options: {
@@ -409,7 +413,7 @@ export async function logFinancialAccess(
     userId,
     operation,
     resource,
-    ...options
+    ...options,
   });
 }
 
@@ -431,7 +435,7 @@ export async function logPlaidOperation(
   await auditLogger.logPlaidOperation({
     userId,
     operation,
-    ...options
+    ...options,
   });
 }
 
@@ -454,7 +458,7 @@ export async function logSecurityEvent(
   await auditLogger.logSecurityEvent({
     eventType,
     severity,
-    ...options
+    ...options,
   });
 }
 

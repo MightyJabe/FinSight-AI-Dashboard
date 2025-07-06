@@ -8,7 +8,10 @@ import type { InvestmentAccount } from '@/types/finance';
 
 const querySchema = z.object({
   includeRebalancing: z.string().nullable().optional(),
-  riskTolerance: z.enum(['conservative', 'moderate', 'aggressive', 'very_aggressive']).nullable().optional(),
+  riskTolerance: z
+    .enum(['conservative', 'moderate', 'aggressive', 'very_aggressive'])
+    .nullable()
+    .optional(),
   userAge: z.string().nullable().optional(),
 });
 
@@ -35,20 +38,14 @@ export async function GET(request: NextRequest) {
 
     const idToken = authHeader.split('Bearer ')[1];
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing token' }, { status: 401 });
     }
-    
+
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user token' }, { status: 401 });
     }
 
     // Parse and validate query parameters
@@ -58,7 +55,7 @@ export async function GET(request: NextRequest) {
       riskTolerance: searchParams.get('riskTolerance'),
       userAge: searchParams.get('userAge'),
     };
-    
+
     const parsed = querySchema.safeParse(queryParams);
 
     if (!parsed.success) {
@@ -67,17 +64,21 @@ export async function GET(request: NextRequest) {
         errors: parsed.error.issues,
       });
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Invalid query parameters',
-          details: parsed.error.issues 
+          details: parsed.error.issues,
         },
         { status: 400 }
       );
     }
 
-    const { includeRebalancing: includeRebalancingStr, riskTolerance, userAge: userAgeStr } = parsed.data;
-    
+    const {
+      includeRebalancing: includeRebalancingStr,
+      riskTolerance,
+      userAge: userAgeStr,
+    } = parsed.data;
+
     // Manual transformation after validation
     const includeRebalancing = includeRebalancingStr === 'true';
     const userAge = userAgeStr && userAgeStr !== 'null' ? parseInt(userAgeStr) : undefined;
@@ -127,7 +128,6 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-
   } catch (error) {
     logger.error('Error generating investment advisor recommendations', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -135,9 +135,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to generate investment recommendations' 
+      {
+        success: false,
+        error: 'Failed to generate investment recommendations',
       },
       { status: 500 }
     );
@@ -159,26 +159,22 @@ export async function POST(request: NextRequest) {
 
     const idToken = authHeader.split('Bearer ')[1];
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing token' }, { status: 401 });
     }
 
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user token' }, { status: 401 });
     }
 
     const body = await request.json();
     const profileSchema = z.object({
       age: z.number().min(18).max(100).optional(),
-      riskTolerance: z.enum(['conservative', 'moderate', 'aggressive', 'very_aggressive']).optional(),
+      riskTolerance: z
+        .enum(['conservative', 'moderate', 'aggressive', 'very_aggressive'])
+        .optional(),
       investmentGoals: z.array(z.string()).optional(),
       timeHorizon: z.number().min(1).max(50).optional(),
     });
@@ -186,10 +182,10 @@ export async function POST(request: NextRequest) {
     const parsed = profileSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Invalid profile data',
-          details: parsed.error.formErrors.fieldErrors 
+          details: parsed.error.formErrors.fieldErrors,
         },
         { status: 400 }
       );
@@ -197,13 +193,15 @@ export async function POST(request: NextRequest) {
 
     const profileData = parsed.data;
 
-    // Update user's investment profile  
+    // Update user's investment profile
     const updateData: Partial<UserProfile> = {};
     if (profileData.age !== undefined) updateData.age = profileData.age;
-    if (profileData.riskTolerance !== undefined) updateData.riskTolerance = profileData.riskTolerance;
-    if (profileData.investmentGoals !== undefined) updateData.investmentGoals = profileData.investmentGoals;
+    if (profileData.riskTolerance !== undefined)
+      updateData.riskTolerance = profileData.riskTolerance;
+    if (profileData.investmentGoals !== undefined)
+      updateData.investmentGoals = profileData.investmentGoals;
     if (profileData.timeHorizon !== undefined) updateData.timeHorizon = profileData.timeHorizon;
-    
+
     await updateUserProfile(userId, updateData);
 
     logger.info('User investment profile updated', {
@@ -215,7 +213,6 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Investment profile updated successfully',
     });
-
   } catch (error) {
     logger.error('Error updating investment profile', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -223,9 +220,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to update investment profile' 
+      {
+        success: false,
+        error: 'Failed to update investment profile',
       },
       { status: 500 }
     );
@@ -238,7 +235,7 @@ export async function POST(request: NextRequest) {
 async function fetchUserInvestmentAccounts(userId: string): Promise<InvestmentAccount[]> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     // Fetch investment accounts from Firebase
     const accountsSnapshot = await db
       .collection('users')
@@ -247,7 +244,7 @@ async function fetchUserInvestmentAccounts(userId: string): Promise<InvestmentAc
       .where('type', 'in', ['Investment', 'Retirement', '401k', 'IRA', 'Roth IRA', 'Brokerage'])
       .get();
 
-    const accounts: InvestmentAccount[] = accountsSnapshot.docs.map(doc => {
+    const accounts: InvestmentAccount[] = accountsSnapshot.docs.map((doc: any) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -266,7 +263,6 @@ async function fetchUserInvestmentAccounts(userId: string): Promise<InvestmentAc
     });
 
     return accounts;
-
   } catch (error) {
     logger.error('Error fetching user investment accounts', {
       userId,
@@ -282,7 +278,7 @@ async function fetchUserInvestmentAccounts(userId: string): Promise<InvestmentAc
 async function fetchUserProfile(userId: string): Promise<UserProfile> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     const profileDoc = await db
       .collection('users')
       .doc(userId)
@@ -301,7 +297,6 @@ async function fetchUserProfile(userId: string): Promise<UserProfile> {
       investmentGoals: profileData?.investmentGoals || [],
       timeHorizon: profileData?.timeHorizon,
     };
-
   } catch (error) {
     logger.error('Error fetching user investment profile', {
       userId,
@@ -317,22 +312,24 @@ async function fetchUserProfile(userId: string): Promise<UserProfile> {
 async function updateUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<void> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     await db
       .collection('users')
       .doc(userId)
       .collection('settings')
       .doc('investment-profile')
-      .set({
-        ...profileData,
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
+      .set(
+        {
+          ...profileData,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
 
     logger.info('User investment profile updated successfully', {
       userId,
       updatedFields: Object.keys(profileData),
     });
-
   } catch (error) {
     logger.error('Error updating user investment profile', {
       userId,

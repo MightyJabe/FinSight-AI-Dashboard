@@ -194,14 +194,14 @@ export async function getNetWorth(
     // Get manual assets
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
     const manualAssets = assetsSnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => sum + (doc.data().amount || 0),
       0
     );
 
     // Get manual liabilities
     const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
     const manualLiabilities = liabilitiesSnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => sum + (doc.data().amount || 0),
       0
     );
 
@@ -243,7 +243,7 @@ export async function getAccountBalancesData(
 
     // Get manual accounts
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-    assetsSnapshot.docs.forEach(doc => {
+    assetsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       accounts.push({
         name: data.name,
@@ -259,7 +259,7 @@ export async function getAccountBalancesData(
       .collection('plaid')
       .doc('access_token')
       .get();
-    
+
     if (accessTokenDoc.exists) {
       const accessToken = accessTokenDoc.data()?.accessToken;
       if (accessToken) {
@@ -320,7 +320,7 @@ export async function getSpendingByCategory(
       .collection('plaid')
       .doc('access_token')
       .get();
-    
+
     const allTransactions: Array<{ category: string; amount: number }> = [];
 
     if (accessTokenDoc.exists) {
@@ -384,8 +384,9 @@ export async function getRecentTransactions(
       .collection('plaid')
       .doc('access_token')
       .get();
-    
-    const allTransactions: Array<{ name: string; amount: number; date: string; category: string }> = [];
+
+    const allTransactions: Array<{ name: string; amount: number; date: string; category: string }> =
+      [];
 
     if (accessTokenDoc.exists) {
       const accessToken = accessTokenDoc.data()?.accessToken;
@@ -451,7 +452,7 @@ export async function getMonthlySummary(
       .collection('plaid')
       .doc('access_token')
       .get();
-    
+
     let income = 0;
     let expenses = 0;
 
@@ -511,7 +512,7 @@ export async function analyzeDebtToIncomeRatio(
     const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
     let monthlyDebtPayments = 0;
 
-    liabilitiesSnapshot.docs.forEach(doc => {
+    liabilitiesSnapshot.docs.forEach((doc: any) => {
       const liability = doc.data();
       // Estimate monthly payment as 3% of total debt (conservative estimate)
       monthlyDebtPayments += (liability.amount || 0) * 0.03;
@@ -526,7 +527,8 @@ export async function analyzeDebtToIncomeRatio(
       recommendation = 'Excellent debt-to-income ratio! You have good financial flexibility.';
       riskLevel = 'low';
     } else if (debtToIncomeRatio <= 36) {
-      recommendation = 'Good debt-to-income ratio, but consider paying down debt to improve financial health.';
+      recommendation =
+        'Good debt-to-income ratio, but consider paying down debt to improve financial health.';
       riskLevel = 'medium';
     } else {
       recommendation = 'High debt-to-income ratio. Focus on debt reduction strategies immediately.';
@@ -553,7 +555,10 @@ export async function analyzeCashFlow(userId: string, _months = 6, _projectionMo
   return {
     currentCashFlow: summary.savings,
     trend: summary.savings > 0 ? 'positive' : 'negative',
-    recommendation: summary.savings > 0 ? 'Your cash flow is positive!' : 'Consider reducing expenses or increasing income.',
+    recommendation:
+      summary.savings > 0
+        ? 'Your cash flow is positive!'
+        : 'Consider reducing expenses or increasing income.',
   };
 }
 
@@ -571,21 +576,25 @@ export async function calculateEmergencyFundStatus(userId: string, targetMonths 
   // Simplified emergency fund calculation
   const accounts = await getAccountBalancesData(userId);
   const summary = await getMonthlySummary(userId);
-  
+
   const liquidAssets = accounts
-    .filter(acc => acc.type.toLowerCase().includes('savings') || acc.type.toLowerCase().includes('checking'))
+    .filter(
+      acc =>
+        acc.type.toLowerCase().includes('savings') || acc.type.toLowerCase().includes('checking')
+    )
     .reduce((sum, acc) => sum + acc.balance, 0);
-  
+
   const monthsCovered = summary.expenses > 0 ? liquidAssets / summary.expenses : 0;
-  
+
   return {
     currentEmergencyFund: liquidAssets,
     monthlyExpenses: summary.expenses,
     monthsCovered,
     targetAmount: summary.expenses * targetMonths,
-    recommendation: monthsCovered >= targetMonths 
-      ? 'Great! Your emergency fund is adequate.' 
-      : `Build your emergency fund to ${targetMonths} months of expenses.`,
+    recommendation:
+      monthsCovered >= targetMonths
+        ? 'Great! Your emergency fund is adequate.'
+        : `Build your emergency fund to ${targetMonths} months of expenses.`,
   };
 }
 
@@ -635,11 +644,12 @@ export async function analyzeFinancialHealthScore(userId: string) {
     return {
       overallScore: score,
       factors,
-      recommendation: score >= 75 
-        ? 'Excellent financial health!' 
-        : score >= 50 
-        ? 'Good financial health with room for improvement.' 
-        : 'Focus on building emergency fund and reducing debt.',
+      recommendation:
+        score >= 75
+          ? 'Excellent financial health!'
+          : score >= 50
+            ? 'Good financial health with room for improvement.'
+            : 'Focus on building emergency fund and reducing debt.',
     };
   } catch (error) {
     logger.error('Error analyzing financial health score', { userId, error });
@@ -664,7 +674,13 @@ export async function executeFinancialTool(
       case 'get_spending_by_category':
         return await getSpendingByCategory(userId, args.period, args.category);
       case 'get_recent_transactions':
-        return await getRecentTransactions(userId, args.limit, args.category, args.amount_min, args.amount_max);
+        return await getRecentTransactions(
+          userId,
+          args.limit,
+          args.category,
+          args.amount_min,
+          args.amount_max
+        );
       case 'get_monthly_summary':
         return await getMonthlySummary(userId, args.month);
       case 'analyze_debt_to_income_ratio':

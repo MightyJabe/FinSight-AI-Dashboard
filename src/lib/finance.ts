@@ -132,7 +132,7 @@ export async function getOverview(): Promise<Overview> {
   };
 
   // Process Manual Assets
-  const manualAssetsRaw = manualAssetsSnapshot.docs.map(doc => {
+  const manualAssetsRaw = manualAssetsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -146,7 +146,7 @@ export async function getOverview(): Promise<Overview> {
   });
 
   // Process Liabilities
-  const liabilities = liabilitiesSnapshot.docs.map(doc => {
+  const liabilities = liabilitiesSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -163,7 +163,7 @@ export async function getOverview(): Promise<Overview> {
   });
 
   // Process Transactions
-  const transactions = transactionsSnapshot.docs.map(doc => {
+  const transactions = transactionsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -195,7 +195,7 @@ export async function getOverview(): Promise<Overview> {
   const overviewAccounts: Overview['accounts'] = []; // To populate overview.accounts
 
   // 1. From Manual Assets
-  const updatedManualAssetsWithCurrentBalance = manualAssetsRaw.map(asset => {
+  const updatedManualAssetsWithCurrentBalance = manualAssetsRaw.map((asset: any) => {
     let currentBalance = asset.amount;
     currentBalance += accountNetTransactionChanges[asset.id] || 0;
     if (LIQUID_ASSET_TYPES.includes(asset.type)) {
@@ -262,7 +262,7 @@ export async function getOverview(): Promise<Overview> {
   // Total Assets for Net Worth:
   // Sum of current balances of all manual assets + sum of current balances of all Plaid accounts.
   const totalManualAssetValuesForNetWorth = updatedManualAssetsWithCurrentBalance.reduce(
-    (sum, asset) => sum + asset.currentBalance,
+    (sum: any, asset: any) => sum + asset.currentBalance,
     0
   );
 
@@ -293,29 +293,29 @@ export async function getOverview(): Promise<Overview> {
 
   const totalAssets = totalManualAssetValuesForNetWorth + totalPlaidAssetValuesForNetWorth;
   const totalLiabilities = liabilities.reduce(
-    (sum, liability) => sum + Number(liability.amount),
+    (sum: any, liability: any) => sum + Number(liability.amount),
     0
   );
   const netWorth = totalAssets - totalLiabilities;
 
   const now = new Date();
   const thirtyDaysAgo = new Date(new Date().setDate(now.getDate() - 30)); // Corrected date calculation
-  const recentTransactions = transactions.filter(t => new Date(t.date) >= thirtyDaysAgo);
+  const recentTransactions = transactions.filter((t: any) => new Date(t.date) >= thirtyDaysAgo);
 
   const monthlyIncome = recentTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .filter((t: any) => t.type === 'income')
+    .reduce((sum: any, t: any) => sum + Number(t.amount), 0);
 
   const monthlyExpenses = recentTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .filter((t: any) => t.type === 'expense')
+    .reduce((sum: any, t: any) => sum + Number(t.amount), 0);
 
   const monthlySavings = monthlyIncome - monthlyExpenses;
 
   const spendingByCategory = recentTransactions
-    .filter(t => t.type === 'expense')
+    .filter((t: any) => t.type === 'expense')
     .reduce(
-      (acc, t) => {
+      (acc: any, t: any) => {
         const category = t.category;
         acc[category] = (acc[category] || 0) + Number(t.amount);
         return acc;
@@ -341,12 +341,12 @@ export async function getOverview(): Promise<Overview> {
       ...account,
       balance: Number(account.balance),
     })),
-    manualAssets: updatedManualAssetsWithCurrentBalance.map(asset => ({
+    manualAssets: updatedManualAssetsWithCurrentBalance.map((asset: any) => ({
       ...asset,
       amount: Number(asset.amount),
       currentBalance: Number(asset.currentBalance),
     })),
-    liabilities: liabilities.map(liability => ({
+    liabilities: liabilities.map((liability: any) => ({
       ...liability,
       amount: Number(liability.amount),
     })),
@@ -378,7 +378,7 @@ export async function getBudget(): Promise<Budget> {
   const userId = await getCurrentUserId();
 
   const transactionsSnapshot = await db.collection(`users/${userId}/transactions`).get();
-  const transactions = transactionsSnapshot.docs.map(doc => {
+  const transactions = transactionsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -401,17 +401,17 @@ export async function getBudget(): Promise<Budget> {
   // Calculate monthly metrics
   const now = new Date();
   const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
-  const recentTransactions = transactions.filter(t => new Date(t.date) >= thirtyDaysAgo);
+  const recentTransactions = transactions.filter((t: any) => new Date(t.date) >= thirtyDaysAgo);
 
   const monthlyExpenses = recentTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .filter((t: any) => t.type === 'expense')
+    .reduce((sum: any, t: any) => sum + Number(t.amount), 0);
 
   // Calculate spending by category
   const spendingByCategory = recentTransactions
-    .filter(t => t.type === 'expense')
+    .filter((t: any) => t.type === 'expense')
     .reduce(
-      (acc, t) => {
+      (acc: any, t: any) => {
         const category = t.category;
         acc[category] = (acc[category] || 0) + Number(t.amount);
         return acc;
@@ -425,11 +425,11 @@ export async function getBudget(): Promise<Budget> {
       id: name,
       name,
       amount: monthlyExpenses,
-      spent: amount,
+      spent: Number(amount),
     })),
     spendingByCategory: Object.entries(spendingByCategory).map(([category, amount]) => ({
       category,
-      amount,
+      amount: Number(amount),
     })),
   };
 }
@@ -441,7 +441,7 @@ export async function getInvestmentAccounts(): Promise<InvestmentAccounts> {
   const userId = await getCurrentUserId();
 
   const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-  const assets = assetsSnapshot.docs.map(doc => {
+  const assets = assetsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -466,7 +466,9 @@ export async function getInvestmentAccounts(): Promise<InvestmentAccounts> {
   >;
 
   // Filter investment assets
-  const investmentAssets = assets.filter(asset => ['investment', 'crypto'].includes(asset.type));
+  const investmentAssets = assets.filter((asset: any) =>
+    ['investment', 'crypto'].includes(asset.type)
+  );
 
   return {
     accounts: investmentAssets.map(asset => ({
@@ -490,12 +492,15 @@ export async function getLiabilities(): Promise<Liabilities> {
   const userId = await getCurrentUserId();
 
   const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
-  const liabilities = liabilitiesSnapshot.docs.map(doc => ({
+  const liabilities = liabilitiesSnapshot.docs.map((doc: any) => ({
     id: doc.id,
     ...doc.data(),
   })) as Overview['liabilities'];
 
-  const totalDebt = liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
+  const totalDebt = liabilities.reduce(
+    (sum: any, liability: any) => sum + Number(liability.amount),
+    0
+  );
 
   return {
     accounts: liabilities.map(liability => ({
@@ -518,7 +523,7 @@ export async function getTransactions(): Promise<Transaction[]> {
   const userId = await getCurrentUserId();
 
   const transactionsSnapshot = await db.collection(`users/${userId}/transactions`).get();
-  return transactionsSnapshot.docs.map(doc => {
+  return transactionsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -553,7 +558,7 @@ export async function getDisplayableAccounts(): Promise<DisplayableAccount[]> {
   ]);
 
   // --- Process Manual Assets (same as before) ---
-  const manualAssetsData = manualAssetsSnapshot.docs.map(doc => {
+  const manualAssetsData = manualAssetsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -563,7 +568,7 @@ export async function getDisplayableAccounts(): Promise<DisplayableAccount[]> {
     };
   });
 
-  const transactionsData = transactionsSnapshot.docs.map(doc => {
+  const transactionsData = transactionsSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -582,7 +587,7 @@ export async function getDisplayableAccounts(): Promise<DisplayableAccount[]> {
     }
   }
 
-  const displayableManualAccounts: DisplayableAccount[] = manualAssetsData.map(asset => {
+  const displayableManualAccounts: DisplayableAccount[] = manualAssetsData.map((asset: any) => {
     let currentBalance = asset.amount;
     currentBalance += accountNetTransactionChanges[asset.id] || 0;
     return {

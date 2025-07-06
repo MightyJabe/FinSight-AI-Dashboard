@@ -257,7 +257,7 @@ async function fetchCategorizedTransactions(
     }
   > = {};
 
-  categorizedSnapshot.docs.forEach(doc => {
+  categorizedSnapshot.docs.forEach((doc: any) => {
     const data = doc.data();
     categorizedMap[data.originalTransactionId || doc.id] = {
       aiCategory: data.aiCategory,

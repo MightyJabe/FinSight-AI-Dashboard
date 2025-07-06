@@ -201,7 +201,7 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
   }
 
   const assetsSnapshot = await db.collection('users').doc(userId).collection('manualAssets').get();
-  const manualAssets = assetsSnapshot.docs.map(doc => ({
+  const manualAssets = assetsSnapshot.docs.map((doc: any) => ({
     id: doc.id,
     ...doc.data(),
   })) as ManualAsset[];
@@ -211,7 +211,7 @@ async function fetchFinancialData(userId: string, accessToken?: string): Promise
     .doc(userId)
     .collection('manualLiabilities')
     .get();
-  const manualLiabilities = liabilitiesSnapshot.docs.map(doc => ({
+  const manualLiabilities = liabilitiesSnapshot.docs.map((doc: any) => ({
     id: doc.id,
     ...doc.data(),
   })) as ManualLiability[];
@@ -468,7 +468,7 @@ export async function GET(request: Request) {
       .collection('plaidItems')
       .get();
 
-    const plaidAccessTokens = plaidItemsSnapshot.docs.map(doc => doc.data().accessToken);
+    const plaidAccessTokens = plaidItemsSnapshot.docs.map((doc: any) => doc.data().accessToken);
 
     // Use the first access token (or undefined if none exist)
     const accessToken = plaidAccessTokens.length > 0 ? plaidAccessTokens[0] : undefined;

@@ -38,7 +38,7 @@ export async function GET(_request: Request) {
       return NextResponse.json([], { status: 200 }); // No assets found, return empty array
     }
 
-    const allAssets = assetsSnapshot.docs.map(doc => ({
+    const allAssets = assetsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       name: doc.data().name as string,
       type: doc.data().type as string,
@@ -46,10 +46,10 @@ export async function GET(_request: Request) {
       // Add other fields if necessary, but keep it minimal for the dropdown
     }));
 
-    const liquidAssets = allAssets.filter(asset => LIQUID_ASSET_TYPES.includes(asset.type));
+    const liquidAssets = allAssets.filter((asset: any) => LIQUID_ASSET_TYPES.includes(asset.type));
 
     // We only need id and name for the dropdown
-    const dropdownAssets = liquidAssets.map(asset => ({
+    const dropdownAssets = liquidAssets.map((asset: any) => ({
       id: asset.id,
       name: `${asset.name} (${asset.type}) - Balance: ${asset.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`,
     }));

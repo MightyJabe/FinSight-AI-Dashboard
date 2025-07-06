@@ -70,19 +70,13 @@ export async function GET(request: NextRequest) {
 
     const idToken = authHeader.split('Bearer ')[1];
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing token' }, { status: 401 });
     }
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
-    
+
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user token' }, { status: 401 });
     }
 
     // Parse and validate query parameters
@@ -91,9 +85,9 @@ export async function GET(request: NextRequest) {
       includeAlerts: searchParams.get('includeAlerts'),
       monthlyIncome: searchParams.get('monthlyIncome'),
     };
-    
+
     logger.info('Query parameters received', { queryParams });
-    
+
     const parsed = querySchema.safeParse(queryParams);
 
     if (!parsed.success) {
@@ -102,20 +96,21 @@ export async function GET(request: NextRequest) {
         errors: parsed.error.issues,
       });
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Invalid query parameters',
-          details: parsed.error.issues 
+          details: parsed.error.issues,
         },
         { status: 400 }
       );
     }
 
     const { includeAlerts: includeAlertsStr, monthlyIncome: monthlyIncomeStr } = parsed.data;
-    
+
     // Manual transformation after validation
     const includeAlerts = includeAlertsStr === 'true';
-    const monthlyIncome = monthlyIncomeStr && monthlyIncomeStr !== 'null' ? parseFloat(monthlyIncomeStr) : undefined;
+    const monthlyIncome =
+      monthlyIncomeStr && monthlyIncomeStr !== 'null' ? parseFloat(monthlyIncomeStr) : undefined;
 
     logger.info('Generating budget recommendations', {
       userId,
@@ -147,7 +142,8 @@ export async function GET(request: NextRequest) {
       recommendationCount: analysis.recommendedAllocations.length,
       alertCount: analysis.alerts.length,
       potentialSavings: analysis.recommendedAllocations.reduce(
-        (sum, rec) => sum + rec.potentialSavings, 0
+        (sum, rec) => sum + rec.potentialSavings,
+        0
       ),
     });
 
@@ -155,7 +151,6 @@ export async function GET(request: NextRequest) {
       success: true,
       data: analysis,
     });
-
   } catch (error) {
     logger.error('Error generating budget recommendations', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -163,9 +158,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to generate budget recommendations' 
+      {
+        success: false,
+        error: 'Failed to generate budget recommendations',
       },
       { status: 500 }
     );
@@ -187,19 +182,13 @@ export async function POST(request: NextRequest) {
 
     const idToken = authHeader.split('Bearer ')[1];
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Missing token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Missing token' }, { status: 401 });
     }
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid user token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid user token' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -211,10 +200,10 @@ export async function POST(request: NextRequest) {
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Invalid request body',
-          details: parsed.error.formErrors.fieldErrors 
+          details: parsed.error.formErrors.fieldErrors,
         },
         { status: 400 }
       );
@@ -238,7 +227,6 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Budget updated successfully',
     });
-
   } catch (error) {
     logger.error('Error updating budget', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -246,9 +234,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to update budget' 
+      {
+        success: false,
+        error: 'Failed to update budget',
       },
       { status: 500 }
     );
@@ -261,11 +249,11 @@ export async function POST(request: NextRequest) {
 async function fetchUserTransactions(userId: string): Promise<TransactionData[]> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     // Fetch manual transactions from the last 3 months
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    
+
     const manualTransactionsSnapshot = await db
       .collection('users')
       .doc(userId)
@@ -275,22 +263,24 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
       .limit(1000)
       .get();
 
-    const manualTransactions: TransactionData[] = manualTransactionsSnapshot.docs.map(doc => {
-      const data = doc.data() as ManualTransaction;
-      const transactionDate = data.date ?? new Date().toISOString().split('T')[0];
-      return {
-        id: doc.id,
-        date: transactionDate,
-        description: data.description || 'Unknown transaction',
-        amount: data.amount,
-        category: data.category,
-        account: data.accountId,
-        accountId: data.accountId,
-        type: data.type,
-        createdAt: data.createdAt || new Date().toISOString(),
-        updatedAt: data.updatedAt || new Date().toISOString(),
-      };
-    });
+    const manualTransactions: TransactionData[] = manualTransactionsSnapshot.docs.map(
+      (doc: any) => {
+        const data = doc.data() as ManualTransaction;
+        const transactionDate = data.date ?? new Date().toISOString().split('T')[0];
+        return {
+          id: doc.id,
+          date: transactionDate,
+          description: data.description || 'Unknown transaction',
+          amount: data.amount,
+          category: data.category,
+          account: data.accountId,
+          accountId: data.accountId,
+          type: data.type,
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString(),
+        };
+      }
+    );
 
     // Fetch Plaid transactions
     const plaidTransactions = await fetchPlaidTransactions(userId);
@@ -299,10 +289,7 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
     const allTransactions = [...manualTransactions, ...plaidTransactions];
 
     // Sort by date (most recent first)
-    return allTransactions.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
+    return allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   } catch (error) {
     logger.error('Error fetching user transactions for budget analysis', {
       userId,
@@ -318,7 +305,7 @@ async function fetchUserTransactions(userId: string): Promise<TransactionData[]>
 async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     // Get Plaid items for the user
     const plaidItemsSnapshot = await db
       .collection('users')
@@ -368,14 +355,13 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
             category: t.category?.[0] || 'Uncategorized',
             account: t.account_id,
             accountId: t.account_id,
-            type: t.amount > 0 ? 'expense' as const : 'income' as const, // Plaid uses positive for expenses
+            type: t.amount > 0 ? ('expense' as const) : ('income' as const), // Plaid uses positive for expenses
             createdAt: transactionDate,
             updatedAt: transactionDate,
           };
         });
 
         allTransactions.push(...plaidTransactions);
-
       } catch (plaidError) {
         logger.warn('Failed to fetch transactions for Plaid item', {
           userId,
@@ -387,7 +373,6 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
     }
 
     return allTransactions;
-
   } catch (error) {
     logger.error('Error fetching Plaid transactions for budget analysis', {
       userId,
@@ -403,7 +388,7 @@ async function fetchPlaidTransactions(userId: string): Promise<TransactionData[]
 async function fetchUserBudgets(userId: string): Promise<{ [category: string]: number }> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
+
     const budgetDoc = await db
       .collection('users')
       .doc(userId)
@@ -417,7 +402,6 @@ async function fetchUserBudgets(userId: string): Promise<{ [category: string]: n
 
     const budgetData = budgetDoc.data();
     return budgetData?.categories || {};
-
   } catch (error) {
     logger.error('Error fetching user budgets', {
       userId,
@@ -430,26 +414,26 @@ async function fetchUserBudgets(userId: string): Promise<{ [category: string]: n
 /**
  * Update user's budget settings
  */
-async function updateUserBudgets(userId: string, budgets: { [category: string]: number }): Promise<void> {
+async function updateUserBudgets(
+  userId: string,
+  budgets: { [category: string]: number }
+): Promise<void> {
   try {
     const db = (await import('@/lib/firebase-admin')).db;
-    
-    await db
-      .collection('users')
-      .doc(userId)
-      .collection('settings')
-      .doc('budgets')
-      .set({
+
+    await db.collection('users').doc(userId).collection('settings').doc('budgets').set(
+      {
         categories: budgets,
         updatedAt: new Date().toISOString(),
-      }, { merge: true });
+      },
+      { merge: true }
+    );
 
     logger.info('User budgets updated successfully', {
       userId,
       categoryCount: Object.keys(budgets).length,
       totalBudget: Object.values(budgets).reduce((sum, amount) => sum + amount, 0),
     });
-
   } catch (error) {
     logger.error('Error updating user budgets', {
       userId,
@@ -465,14 +449,13 @@ async function updateUserBudgets(userId: string, budgets: { [category: string]: 
 async function calculateMonthlyIncome(userId: string): Promise<number> {
   try {
     const transactions = await fetchUserTransactions(userId);
-    
+
     // Calculate average monthly income from last 3 months
     const incomeTransactions = transactions.filter(t => t.type === 'income');
     const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
+
     // Estimate monthly income (assuming 3 months of data)
     return totalIncome / 3;
-
   } catch (error) {
     logger.warn('Error calculating monthly income, using default', {
       userId,

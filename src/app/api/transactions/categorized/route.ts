@@ -12,10 +12,7 @@ export async function GET(request: Request) {
     // Authentication
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -25,7 +22,7 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
-    
+
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
@@ -47,21 +44,24 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         data: {
-          categorizedTransactions: {}
-        }
+          categorizedTransactions: {},
+        },
       });
     }
 
     // Build a map of transaction ID to categorized data
-    const categorizedTransactions: Record<string, {
-      aiCategory: string;
-      aiConfidence: number;
-      aiReasoning?: string;
-      type: 'income' | 'expense';
-      aiCategorizedAt: string;
-    }> = {};
+    const categorizedTransactions: Record<
+      string,
+      {
+        aiCategory: string;
+        aiConfidence: number;
+        aiReasoning?: string;
+        type: 'income' | 'expense';
+        aiCategorizedAt: string;
+      }
+    > = {};
 
-    categorizedSnapshot.docs.forEach(doc => {
+    categorizedSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       categorizedTransactions[data.originalTransactionId || doc.id] = {
         aiCategory: data.aiCategory,
@@ -75,15 +75,11 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
-        categorizedTransactions
-      }
+        categorizedTransactions,
+      },
     });
-
   } catch (error) {
     logger.error('Error fetching categorized transactions', { error });
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -7,15 +7,19 @@ import logger from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 const categorizeSchema = z.object({
-  transactions: z.array(z.object({
-    id: z.string(),
-    amount: z.number(),
-    description: z.string(),
-    date: z.string(),
-    originalCategory: z.array(z.string()).optional(),
-    merchant_name: z.string().optional(),
-    payment_channel: z.string().optional(),
-  })).optional(),
+  transactions: z
+    .array(
+      z.object({
+        id: z.string(),
+        amount: z.number(),
+        description: z.string(),
+        date: z.string(),
+        originalCategory: z.array(z.string()).optional(),
+        merchant_name: z.string().optional(),
+        payment_channel: z.string().optional(),
+      })
+    )
+    .optional(),
   accountId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -29,10 +33,7 @@ export async function POST(request: Request) {
     // Authentication
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -59,9 +60,9 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { 
-          success: false, 
-          errors: parsed.error.formErrors.fieldErrors 
+        {
+          success: false,
+          errors: parsed.error.formErrors.fieldErrors,
         },
         { status: 400 }
       );
@@ -84,11 +85,14 @@ export async function POST(request: Request) {
     } else {
       // Fetch transactions from Plaid API and any stored manual transactions
       const [plaidResponse, manualResponse] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`, {
-          headers: {
-            Authorization: authHeader,
-          },
-        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`,
+          {
+            headers: {
+              Authorization: authHeader,
+            },
+          }
+        ),
         db.collection('users').doc(userId).collection('manualTransactions').get(),
       ]);
 
@@ -142,9 +146,9 @@ export async function POST(request: Request) {
             summary: {
               total: 0,
               categorized: 0,
-              failed: 0
-            }
-          }
+              failed: 0,
+            },
+          },
         });
       }
     }
@@ -157,20 +161,20 @@ export async function POST(request: Request) {
           summary: {
             total: 0,
             categorized: 0,
-            failed: 0
-          }
-        }
+            failed: 0,
+          },
+        },
       });
     }
 
-    logger.info('Starting AI categorization', { 
-      userId, 
-      transactionCount: transactionsToProcess.length 
+    logger.info('Starting AI categorization', {
+      userId,
+      transactionCount: transactionsToProcess.length,
     });
 
     // Process transactions with AI categorization
     const categorizedTransactions = await categorizeTransactionsBatch(transactionsToProcess);
-    
+
     // Store categorized transactions in a dedicated collection
     const batch = db.batch();
     let categorizedCount = 0;
@@ -184,24 +188,28 @@ export async function POST(request: Request) {
           .collection('categorizedTransactions')
           .doc(categorizedTx.id);
 
-        batch.set(docRef, {
-          originalTransactionId: categorizedTx.id,
-          amount: categorizedTx.amount,
-          description: categorizedTx.description,
-          date: categorizedTx.date,
-          originalCategory: categorizedTx.originalCategory,
-          aiCategory: categorizedTx.aiCategory,
-          aiConfidence: categorizedTx.aiConfidence,
-          aiReasoning: categorizedTx.reasoning,
-          type: categorizedTx.type,
-          aiCategorizedAt: new Date().toISOString(),
-        }, { merge: true });
+        batch.set(
+          docRef,
+          {
+            originalTransactionId: categorizedTx.id,
+            amount: categorizedTx.amount,
+            description: categorizedTx.description,
+            date: categorizedTx.date,
+            originalCategory: categorizedTx.originalCategory,
+            aiCategory: categorizedTx.aiCategory,
+            aiConfidence: categorizedTx.aiConfidence,
+            aiReasoning: categorizedTx.reasoning,
+            type: categorizedTx.type,
+            aiCategorizedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
 
         categorizedCount++;
       } catch (error) {
-        logger.error('Failed to store categorized transaction', { 
-          error, 
-          transactionId: categorizedTx.id 
+        logger.error('Failed to store categorized transaction', {
+          error,
+          transactionId: categorizedTx.id,
         });
         failedCount++;
       }
@@ -214,7 +222,7 @@ export async function POST(request: Request) {
       userId,
       total: transactionsToProcess.length,
       categorized: categorizedCount,
-      failed: failedCount
+      failed: failedCount,
     });
 
     return NextResponse.json({
@@ -224,17 +232,13 @@ export async function POST(request: Request) {
         summary: {
           total: transactionsToProcess.length,
           categorized: categorizedCount,
-          failed: failedCount
-        }
-      }
+          failed: failedCount,
+        },
+      },
     });
-
   } catch (error) {
     logger.error('Error in AI categorization API', { error });
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -246,10 +250,7 @@ export async function GET(request: Request) {
     // Authentication
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -259,7 +260,7 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
-    
+
     const decodedToken = await auth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
@@ -272,11 +273,14 @@ export async function GET(request: Request) {
 
     // Get categorization statistics from both Plaid and manual transactions
     const [plaidResponse, manualResponse, categorizedResponse] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`, {
-        headers: {
-          Authorization: authHeader,
-        },
-      }),
+      fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`,
+        {
+          headers: {
+            Authorization: authHeader,
+          },
+        }
+      ),
       db.collection('users').doc(userId).collection('manualTransactions').get(),
       db.collection('users').doc(userId).collection('categorizedTransactions').get(),
     ]);
@@ -287,7 +291,7 @@ export async function GET(request: Request) {
 
     // Count categorized transactions
     if (!categorizedResponse.empty) {
-      categorizedResponse.docs.forEach(doc => {
+      categorizedResponse.docs.forEach((doc: any) => {
         categorizedTransactionIds.add(doc.data().originalTransactionId || doc.id);
         categorized++;
       });
@@ -311,15 +315,11 @@ export async function GET(request: Request) {
         total,
         categorized,
         uncategorized,
-        percentage
-      }
+        percentage,
+      },
     });
-
   } catch (error) {
     logger.error('Error fetching categorization status', { error });
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

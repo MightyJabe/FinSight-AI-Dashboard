@@ -257,14 +257,14 @@ async function getNetWorth(
     // Get manual assets
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
     const manualAssets = assetsSnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => sum + (doc.data().amount || 0),
       0
     );
 
     // Get manual liabilities
     const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
     const manualLiabilities = liabilitiesSnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => sum + (doc.data().amount || 0),
       0
     );
 
@@ -309,7 +309,7 @@ async function getAccountBalancesData(
 
     // Get manual accounts
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-    assetsSnapshot.docs.forEach(doc => {
+    assetsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       accounts.push({
         name: data.name,
@@ -464,10 +464,7 @@ async function getRecentTransactions(
             ) {
               return;
             }
-            if (
-              merchant &&
-              !txn.name.toLowerCase().includes(merchant.toLowerCase())
-            ) {
+            if (merchant && !txn.name.toLowerCase().includes(merchant.toLowerCase())) {
               return;
             }
             if (amountMin && Math.abs(txn.amount) < amountMin) {
@@ -537,7 +534,12 @@ async function searchTransactionsByMerchant(
     }
 
     const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
-    const matchingTransactions: Array<{ name: string; amount: number; date: string; category: string }> = [];
+    const matchingTransactions: Array<{
+      name: string;
+      amount: number;
+      date: string;
+      category: string;
+    }> = [];
 
     for (const itemDoc of plaidItemsSnapshot.docs) {
       const plaidItem = itemDoc.data();
@@ -691,7 +693,7 @@ async function analyzeDebtToIncomeRatio(
     const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
     let monthlyDebtPayments = 0;
 
-    liabilitiesSnapshot.docs.forEach(doc => {
+    liabilitiesSnapshot.docs.forEach((doc: any) => {
       const liability = doc.data();
       // Estimate monthly payment as 3% of total debt (conservative estimate)
       monthlyDebtPayments += (liability.amount || 0) * 0.03;
@@ -809,7 +811,9 @@ async function analyzeCashFlow(
     const incomeGrowth =
       incomes.length > 1 ? ((incomes[incomes.length - 1]! - incomes[0]!) / incomes[0]!) * 100 : 0;
     const expenseGrowth =
-      expenses.length > 1 ? ((expenses[expenses.length - 1]! - expenses[0]!) / expenses[0]!) * 100 : 0;
+      expenses.length > 1
+        ? ((expenses[expenses.length - 1]! - expenses[0]!) / expenses[0]!) * 100
+        : 0;
 
     const avgIncome = incomes.reduce((a, b) => a + b, 0) / incomes.length;
     const avgExpenses = expenses.reduce((a, b) => a + b, 0) / expenses.length;
@@ -1112,7 +1116,7 @@ async function calculateEmergencyFundStatus(
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
     let currentEmergencyFund = 0;
 
-    assetsSnapshot.docs.forEach(doc => {
+    assetsSnapshot.docs.forEach((doc: any) => {
       const asset = doc.data();
       // Assume savings accounts and cash are emergency fund
       if (
@@ -1125,7 +1129,7 @@ async function calculateEmergencyFundStatus(
 
     // If no specific emergency fund accounts, use 50% of liquid assets
     if (currentEmergencyFund === 0) {
-      assetsSnapshot.docs.forEach(doc => {
+      assetsSnapshot.docs.forEach((doc: any) => {
         const asset = doc.data();
         currentEmergencyFund += (asset.amount || 0) * 0.5;
       });
@@ -1374,7 +1378,7 @@ async function getUserConversations(
       .limit(20)
       .get();
 
-    return snapshot.docs.map(doc => {
+    return snapshot.docs.map((doc: any) => {
       const data = doc.data();
       const messages = data.messages || [];
       const firstUserMessage =
