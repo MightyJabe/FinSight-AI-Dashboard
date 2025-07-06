@@ -10,15 +10,24 @@ import { getTransactionService } from '@/lib/services/transaction-service';
 
 const { openai: openaiEnvVars } = getConfig();
 
-// Validate OpenAI API key
-if (!openaiEnvVars.apiKey) {
-  logger.error('OpenAI API key is missing from environment variables');
-  throw new Error('OpenAI API key is not configured');
-}
+// Initialize OpenAI client conditionally
+let openai: OpenAI | null = null;
 
-const openai = new OpenAI({
-  apiKey: openaiEnvVars.apiKey,
-});
+// Skip OpenAI initialization in CI build environment
+if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
+  console.log('Skipping OpenAI initialization in AI Brain Service for CI build environment');
+  openai = {} as OpenAI;
+} else {
+  // Validate OpenAI API key
+  if (!openaiEnvVars.apiKey) {
+    logger.error('OpenAI API key is missing from environment variables');
+    throw new Error('OpenAI API key is not configured');
+  }
+
+  openai = new OpenAI({
+    apiKey: openaiEnvVars.apiKey,
+  });
+}
 
 export interface AIResponse {
   answer: string;
@@ -74,7 +83,7 @@ export class AIBrainService {
         userId: this.userId,
         query: query.substring(0, 100),
         context: context.pageName,
-        hasHistory: conversationHistory.length > 0
+        hasHistory: conversationHistory.length > 0,
       });
 
       // Smart query classification
@@ -116,19 +125,23 @@ export class AIBrainService {
       response.conversationId = conversationId;
 
       return response;
-
     } catch (error) {
-      logger.error('AI Brain error', { error, userId: this.userId, query: query.substring(0, 100) });
+      logger.error('AI Brain error', {
+        error,
+        userId: this.userId,
+        query: query.substring(0, 100),
+      });
       return {
-        answer: 'I apologize, but I encountered an error processing your request. Please try rephrasing your question.',
+        answer:
+          'I apologize, but I encountered an error processing your request. Please try rephrasing your question.',
         confidence: 0.1,
         type: 'error',
         suggestions: [
           'Try asking about your spending this month',
           'Ask for your account balances',
           'Request a financial health overview',
-          'Ask about your budget status'
-        ]
+          'Ask about your budget status',
+        ],
       };
     }
   }
@@ -141,17 +154,53 @@ export class AIBrainService {
 
     // Financial analysis patterns (complex financial concepts)
     const analysisPatterns = [
-      'analyze', 'analysis', 'patterns', 'trends', 'forecast', 'predict', 'projection',
-      'health score', 'financial health', 'debt to income', 'cash flow', 'emergency fund',
-      'portfolio', 'investment', 'optimize', 'strategy', 'recommend', 'advice',
-      'net worth', 'savings rate', 'budget adherence', 'risk', 'volatility'
+      'analyze',
+      'analysis',
+      'patterns',
+      'trends',
+      'forecast',
+      'predict',
+      'projection',
+      'health score',
+      'financial health',
+      'debt to income',
+      'cash flow',
+      'emergency fund',
+      'portfolio',
+      'investment',
+      'optimize',
+      'strategy',
+      'recommend',
+      'advice',
+      'net worth',
+      'savings rate',
+      'budget adherence',
+      'risk',
+      'volatility',
     ];
 
     // Financial query patterns (data retrieval)
     const queryPatterns = [
-      'how much', 'what is', 'show me', 'total', 'balance', 'spend', 'spent', 'income',
-      'transaction', 'account', 'category', 'budget', 'this month', 'last month',
-      'recent', 'current', 'average', 'sum', 'count', 'list'
+      'how much',
+      'what is',
+      'show me',
+      'total',
+      'balance',
+      'spend',
+      'spent',
+      'income',
+      'transaction',
+      'account',
+      'category',
+      'budget',
+      'this month',
+      'last month',
+      'recent',
+      'current',
+      'average',
+      'sum',
+      'count',
+      'list',
     ];
 
     // Check for financial analysis
@@ -179,7 +228,7 @@ export class AIBrainService {
       const [transactions, accounts, budgets] = await Promise.all([
         transactionService.getTransactions(30),
         accountService.getAccounts(),
-        getUserBudgets(this.userId)
+        getUserBudgets(this.userId),
       ]);
 
       const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -199,7 +248,7 @@ export class AIBrainService {
         transactionCount: transactions.length,
         budgetCategories: Object.keys(budgets),
         topSpendingCategories: this.getTopCategories(transactions),
-        hasRecentActivity: transactions.length > 0
+        hasRecentActivity: transactions.length > 0,
       };
     } catch (error) {
       logger.error('Error getting financial context', { error, userId: this.userId });
@@ -212,7 +261,7 @@ export class AIBrainService {
         transactionCount: 0,
         budgetCategories: [],
         topSpendingCategories: [],
-        hasRecentActivity: false
+        hasRecentActivity: false,
       };
     }
   }
@@ -223,10 +272,13 @@ export class AIBrainService {
   private getTopCategories(transactions: any[]): Array<{ category: string; amount: number }> {
     const categoryTotals = transactions
       .filter(t => t.type === 'expense')
-      .reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
-        return acc;
-      }, {} as { [key: string]: number });
+      .reduce(
+        (acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + t.amount;
+          return acc;
+        },
+        {} as { [key: string]: number }
+      );
 
     return Object.entries(categoryTotals)
       .map(([category, amount]) => ({ category, amount: Number(amount) }))
@@ -248,9 +300,10 @@ Current Financial Snapshot:
 - Number of Accounts: ${financialContext.accountCount}
 - Recent Transactions: ${financialContext.transactionCount}
 - Active Budget Categories: ${financialContext.budgetCategories.join(', ')}
-${financialContext.topSpendingCategories.length > 0 
-  ? `- Top Spending Categories: ${financialContext.topSpendingCategories.map((c: any) => `${c.category} ($${c.amount.toFixed(2)})`).join(', ')}`
-  : ''
+${
+  financialContext.topSpendingCategories.length > 0
+    ? `- Top Spending Categories: ${financialContext.topSpendingCategories.map((c: any) => `${c.category} ($${c.amount.toFixed(2)})`).join(', ')}`
+    : ''
 }
 `
       : 'User has limited financial data connected. Focus on general financial guidance and encourage connecting accounts for personalized insights.';
@@ -310,13 +363,11 @@ Remember: You have access to the user's complete financial picture. Use this dat
     try {
       // Use OpenAI with advanced financial analysis tools
       return await this.useOpenAIWithTools(query, systemPrompt, conversationHistory);
-
     } catch (error) {
       logger.error('Error processing financial query', { error, userId: this.userId });
       return await this.useOpenAIWithTools(query, systemPrompt, conversationHistory);
     }
   }
-
 
   /**
    * Use OpenAI with advanced financial tools
@@ -331,11 +382,15 @@ Remember: You have access to the user's complete financial picture. Use this dat
       const messages = [
         { role: 'system' as const, content: systemPrompt },
         ...conversationHistory.slice(-6).map(msg => ({
-          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-          content: msg.content
+          role: msg.type === 'user' ? ('user' as const) : ('assistant' as const),
+          content: msg.content,
         })),
-        { role: 'user' as const, content: query }
+        { role: 'user' as const, content: query },
       ];
+
+      if (!openai) {
+        throw new Error('OpenAI client not initialized');
+      }
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
@@ -343,7 +398,7 @@ Remember: You have access to the user's complete financial picture. Use this dat
         tools: financialTools,
         tool_choice: 'auto',
         temperature: 0.7,
-        max_tokens: 1500
+        max_tokens: 1500,
       });
 
       const responseMessage = completion.choices[0]?.message;
@@ -387,20 +442,24 @@ Remember: You have access to the user's complete financial picture. Use this dat
             max_tokens: 1500,
           });
 
-          finalResponse = finalCompletion.choices[0]?.message?.content || 
+          finalResponse =
+            finalCompletion.choices[0]?.message?.content ||
             'I analyzed your financial data and here are the insights.';
         } catch (finalError) {
-          logger.error('Error getting final response from OpenAI', { userId: this.userId, error: finalError });
-          finalResponse = 'I analyzed your financial data, but encountered an error in the final response.';
+          logger.error('Error getting final response from OpenAI', {
+            userId: this.userId,
+            error: finalError,
+          });
+          finalResponse =
+            'I analyzed your financial data, but encountered an error in the final response.';
         }
       }
 
       return {
         answer: finalResponse,
         confidence: 0.9,
-        type: 'financial_analysis'
+        type: 'financial_analysis',
       };
-
     } catch (error) {
       logger.error('Error using OpenAI with tools', { error, userId: this.userId });
       throw error;
@@ -435,29 +494,33 @@ If it's general, still relate it back to their financial goals when appropriate.
       const messages = [
         { role: 'system' as const, content: chatPrompt },
         ...conversationHistory.slice(-4).map(msg => ({
-          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-          content: msg.content
+          role: msg.type === 'user' ? ('user' as const) : ('assistant' as const),
+          content: msg.content,
         })),
-        { role: 'user' as const, content: query }
+        { role: 'user' as const, content: query },
       ];
+
+      if (!openai) {
+        throw new Error('OpenAI client not initialized');
+      }
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 800,
       });
 
-      const response = completion.choices[0]?.message?.content || 
+      const response =
+        completion.choices[0]?.message?.content ||
         "I'm here to help with your financial questions. What would you like to know?";
 
       return {
         answer: response,
         confidence: 0.8,
         type: 'general_chat',
-        context: _context.pageName
+        context: _context.pageName,
       };
-
     } catch (error) {
       logger.error('Error processing general chat', { error, userId: this.userId });
       throw error;
@@ -475,31 +538,33 @@ If it's general, still relate it back to their financial goals when appropriate.
     const baseSuggestions = {
       Dashboard: [
         "What's my financial health score?",
-        "How is my spending trending?",
-        "What are my biggest opportunities to save money?",
-        "How does this month compare to last month?"
+        'How is my spending trending?',
+        'What are my biggest opportunities to save money?',
+        'How does this month compare to last month?',
       ],
       Accounts: [
-        "Should I move money between accounts?",
-        "Which account is best for my emergency fund?",
-        "How can I optimize my account balances?",
-        "What's my total liquid net worth?"
+        'Should I move money between accounts?',
+        'Which account is best for my emergency fund?',
+        'How can I optimize my account balances?',
+        "What's my total liquid net worth?",
       ],
       Transactions: [
         "What's my biggest expense category?",
-        "Are there any unusual spending patterns?",
-        "How can I reduce my spending?",
-        "What subscriptions am I paying for?"
+        'Are there any unusual spending patterns?',
+        'How can I reduce my spending?',
+        'What subscriptions am I paying for?',
       ],
       Insights: [
-        "Analyze my spending patterns over time",
-        "What financial risks should I be aware of?",
-        "How can I improve my financial health?",
-        "Forecast my cash flow for next quarter"
-      ]
+        'Analyze my spending patterns over time',
+        'What financial risks should I be aware of?',
+        'How can I improve my financial health?',
+        'Forecast my cash flow for next quarter',
+      ],
     };
 
-    const contextSuggestions = baseSuggestions[context.pageName as keyof typeof baseSuggestions] || baseSuggestions.Dashboard;
+    const contextSuggestions =
+      baseSuggestions[context.pageName as keyof typeof baseSuggestions] ||
+      baseSuggestions.Dashboard;
 
     // Add response-specific suggestions
     if (response.data?.categories) {
@@ -529,7 +594,7 @@ If it's general, still relate it back to their financial goals when appropriate.
         context,
         confidence: response.confidence,
         timestamp: new Date(),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       const docRef = await db
@@ -544,7 +609,6 @@ If it's general, still relate it back to their financial goals when appropriate.
       return '';
     }
   }
-
 }
 
 /**
