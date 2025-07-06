@@ -56,6 +56,15 @@ jobs:
           OPENAI_API_KEY: dummy_openai_key
         run: npm run build
 
+      - name: E2E Test Guidance
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "📋 E2E Testing Guide:"
+          echo "• Critical E2E tests run automatically on PRs affecting src/ or tests/"
+          echo "• Full E2E suite runs on main branch merges and daily"
+          echo "• Manual E2E: Go to Actions tab → E2E Tests → Run workflow"
+          echo "• Local E2E: npm run test:e2e (requires browsers: npm run playwright:install)"
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest

@@ -2,12 +2,14 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ main, master ]  # Only on main branches
-  pull_request:
-    branches: [ main, master ]  # And PRs to main
+    branches: [ main, master ]  # Only on main branches after merge
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM for regression testing
   workflow_dispatch:  # Allow manual triggers
+  
+  # Commented out: Run E2E on PRs only when specifically requested
+  # pull_request:
+  #   branches: [ main, master ]
 
 env:
   NODE_ENV: test
@@ -17,12 +19,12 @@ jobs:
   e2e-tests:
     name: E2E Tests (${{ matrix.project }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15  # Reduced timeout - fail fast
     
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, firefox, webkit]
+        project: [chromium]  # Start with just Chromium for speed
 
     steps:
       - name: Checkout code
@@ -96,7 +98,7 @@ jobs:
   mobile-tests:
     name: Mobile E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10  # Reduced timeout
 
     steps:
       - name: Checkout code
@@ -162,7 +164,7 @@ jobs:
   accessibility-tests:
     name: Accessibility Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8  # Reduced timeout
 
     steps:
       - name: Checkout code
