@@ -14,6 +14,12 @@ npm run lint        # ESLint - must pass
 npm run type-check  # TypeScript - must pass
 npm run test:all    # Tests - must pass with >80% coverage
 
+# E2E Testing (requires browser dependencies)
+npm run test:e2e           # Run all E2E tests
+npm run test:e2e:ui        # Run with UI mode
+npm run test:e2e:headed    # Run in headed mode
+npm run test:e2e:debug     # Debug specific tests
+
 # Quick check all:
 npm run lint && npm run type-check && npm run test:all && npm run build
 ```
@@ -121,6 +127,7 @@ Before committing, ensure:
 
 2. **Tests**
    - `npm run test:all` - Must pass with >80% coverage
+   - `npm run test:e2e` - E2E tests must pass (requires browser deps)
    - New features have corresponding tests
 
 3. **Build**
@@ -136,6 +143,7 @@ Before committing, ensure:
 - `project.md` - Technical design, architecture, database schema
 - `README.md` - Setup instructions, troubleshooting
 - `.env.example` - Complete list of environment variables
+- `TESTING-STRATEGY.md` - Comprehensive testing guide (Jest + Playwright)
 
 ### Development Rules
 - `.cursor/rules/api-rules.mdc` - API development patterns
@@ -205,6 +213,35 @@ Before committing, ensure:
 ## All Planned Improvements Complete! 🎉
 
 All items from the original TODO list have been successfully implemented and are production-ready.
+
+## E2E Testing Setup
+
+### Browser Dependencies (Required for E2E tests)
+
+```bash
+# Install Playwright browser dependencies
+sudo npx playwright install-deps
+
+# Or manually install required packages
+sudo apt-get install libnspr4 libnss3 libasound2t64
+```
+
+### E2E Test Structure
+
+- **Location**: `tests/e2e/` directory
+- **Framework**: Playwright with TypeScript
+- **Coverage**: Homepage, Auth, Dashboard, Transactions, Plaid, Trends, AI Chat
+- **Browsers**: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
+- **CI/CD**: GitHub Actions workflow with cross-browser testing
+
+### Key Features
+
+- **Authentication Mocking**: Mock Firebase auth for testing protected routes
+- **API Response Mocking**: Mock all external API calls for consistent testing
+- **Plaid Integration Mocking**: Mock Plaid Link flow for banking features
+- **Mobile Testing**: Responsive design testing on mobile viewports
+- **Accessibility Testing**: Basic a11y checks integrated into test suite
+- **Visual Testing**: Screenshots and videos on test failures
 
 ## Important Reminders
 

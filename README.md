@@ -109,8 +109,17 @@ For detailed troubleshooting, see [project.md](project.md).
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Testing
+
+See [TESTING-STRATEGY.md](TESTING-STRATEGY.md) for comprehensive testing guidelines including:
+- Unit testing with Jest
+- E2E testing with Playwright
+- When to use each test type
+- Testing best practices
+
 ## Support
 
 - **Documentation**: [project.md](project.md)
+- **Testing Guide**: [TESTING-STRATEGY.md](TESTING-STRATEGY.md)
 - **Issues**: [GitHub Issues](https://github.com/MightyJade/finsight-ai-dashboard/issues)
 - **Security**: Report to security@finsight.ai
