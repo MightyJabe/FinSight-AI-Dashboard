@@ -13,10 +13,14 @@ if (typeof global.Request === 'undefined') {
      *
      */
     constructor(input, init = {}) {
-      this.url = typeof input === 'string' ? input : input.url;
+      this._url = typeof input === 'string' ? input : input.url;
       this.method = init.method || 'GET';
       this.headers = new Headers(init.headers);
       this.body = init.body;
+    }
+    
+    get url() {
+      return this._url;
     }
   };
 }
@@ -47,6 +51,16 @@ if (typeof global.Response === 'undefined') {
      */
     text() {
       return Promise.resolve(this.body || '');
+    }
+    
+    static json(data, init = {}) {
+      return new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...init.headers
+        }
+      });
     }
   };
 }
@@ -110,27 +124,27 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock next-auth
-jest.mock('next-auth/react', () => {
-  const originalModule = jest.requireActual('next-auth/react');
-  return {
-    __esModule: true,
-    ...originalModule,
-    useSession: () => ({
-      data: {
-        user: {
-          id: 'test-user-id',
-          email: 'test@example.com',
-        },
-        expires: new Date(Date.now() + 2 * 86400).toISOString(),
-      },
-      status: 'authenticated',
-    }),
-    signIn: jest.fn(),
-    signOut: jest.fn(),
-    getSession: jest.fn(),
-  };
-});
+// Mock SessionProvider - will be overridden in specific tests
+const defaultSessionMock = {
+  user: {
+    uid: 'test-user-id',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    getIdToken: jest.fn().mockResolvedValue('test-token'),
+  },
+  firebaseUser: {
+    uid: 'test-user-id',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    getIdToken: jest.fn().mockResolvedValue('test-token'),
+  },
+  loading: false,
+};
+
+jest.mock('@/components/providers/SessionProvider', () => ({
+  useSession: jest.fn(() => defaultSessionMock),
+  SessionProvider: ({ children }) => children,
+}));
 
 // Mock firebase-admin
 jest.mock('firebase-admin', () => ({
@@ -162,3 +176,47 @@ jest.mock('firebase/auth', () => ({
 import { TextDecoder, TextEncoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+
+// Add Node.js timer polyfills for Winston
+global.setImmediate = global.setImmediate || ((fn, ...args) => global.setTimeout(fn, 0, ...args));
+
+// Setup JSDOM environment properly for component tests
+const { JSDOM } = require('jsdom');
+
+// Create a proper JSDOM environment
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+  url: 'http://localhost',
+  pretendToBeVisual: true,
+  resources: 'usable'
+});
+
+// Set up global environment
+global.window = dom.window;
+global.document = dom.window.document;
+global.navigator = dom.window.navigator;
+global.HTMLElement = dom.window.HTMLElement;
+global.HTMLIFrameElement = dom.window.HTMLIFrameElement;
+global.Event = dom.window.Event;
+
+// Setup server-side tests - override window as undefined when needed
+const originalWindow = global.window;
+global.isServerSide = () => {
+  Object.defineProperty(global, 'window', {
+    value: undefined,
+    writable: true
+  });
+};
+global.restoreWindow = () => {
+  Object.defineProperty(global, 'window', {
+    value: originalWindow,
+    writable: true
+  });
+};
+
+// Mock OpenAI module
+jest.mock('@/lib/openai', () => ({
+  generateChatCompletion: jest.fn().mockResolvedValue({
+    content: '{"category": "Uncategorized", "confidence": 50, "reasoning": "Test response"}',
+    role: 'assistant'
+  }),
+}));

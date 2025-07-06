@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { PieChart, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
 import { useSession } from '@/components/providers/SessionProvider';
+import { ChartSkeleton } from '@/components/common/SkeletonLoader';
+import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface CategorySpending {
   category: string;
@@ -30,14 +33,14 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
   const { firebaseUser } = useSession();
   const [spendingData, setSpendingData] = useState<SpendingData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { error, handleError, retry, clearError, canRetry, isRetrying } = useErrorHandler();
 
   const fetchSpendingData = useCallback(async () => {
     if (!firebaseUser) return;
 
     try {
       setLoading(true);
-      setError(null);
+      clearError();
 
       const idToken = await firebaseUser.getIdToken();
       
@@ -50,7 +53,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch spending data');
+        throw new Error(`Failed to fetch spending data: ${response.status}`);
       }
 
       const data = await response.json();
@@ -75,12 +78,11 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       }
 
     } catch (err) {
-      console.error('Error fetching spending data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch spending data');
+      handleError(err, 'SpendingBreakdown.fetchSpendingData');
     } finally {
       setLoading(false);
     }
-  }, [firebaseUser]);
+  }, [firebaseUser, handleError, clearError]);
 
   useEffect(() => {
     fetchSpendingData();
@@ -95,35 +97,19 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
   }, [fetchSpendingData]);
 
   if (loading) {
-    return (
-      <div className="rounded-lg bg-white p-6 shadow-sm border">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4 w-1/3"></div>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ChartSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 border border-red-200 p-6">
-        <div className="flex items-center gap-2 text-red-800 mb-2">
-          <TrendingUp className="h-5 w-5" />
-          <span className="font-medium">Spending Analysis Error</span>
-        </div>
-        <p className="text-red-700 text-sm">{error}</p>
-        <button
-          onClick={fetchSpendingData}
-          className="mt-3 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorMessage
+        message={error.message}
+        variant={error.type === 'network' ? 'network' : 'default'}
+        showRetry={canRetry ?? false}
+        onRetry={() => retry(fetchSpendingData)}
+        isRetrying={isRetrying}
+        retryLabel="Retry Analysis"
+      />
     );
   }
 

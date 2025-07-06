@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Settings,
   Sun,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -20,13 +21,15 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { auth as firebaseAuth } from '@/lib/firebase';
 import { useTheme } from '@/hooks/useTheme';
+import { NavigationSkeleton } from '@/components/common/SkeletonLoader';
 
 const primaryNavigationItems = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'AI Chat', href: '/chat', icon: MessageCircle },
   { name: 'Accounts & Balances', href: '/accounts', icon: Users },
   { name: 'Spending & Budget', href: '/transactions', icon: ListChecks },
   { name: 'AI Insights', href: '/insights', icon: BarChart3 },
-  { name: 'AI Chat', href: '/chat', icon: MessageCircle },
+  { name: 'Spending Trends', href: '/trends', icon: TrendingUp },
   { name: 'Add Data', href: '/manual-data', icon: PlusCircle },
 ];
 
@@ -56,16 +59,7 @@ export function Navigation() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-between p-4 h-[68px]">
-        <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse md:hidden"></div>
-        <div className="hidden md:flex space-x-2">
-          <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
-        </div>
-      </div>
-    );
+    return <NavigationSkeleton />;
   }
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';

@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 import { Suspense, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -10,6 +12,7 @@ import { BudgetSection } from '@/components/dashboard/BudgetSection';
 import { CashFlowForecast } from '@/components/dashboard/CashFlowForecast';
 import { ChartsSection } from '@/components/dashboard/ChartsSection';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
+import { InvestmentAdvisor } from '@/components/dashboard/InvestmentAdvisor';
 import { NetWorthDisplay } from '@/components/dashboard/NetWorthDisplay';
 import { OverviewCards } from '@/components/dashboard/OverviewCards';
 import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/types/finance';
@@ -99,6 +102,26 @@ export function DashboardContent({
         )}
       </div>
 
+      {/* AI Chat Link */}
+      <Link href="/chat">
+        <div className="bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 rounded-xl p-6 border border-primary/20 hover:border-primary/30 transition-all duration-200 cursor-pointer group">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 group-hover:bg-primary/20 rounded-lg transition-colors">
+              <MessageCircle className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Ask Your AI Financial Assistant</h3>
+              <p className="text-gray-600 text-sm">
+                Get instant answers about your finances with visual analytics and conversation history
+              </p>
+            </div>
+            <div className="text-primary group-hover:translate-x-1 transition-transform">
+              →
+            </div>
+          </div>
+        </div>
+      </Link>
+
       {/* Financial Health Score */}
       <FinancialHealthScore overview={overview} />
 
@@ -110,6 +133,9 @@ export function DashboardContent({
 
       {/* Cash Flow Forecast */}
       <CashFlowForecast />
+
+      {/* Investment Advisor */}
+      <InvestmentAdvisor />
 
       {/* AI Insights */}
       <AIInsights insights={[]} insightsLoading={false} />

@@ -96,6 +96,27 @@ export interface Budget {
   }>;
 }
 
+export interface InvestmentAccount {
+  id: string;
+  name: string;
+  type: string;
+  currentBalance: number;
+  source: 'linked' | 'manual';
+  lastUpdated: string;
+  holdings?: Array<{
+    symbol: string;
+    name: string;
+    shares: number;
+    currentPrice: number;
+    value: number;
+  }>;
+  performance?: {
+    totalReturn: number;
+    dayChange: number;
+    dayChangePercent: number;
+  };
+}
+
 export interface InvestmentAccounts {
   accounts: Array<{
     id: string;

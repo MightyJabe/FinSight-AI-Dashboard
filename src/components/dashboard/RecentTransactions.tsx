@@ -1,5 +1,5 @@
 import { ErrorMessage } from '@/components/common/ErrorMessage';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { TransactionSkeleton } from '@/components/common/SkeletonLoader';
 import { useTransactions } from '@/hooks/use-transactions';
 import type { Transaction } from '@/types/finance';
 
@@ -18,11 +18,32 @@ export function RecentTransactions({
   const { transactions, loading, error } = useTransactions();
 
   if (loading) {
-    return <LoadingSpinner message="Loading transactions..." />;
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Recent Transactions</h2>
+        </div>
+        <div className="p-6">
+          <TransactionSkeleton count={5} />
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorMessage message="Error loading transactions" />;
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Recent Transactions</h2>
+        </div>
+        <div className="p-6">
+          <ErrorMessage 
+            message="Unable to load recent transactions. Please try refreshing the page."
+            variant="default"
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!transactions?.length) {
@@ -51,7 +72,7 @@ export function RecentTransactions({
                   transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                ${Math.abs(transaction.amount).toLocaleString()}
+                {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString()}
               </span>
               <div className="flex gap-2">
                 <button

@@ -4,6 +4,8 @@ import { z } from 'zod';
 
 import { auth, db } from '@/lib/firebase-admin';
 import { plaidClient } from '@/lib/plaid';
+import { encryptPlaidToken } from '@/lib/encryption';
+import logger from '@/lib/logger';
 
 // Zod schema for input validation
 const exchangeTokenSchema = z.object({
@@ -85,15 +87,25 @@ export async function POST(request: Request) {
     // with the document ID being the Plaid item_id for easy lookup/management.
     const itemDocRef = db.collection('users').doc(userId).collection('plaidItems').doc(item_id);
 
+    // Encrypt the Plaid access token before storing
+    const encryptedToken = encryptPlaidToken(access_token);
+    
     await itemDocRef.set({
-      accessToken: access_token, // Encrypt this in a real production app
+      accessToken: encryptedToken, // ✅ SECURE: Encrypted access token
       itemId: item_id,
       userId: userId,
       institutionId: institution_id || null, // From Plaid Link metadata
       institutionName: institution_name || null, // From Plaid Link metadata
       linkedAt: new Date(),
+      encryptedAt: new Date(), // Track when encryption was applied
       // You might want to store initial account details from Plaid Link metadata (accounts) here too,
       // or trigger an immediate fetch of accounts using the new access_token.
+    });
+    
+    logger.info('Plaid access token encrypted and stored securely', { 
+      userId, 
+      itemId: item_id,
+      institutionName: institution_name 
     });
 
     // Optionally, trigger an initial sync of accounts and transactions here.

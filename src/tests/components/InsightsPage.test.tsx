@@ -2,17 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import InsightsPage from '@/app/insights/page';
-
-// Mock SessionProvider
-jest.mock('@/components/providers/SessionProvider', () => ({
-  useSession: jest.fn(),
-}));
+import { useSession } from '@/components/providers/SessionProvider';
 
 // Mock fetch
 global.fetch = jest.fn();
 
-import { useSession as _useSession } from '@/components/providers/SessionProvider';
-const mockUseSession = _useSession as jest.Mock;
+const mockUseSession = useSession as jest.MockedFunction<typeof useSession>;
 
 describe('<InsightsPage />', () => {
   beforeEach(() => {

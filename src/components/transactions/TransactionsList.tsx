@@ -195,8 +195,8 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
                   />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    {formatCurrency(transaction.amount)}
+                  <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
                   </span>
                 </td>
               </tr>

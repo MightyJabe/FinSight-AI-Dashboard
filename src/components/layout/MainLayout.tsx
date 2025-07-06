@@ -7,6 +7,7 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Footer } from '@/components/common/Footer';
 import { Header } from '@/components/common/Header';
 import { Navigation } from '@/components/common/Navigation';
+import { OfflineBanner } from '@/components/common/ConnectionStatus';
 import { useSession } from '@/components/providers/SessionProvider';
 import { SWRProvider } from '@/components/providers/SWRProvider';
 
@@ -33,6 +34,7 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
   if (!user || isPublicRoute) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased">
+        <OfflineBanner />
         <div className="flex min-h-screen">
           <div className="flex-1">
             <Header />
@@ -48,6 +50,7 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
   // Authenticated layout
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased overflow-x-hidden">
+      <OfflineBanner />
       <SWRProvider>
         <ErrorBoundary>
           <div className="lg:flex min-h-screen overflow-x-hidden">

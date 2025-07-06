@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read and write only their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // User's Plaid items - most sensitive financial data
+      match /plaidItems/{itemId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        // Plaid accounts under items
+        match /accounts/{accountId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+      
+      // User's categorized transactions
+      match /categorizedTransactions/{transactionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's chat conversations
+      match /conversations/{conversationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's manual financial data
+      match /manualData/{dataId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's insights cache
+      match /insights/{insightId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's AI analysis results
+      match /analysis/{analysisId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Admin-only access for system data (if needed)
+    match /system/{document=**} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email_verified == true &&
+        request.auth.token.email in ['admin@finsight.ai']; // Replace with actual admin emails
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

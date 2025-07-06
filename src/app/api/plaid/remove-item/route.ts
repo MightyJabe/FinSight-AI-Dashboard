@@ -4,6 +4,8 @@ import { z } from 'zod';
 
 import { auth, db } from '@/lib/firebase-admin';
 import { plaidClient } from '@/lib/plaid';
+import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
+import logger from '@/lib/logger';
 
 // Zod schema for input validation
 const removeItemSchema = z.object({
@@ -58,19 +60,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Plaid item not found for this user.' }, { status: 404 });
     }
 
-    const accessToken = itemDoc.data()?.accessToken as string | undefined;
+    const storedAccessToken = itemDoc.data()?.accessToken;
 
     // Step 1: Attempt to remove the item from Plaid (invalidates access token)
-    if (accessToken) {
+    let accessToken: string | undefined;
+    if (storedAccessToken) {
       try {
-        await plaidClient.itemRemove({ access_token: accessToken });
-      } catch (plaidError: unknown) {
-        // Log the error but proceed with removing from Firestore, as the token might be already invalid
-        // or the item doesn't exist on Plaid's side anymore.
-        console.warn(
-          `Could not remove Plaid item ${itemId} from Plaid systems (might be already removed or token invalid):`,
-          plaidError instanceof Error ? plaidError.message : plaidError
-        );
+        if (isEncryptedData(storedAccessToken)) {
+          accessToken = decryptPlaidToken(storedAccessToken);
+          logger.info('Successfully decrypted Plaid access token for removal', { itemId });
+        } else {
+          // Handle legacy unencrypted tokens
+          accessToken = storedAccessToken as string;
+          logger.warn('Found unencrypted Plaid access token during removal', { itemId });
+        }
+        
+        if (accessToken) {
+          await plaidClient.itemRemove({ access_token: accessToken });
+        }
+      } catch (error: unknown) {
+        // This catches both decryption errors and Plaid API errors
+        if (error instanceof Error && error.message.includes('decrypt')) {
+          logger.error('Failed to decrypt Plaid access token for removal', { 
+            error, 
+            itemId,
+            userId 
+          });
+        } else {
+          // Log the error but proceed with removing from Firestore, as the token might be already invalid
+          // or the item doesn't exist on Plaid's side anymore.
+          logger.warn(
+            `Could not remove Plaid item ${itemId} from Plaid systems (might be already removed or token invalid)`,
+            { error: error instanceof Error ? error.message : error, itemId, userId }
+          );
+        }
       }
     }
 

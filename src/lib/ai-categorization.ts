@@ -255,6 +255,9 @@ function fallbackCategorization(
   if (description.includes('electric') || description.includes('water') || description.includes('internet')) {
     return { category: EXPENSE_CATEGORIES.UTILITIES, confidence: 85, reasoning: 'Pattern match: utilities' };
   }
+  if (description.includes('netflix') || description.includes('spotify') || description.includes('entertainment') || description.includes('movie') || description.includes('subscription')) {
+    return { category: EXPENSE_CATEGORIES.ENTERTAINMENT, confidence: 80, reasoning: 'Pattern match: entertainment' };
+  }
   
   return { category: EXPENSE_CATEGORIES.UNCATEGORIZED, confidence: 30, reasoning: 'Fallback: no pattern match' };
 }

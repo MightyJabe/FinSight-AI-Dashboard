@@ -1,22 +1,5 @@
 import { jest } from '@jest/globals';
 import { categorizeTransaction, categorizeTransactionsBatch, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/ai-categorization';
-
-// Mock the OpenAI module
-jest.mock('@/lib/openai', () => ({
-  generateChatCompletion: jest.fn(),
-}));
-
-// Mock the logger
-jest.mock('@/lib/logger', () => ({
-  __esModule: true,
-  default: {
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
-
 import { generateChatCompletion } from '@/lib/openai';
 
 const mockGenerateChatCompletion = generateChatCompletion as jest.MockedFunction<typeof generateChatCompletion>;
@@ -24,12 +7,23 @@ const mockGenerateChatCompletion = generateChatCompletion as jest.MockedFunction
 describe('AI Categorization', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Ensure server-side environment for AI categorization
+    if (global.isServerSide) {
+      global.isServerSide();
+    }
+  });
+
+  afterEach(() => {
+    // Restore window for other tests
+    if (global.restoreWindow) {
+      global.restoreWindow();
+    }
   });
 
   describe('categorizeTransaction', () => {
-    it('should categorize an expense transaction correctly', async () => {
-      // Mock AI response
-      mockGenerateChatCompletion.mockResolvedValue({
+    it('should call OpenAI and parse valid JSON response', async () => {
+      // Mock AI response with specific category
+      mockGenerateChatCompletion.mockResolvedValueOnce({
         content: JSON.stringify({
           category: EXPENSE_CATEGORIES.GROCERIES,
           confidence: 95,
@@ -69,7 +63,7 @@ describe('AI Categorization', () => {
 
     it('should categorize an income transaction correctly', async () => {
       // Mock AI response
-      mockGenerateChatCompletion.mockResolvedValue({
+      mockGenerateChatCompletion.mockResolvedValueOnce({
         content: JSON.stringify({
           category: INCOME_CATEGORIES.SALARY,
           confidence: 98,
@@ -95,7 +89,7 @@ describe('AI Categorization', () => {
 
     it('should handle AI errors gracefully with fallback categorization', async () => {
       // Mock AI error
-      mockGenerateChatCompletion.mockRejectedValue(new Error('API Error'));
+      mockGenerateChatCompletion.mockRejectedValueOnce(new Error('API Error'));
 
       const transaction = {
         amount: 50.00,
@@ -112,7 +106,7 @@ describe('AI Categorization', () => {
 
     it('should handle invalid JSON response with fallback', async () => {
       // Mock invalid JSON response
-      mockGenerateChatCompletion.mockResolvedValue({
+      mockGenerateChatCompletion.mockResolvedValueOnce({
         content: 'Invalid JSON response',
         role: 'assistant'
       });
@@ -133,7 +127,7 @@ describe('AI Categorization', () => {
 
   describe('categorizeTransactionsBatch', () => {
     it('should process multiple transactions in batches', async () => {
-      // Mock AI responses
+      // Mock AI responses for each transaction
       mockGenerateChatCompletion
         .mockResolvedValueOnce({
           content: JSON.stringify({
@@ -193,9 +187,6 @@ describe('AI Categorization', () => {
 
   describe('fallback categorization', () => {
     it('should categorize common expense patterns correctly', async () => {
-      // Test fallback when AI fails
-      mockGenerateChatCompletion.mockRejectedValue(new Error('API Error'));
-
       const testCases = [
         { description: 'RENT PAYMENT', expected: EXPENSE_CATEGORIES.HOUSING },
         { description: 'ELECTRIC BILL', expected: EXPENSE_CATEGORIES.UTILITIES },
@@ -204,6 +195,9 @@ describe('AI Categorization', () => {
       ];
 
       for (const testCase of testCases) {
+        // Mock AI error for each test case
+        mockGenerateChatCompletion.mockRejectedValueOnce(new Error('API Error'));
+        
         const result = await categorizeTransaction({
           amount: 50.00,
           description: testCase.description,
@@ -211,19 +205,21 @@ describe('AI Categorization', () => {
         });
 
         expect(result.category).toBe(testCase.expected);
+        expect(result.confidence).toBeLessThan(100);
+        expect(result.reasoning).toContain('Pattern match');
       }
     });
 
     it('should categorize income patterns correctly', async () => {
-      // Test fallback when AI fails
-      mockGenerateChatCompletion.mockRejectedValue(new Error('API Error'));
-
       const testCases = [
         { description: 'SALARY DEPOSIT', expected: INCOME_CATEGORIES.SALARY },
         { description: 'FREELANCE PAYMENT', expected: INCOME_CATEGORIES.FREELANCE }
       ];
 
       for (const testCase of testCases) {
+        // Mock AI error for each test case
+        mockGenerateChatCompletion.mockRejectedValueOnce(new Error('API Error'));
+        
         const result = await categorizeTransaction({
           amount: -3000.00, // Negative for income
           description: testCase.description,
@@ -231,6 +227,8 @@ describe('AI Categorization', () => {
         });
 
         expect(result.category).toBe(testCase.expected);
+        expect(result.confidence).toBeLessThan(100);
+        expect(result.reasoning).toContain('Pattern match');
       }
     });
   });

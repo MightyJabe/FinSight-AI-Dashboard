@@ -36,6 +36,9 @@ const envSchema = z.object({
 
   // OpenAI (server-side, made optional for client-side parsing)
   OPENAI_API_KEY: z.string().trim().min(1).optional(),
+
+  // Encryption key for sensitive data protection (server-side)
+  ENCRYPTION_KEY: z.string().trim().min(32, 'ENCRYPTION_KEY must be at least 32 characters long').optional(),
 });
 
 let parsedEnv: Partial<z.infer<typeof envSchema>> = {};
@@ -58,6 +61,7 @@ if (typeof process !== 'undefined' && process.env) {
     PLAID_SECRET: process.env.PLAID_SECRET,
     PLAID_ENV: process.env.PLAID_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   };
 
   const result = envSchema.safeParse(envVarsToValidate);
@@ -93,6 +97,9 @@ export const config = {
   },
   openai: {
     apiKey: parsedEnv.OPENAI_API_KEY,
+  },
+  encryption: {
+    key: parsedEnv.ENCRYPTION_KEY,
   },
 } as const;
 

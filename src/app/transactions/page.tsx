@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
+import { TableSkeleton } from '@/components/common/SkeletonLoader';
 
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
@@ -110,13 +111,13 @@ export default function TransactionsPage() {
           id: t.transaction_id,
           date: t.date,
           description: t.name,
-          amount: t.amount,
+          amount: -t.amount, // Invert Plaid amounts
           category: categorizedInfo?.aiCategory || t.category?.[0] || 'Uncategorized',
           aiCategory: categorizedInfo?.aiCategory,
           aiConfidence: categorizedInfo?.aiConfidence,
           account: t.account_name,
           accountId: t.account_id,
-          type: categorizedInfo?.type || (t.amount > 0 ? 'income' : 'expense'),
+          type: categorizedInfo?.type || (t.amount < 0 ? 'income' : 'expense'), // Inverted logic for type
           createdAt: t.date,
           updatedAt: t.date,
         };
@@ -163,7 +164,21 @@ export default function TransactionsPage() {
   }, [fetchTransactions]);
 
   if (authLoading || loading) {
-    return <div className="p-4">Loading transactions...</div>;
+    return (
+      <div className="max-w-full">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Track your spending, analyze patterns, and manage your budget across all accounts.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6">
+            <TableSkeleton rows={10} columns={4} />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

@@ -106,8 +106,38 @@ const tools = [
             type: 'number',
             description: 'Maximum transaction amount',
           },
+          merchant: {
+            type: 'string',
+            description: 'Search by merchant/business name (e.g., "Uber", "Starbucks", "Amazon")',
+          },
         },
         required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_transactions_by_merchant',
+      description: 'Search transactions by merchant/business name with spending totals',
+      parameters: {
+        type: 'object',
+        properties: {
+          merchant: {
+            type: 'string',
+            description: 'Merchant name to search for (e.g., "Uber", "Starbucks", "Amazon")',
+          },
+          period: {
+            type: 'string',
+            enum: ['week', 'month', 'quarter', 'year'],
+            description: 'Time period to search (default: month)',
+          },
+          limit: {
+            type: 'number',
+            description: 'Number of transactions to return (default: 50)',
+          },
+        },
+        required: ['merchant'],
       },
     },
   },
@@ -407,7 +437,8 @@ async function getRecentTransactions(
   limit = 10,
   category?: string,
   amountMin?: number,
-  amountMax?: number
+  amountMax?: number,
+  merchant?: string
 ): Promise<Array<{ name: string; amount: number; date: string; category: string }>> {
   try {
     const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
@@ -433,6 +464,12 @@ async function getRecentTransactions(
             ) {
               return;
             }
+            if (
+              merchant &&
+              !txn.name.toLowerCase().includes(merchant.toLowerCase())
+            ) {
+              return;
+            }
             if (amountMin && Math.abs(txn.amount) < amountMin) {
               return;
             }
@@ -442,7 +479,7 @@ async function getRecentTransactions(
 
             allTransactions.push({
               name: txn.name,
-              amount: txn.amount,
+              amount: -txn.amount, // Invert Plaid amounts: negative becomes positive (income), positive becomes negative (expense)
               date: txn.date,
               category: txn.category?.[0] || 'Uncategorized',
             });
@@ -459,6 +496,93 @@ async function getRecentTransactions(
       .slice(0, limit);
   } catch (error) {
     logger.error('Error getting recent transactions', { userId, error });
+    throw error;
+  }
+}
+
+/**
+ * Search transactions by merchant name with spending totals
+ */
+async function searchTransactionsByMerchant(
+  userId: string,
+  merchant: string,
+  period = 'month',
+  limit = 50
+): Promise<{
+  transactions: Array<{ name: string; amount: number; date: string; category: string }>;
+  totalSpent: number;
+  totalTransactions: number;
+}> {
+  try {
+    // Calculate date range based on period
+    const now = new Date();
+    let startDate: Date;
+
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+    }
+
+    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
+    const matchingTransactions: Array<{ name: string; amount: number; date: string; category: string }> = [];
+
+    for (const itemDoc of plaidItemsSnapshot.docs) {
+      const plaidItem = itemDoc.data();
+      const accessToken = plaidItem.accessToken;
+      if (accessToken) {
+        try {
+          const transactions = await getTransactions(
+            accessToken,
+            startDate.toISOString().split('T')[0] as string,
+            now.toISOString().split('T')[0] as string
+          );
+
+          transactions.forEach(txn => {
+            // Search by merchant name (case insensitive)
+            if (txn.name.toLowerCase().includes(merchant.toLowerCase())) {
+              matchingTransactions.push({
+                name: txn.name,
+                amount: -txn.amount, // Invert Plaid amounts
+                date: txn.date,
+                category: txn.category?.[0] || 'Uncategorized',
+              });
+            }
+          });
+        } catch (error) {
+          logger.error('Error fetching Plaid transactions for merchant search', { userId, error });
+        }
+      }
+    }
+
+    // Sort by date (most recent first) and limit results
+    const sortedTransactions = matchingTransactions
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+
+    // Calculate totals (only expenses - negative amounts)
+    const expenseTransactions = matchingTransactions.filter(txn => txn.amount < 0);
+    const totalSpent = expenseTransactions.reduce((sum, txn) => sum + Math.abs(txn.amount), 0);
+
+    return {
+      transactions: sortedTransactions,
+      totalSpent,
+      totalTransactions: matchingTransactions.length,
+    };
+  } catch (error) {
+    logger.error('Error searching transactions by merchant', { userId, merchant, error });
     throw error;
   }
 }
@@ -1449,7 +1573,16 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
                 functionArgs.limit,
                 functionArgs.category,
                 functionArgs.amount_min,
-                functionArgs.amount_max
+                functionArgs.amount_max,
+                functionArgs.merchant
+              );
+              break;
+            case 'search_transactions_by_merchant':
+              result = await searchTransactionsByMerchant(
+                userId!,
+                functionArgs.merchant,
+                functionArgs.period,
+                functionArgs.limit
               );
               break;
             case 'get_monthly_summary':

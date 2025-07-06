@@ -1,9 +1,11 @@
 'use client';
 
-import { AlertCircle, Bot, CheckCircle2, Clock, Copy, Download, Edit3, History, Plus, RefreshCw, RotateCcw, Send, ThumbsDown, ThumbsUp, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, BarChart3, Bot, CheckCircle2, Clock, Copy, Download, Edit3, History, PiggyBank, Plus, RefreshCw, RotateCcw, Send, ThumbsDown, ThumbsUp, TrendingDown, TrendingUp, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { ChatVisualization } from '@/components/chat/ChatVisualization';
 import { useSession } from '@/components/providers/SessionProvider';
+import { CardSkeleton } from '@/components/common/SkeletonLoader';
 
 interface Message {
   id: string;
@@ -13,6 +15,10 @@ interface Message {
   status?: 'sending' | 'sent' | 'error';
   error?: string | undefined;
   rating?: 'like' | 'dislike' | null;
+  visualizationData?: {
+    type: 'spending' | 'networth' | 'budget' | 'trend' | 'accounts' | 'transactions';
+    data: any;
+  } | null;
 }
 
 interface Conversation {
@@ -56,6 +62,14 @@ export default function ChatPage() {
   const [messageRatings, setMessageRatings] = useState<Record<string, 'like' | 'dislike'>>({});
   const [isOnline, setIsOnline] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [financialOverview, setFinancialOverview] = useState<{
+    netWorth: number;
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    savingsRate: number;
+    emergencyFund: number;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const copyMessageToClipboard = async (content: string, messageId: string) => {
@@ -113,6 +127,9 @@ export default function ChatPage() {
         msg.id === messageId ? { ...msg, status: 'sent' } : msg
       ));
       
+      // Extract visualization data from the response
+      const visualizationData = extractVisualizationData(data.response);
+      
       // Add AI response
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -120,6 +137,7 @@ export default function ChatPage() {
         content: data.response,
         timestamp: new Date(),
         status: 'sent',
+        visualizationData,
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -181,10 +199,13 @@ export default function ChatPage() {
 
       const data = await response.json();
 
+      // Extract visualization data from the response
+      const visualizationData = extractVisualizationData(data.response);
+
       // Replace the assistant message with the new response
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, content: data.response, timestamp: new Date(), status: 'sent' as const }
+          ? { ...msg, content: data.response, timestamp: new Date(), status: 'sent' as const, visualizationData }
           : msg
       ));
     } catch (error) {
@@ -317,6 +338,36 @@ export default function ChatPage() {
     };
   }, []);
 
+  // Load financial overview data
+  const loadFinancialOverview = useCallback(async () => {
+    if (!firebaseUser) return;
+
+    try {
+      const token = await firebaseUser.getIdToken();
+      
+      // Fetch from the accounts endpoint which has overview data
+      const response = await fetch('/api/accounts', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFinancialOverview({
+          netWorth: data.netWorth || 0,
+          monthlyIncome: data.monthlyIncome || 0,
+          monthlyExpenses: data.monthlyExpenses || 0,
+          savingsRate: data.savingsRate || 0,
+          emergencyFund: data.emergencyFundStatus || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading financial overview:', error);
+      // Silently fail - this is supplementary data
+    }
+  }, [firebaseUser]);
+
   // Load conversations on mount
   const loadConversations = useCallback(async () => {
     if (!firebaseUser) return;
@@ -349,8 +400,9 @@ export default function ChatPage() {
   useEffect(() => {
     if (firebaseUser) {
       loadConversations();
+      loadFinancialOverview();
     }
-  }, [firebaseUser, loadConversations]);
+  }, [firebaseUser, loadConversations, loadFinancialOverview]);
 
   const loadConversation = useCallback(
     async (conversationId: string) => {
@@ -530,12 +582,16 @@ export default function ChatPage() {
 
       const data = await response.json();
 
+      // Extract visualization data from the response
+      const visualizationData = extractVisualizationData(data.response);
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response,
         timestamp: new Date(),
         status: 'sent',
+        visualizationData,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -566,6 +622,80 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Extract visualization data from AI response
+  const extractVisualizationData = (content: string) => {
+    const lowerContent = content.toLowerCase();
+    
+    // Net worth visualization
+    if (lowerContent.includes('net worth') || lowerContent.includes('assets') || lowerContent.includes('liabilities')) {
+      const netWorthMatch = content.match(/\$([0-9,]+(?:\.[0-9]{2})?)/g);
+      if (netWorthMatch && netWorthMatch.length >= 2) {
+        const amounts = netWorthMatch.map(match => parseFloat(match.replace(/[$,]/g, '')));
+        return {
+          type: 'networth' as const,
+          data: {
+            netWorth: amounts[amounts.length - 1], // Last mentioned amount is usually net worth
+            assets: amounts[0] || 0,
+            liabilities: amounts[1] || 0,
+          }
+        };
+      }
+    }
+
+    // Spending visualization
+    if (lowerContent.includes('spending') || lowerContent.includes('expenses') || lowerContent.includes('spent')) {
+      // Look for category spending patterns like "restaurants: $123" or "food $456"
+      const categoryMatches = content.match(/(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi);
+      if (categoryMatches && categoryMatches.length > 1) {
+        const categories = categoryMatches.map(match => {
+          const parts = match.split(/[:$]/);
+          const category = parts[0]?.trim() || 'Unknown';
+          const amount = parseFloat(parts[1]?.replace(/[$,]/g, '') || '0');
+          return { category, amount };
+        });
+        return {
+          type: 'spending' as const,
+          data: categories
+        };
+      }
+    }
+
+    // Account balances visualization
+    if (lowerContent.includes('account') || lowerContent.includes('balance')) {
+      // Look for account patterns like "Checking: $1,234" or "Savings Account $5,678"
+      const accountMatches = content.match(/(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi);
+      if (accountMatches && accountMatches.length > 1) {
+        const accounts = accountMatches.map(match => {
+          const parts = match.split(/[:$]/);
+          const name = parts[0]?.trim() || 'Unknown Account';
+          const balance = parseFloat(parts[1]?.replace(/[$,]/g, '') || '0');
+          return { name, balance, type: 'Account' };
+        });
+        return {
+          type: 'accounts' as const,
+          data: accounts
+        };
+      }
+    }
+
+    // Monthly summary visualization
+    if (lowerContent.includes('income') && lowerContent.includes('expenses')) {
+      const amounts = content.match(/\$([0-9,]+(?:\.[0-9]{2})?)/g);
+      if (amounts && amounts.length >= 2) {
+        const values = amounts.map(match => parseFloat(match.replace(/[$,]/g, '')));
+        return {
+          type: 'budget' as const,
+          data: {
+            income: values[0] || 0,
+            expenses: values[1] || 0,
+          }
+        };
+      }
+    }
+
+    return null;
   };
 
   const deleteConversation = async (conversationId: string) => {
@@ -668,6 +798,17 @@ export default function ChatPage() {
                 <History className="h-4 w-4" />
                 <span className="sm:inline">History</span>
               </button>
+              <button
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                  showAnalytics
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span className="sm:inline">Analytics</span>
+              </button>
               {messages.length > 0 && (
                 <button
                   onClick={exportConversation}
@@ -766,10 +907,96 @@ export default function ChatPage() {
             </div>
           )}
 
+          {/* Analytics Sidebar */}
+          {showAnalytics && (
+            <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 order-3 lg:order-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Financial Overview</h3>
+              {financialOverview ? (
+                <div className="space-y-4">
+                  {/* Net Worth */}
+                  <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Net Worth</span>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      ${financialOverview.netWorth.toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Monthly Income */}
+                  <div className="p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Income</span>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                      ${financialOverview.monthlyIncome.toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Monthly Expenses */}
+                  <div className="p-3 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4 text-red-600" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Expenses</span>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                      ${financialOverview.monthlyExpenses.toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Savings Rate */}
+                  <div className="p-3 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <PiggyBank className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Savings Rate</span>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      {(financialOverview.savingsRate * 100).toFixed(1)}%
+                    </p>
+                  </div>
+
+                  {/* Emergency Fund */}
+                  <div className="p-3 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Fund</span>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                      {(financialOverview.emergencyFund * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Chat Interface */}
           <div
             className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-[500px] sm:h-[600px] lg:h-[700px] flex flex-col order-1 lg:order-2 w-full min-w-0 ${
-              showConversationList ? 'lg:col-span-3' : 'lg:col-span-4'
+              showConversationList && showAnalytics 
+                ? 'lg:col-span-2' 
+                : showConversationList || showAnalytics 
+                  ? 'lg:col-span-3' 
+                  : 'lg:col-span-4'
             }`}
           >
             {/* Messages */}
@@ -884,7 +1111,17 @@ export default function ChatPage() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words flex-1">{message.content}</p>
+                            <div className="flex-1">
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                              
+                              {/* Chat Visualization for assistant messages */}
+                              {message.role === 'assistant' && message.visualizationData && (
+                                <ChatVisualization 
+                                  data={message.visualizationData.data} 
+                                  type={message.visualizationData.type} 
+                                />
+                              )}
+                            </div>
                           )}
                           
                           {editingMessageId !== message.id && (
