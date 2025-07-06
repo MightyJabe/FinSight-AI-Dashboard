@@ -2,28 +2,20 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/chat/route';
 import { DELETE } from '@/app/api/chat/[conversationId]/route';
 
-// Mock Firebase Admin
-jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockResolvedValue({
-    uid: 'test-user-id',
-    email: 'test@example.com'
-  }),
-}));
-
 // Mock AI Brain Service
 jest.mock('@/lib/ai-brain-service', () => ({
   processUnifiedRequest: jest.fn().mockResolvedValue({
     response: 'Based on your financial data, you spent $500 on dining out last month.',
     type: 'analysis',
     confidence: 90,
-    actionItems: ['Consider setting a dining budget of $400', 'Try cooking at home more often']
+    actionItems: ['Consider setting a dining budget of $400', 'Try cooking at home more often'],
   }),
 }));
 
 // Mock Firestore
 const mockFirestore = {
   collection: jest.fn(() => ({
-    doc: jest.fn((id) => ({
+    doc: jest.fn(id => ({
       get: jest.fn().mockResolvedValue({
         exists: id !== 'non-existent',
         id: id,
@@ -32,15 +24,15 @@ const mockFirestore = {
           userId: 'test-user-id',
           messages: [
             { role: 'user', content: 'How much did I spend on dining?' },
-            { role: 'assistant', content: 'You spent $500 on dining out last month.' }
+            { role: 'assistant', content: 'You spent $500 on dining out last month.' },
           ],
           updatedAt: new Date(),
-          createdAt: new Date()
-        })
+          createdAt: new Date(),
+        }),
       }),
       set: jest.fn().mockResolvedValue({}),
       update: jest.fn().mockResolvedValue({}),
-      delete: jest.fn().mockResolvedValue({})
+      delete: jest.fn().mockResolvedValue({}),
     })),
     where: jest.fn(() => ({
       orderBy: jest.fn(() => ({
@@ -54,8 +46,8 @@ const mockFirestore = {
                   userId: 'test-user-id',
                   messageCount: 4,
                   updatedAt: new Date().toISOString(),
-                  createdAt: new Date().toISOString()
-                })
+                  createdAt: new Date().toISOString(),
+                }),
               },
               {
                 id: 'conv_456',
@@ -64,22 +56,23 @@ const mockFirestore = {
                   userId: 'test-user-id',
                   messageCount: 2,
                   updatedAt: new Date().toISOString(),
-                  createdAt: new Date().toISOString()
-                })
-              }
-            ]
-          })
-        }))
-      }))
+                  createdAt: new Date().toISOString(),
+                }),
+              },
+            ],
+          }),
+        })),
+      })),
     })),
-    add: jest.fn().mockResolvedValue({ id: 'new_conv_123' })
-  }))
+    add: jest.fn().mockResolvedValue({ id: 'new_conv_123' }),
+  })),
 };
 
+// Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
-    email: 'test@example.com'
+    email: 'test@example.com',
   }),
   firestore: mockFirestore,
 }));
@@ -96,8 +89,8 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'GET',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await GET(request);
@@ -110,7 +103,7 @@ describe('Chat API Endpoints', () => {
       expect(data.conversations[0]).toMatchObject({
         id: 'conv_123',
         title: 'Dining Expenses Discussion',
-        messageCount: 4
+        messageCount: 4,
       });
     });
 
@@ -118,8 +111,8 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat?conversationId=conv_123', {
         method: 'GET',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await GET(request);
@@ -133,12 +126,15 @@ describe('Chat API Endpoints', () => {
     });
 
     it('should handle non-existent conversation', async () => {
-      const request = new NextRequest('http://localhost:3000/api/chat?conversationId=non-existent', {
-        method: 'GET',
-        headers: {
-          'Authorization': validToken
+      const request = new NextRequest(
+        'http://localhost:3000/api/chat?conversationId=non-existent',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: validToken,
+          },
         }
-      });
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -150,7 +146,7 @@ describe('Chat API Endpoints', () => {
 
     it('should reject requests without authorization', async () => {
       const request = new NextRequest('http://localhost:3000/api/chat', {
-        method: 'GET'
+        method: 'GET',
       });
 
       const response = await GET(request);
@@ -165,16 +161,16 @@ describe('Chat API Endpoints', () => {
   describe('POST /api/chat', () => {
     it('should create new conversation and respond to message', async () => {
       const requestBody = {
-        message: 'How much did I spend on dining out last month?'
+        message: 'How much did I spend on dining out last month?',
       };
 
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -193,17 +189,17 @@ describe('Chat API Endpoints', () => {
         conversationId: 'conv_123',
         history: [
           { role: 'user', content: 'How much did I spend on dining?' },
-          { role: 'assistant', content: 'You spent $500 on dining out last month.' }
-        ]
+          { role: 'assistant', content: 'You spent $500 on dining out last month.' },
+        ],
       };
 
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -221,10 +217,10 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -237,16 +233,16 @@ describe('Chat API Endpoints', () => {
 
     it('should handle empty message', async () => {
       const requestBody = {
-        message: '   ' // Empty/whitespace message
+        message: '   ', // Empty/whitespace message
       };
 
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -262,16 +258,16 @@ describe('Chat API Endpoints', () => {
       processUnifiedRequest.mockRejectedValueOnce(new Error('AI service unavailable'));
 
       const requestBody = {
-        message: 'Test message'
+        message: 'Test message',
       };
 
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -286,17 +282,17 @@ describe('Chat API Endpoints', () => {
       const requestBody = {
         message: 'Test message',
         history: [
-          { role: 'invalid-role', content: 'Test' } // Invalid role
-        ]
+          { role: 'invalid-role', content: 'Test' }, // Invalid role
+        ],
       };
 
       const request = new NextRequest('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await POST(request);
@@ -313,8 +309,8 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat/conv_123', {
         method: 'DELETE',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await DELETE(request, { params: { conversationId: 'conv_123' } });
@@ -329,8 +325,8 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat/non-existent', {
         method: 'DELETE',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await DELETE(request, { params: { conversationId: 'non-existent' } });
@@ -343,7 +339,7 @@ describe('Chat API Endpoints', () => {
 
     it('should reject unauthorized deletion requests', async () => {
       const request = new NextRequest('http://localhost:3000/api/chat/conv_123', {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       const response = await DELETE(request, { params: { conversationId: 'conv_123' } });
@@ -358,8 +354,8 @@ describe('Chat API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/chat/', {
         method: 'DELETE',
         headers: {
-          'Authorization': validToken
-        }
+          Authorization: validToken,
+        },
       });
 
       const response = await DELETE(request, { params: { conversationId: '' } });

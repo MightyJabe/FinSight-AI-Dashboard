@@ -3,20 +3,6 @@ import { GET as getSession } from '@/app/api/auth/session/route';
 import { GET as getAccounts } from '@/app/api/accounts/route';
 import { GET as getHealth } from '@/app/api/health/route';
 
-// Mock Firebase Admin
-jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockImplementation(token => {
-    if (token === 'valid-token') {
-      return Promise.resolve({
-        uid: 'test-user-id',
-        email: 'test@example.com',
-        name: 'Test User',
-      });
-    }
-    throw new Error('Invalid token');
-  }),
-}));
-
 // Mock Firestore
 const mockFirestore = {
   collection: jest.fn(() => ({
@@ -74,6 +60,7 @@ const mockFirestore = {
   })),
 };
 
+// Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockImplementation(token => {
     if (token === 'valid-token') {

@@ -4,75 +4,7 @@ import { POST as cashFlowForecast } from '@/app/api/cash-flow-forecast/route';
 import { POST as investmentAdvisor } from '@/app/api/investment-advisor/route';
 import { POST as unifiedAI } from '@/app/api/unified-ai-assistant/route';
 
-// Mock Firebase Admin
-jest.mock('@/lib/firebase-admin', () => ({
-  verifyIdToken: jest.fn().mockResolvedValue({
-    uid: 'test-user-id',
-    email: 'test@example.com'
-  }),
-}));
-
-// Mock AI services
-jest.mock('@/lib/budget-recommendations', () => ({
-  generateBudgetRecommendations: jest.fn().mockResolvedValue({
-    recommendations: [
-      {
-        category: 'Dining Out',
-        currentSpending: 500,
-        recommendedBudget: 400,
-        potentialSavings: 100,
-        priority: 'high'
-      }
-    ],
-    totalPotentialSavings: 100,
-    budgetHealthScore: 75
-  }),
-}));
-
-jest.mock('@/lib/cash-flow-forecasting', () => ({
-  generateCashFlowForecast: jest.fn().mockResolvedValue({
-    projections: [
-      {
-        month: '2024-02',
-        projectedIncome: 5000,
-        projectedExpenses: 4200,
-        netCashFlow: 800,
-        confidence: 85
-      }
-    ],
-    insights: ['Your cash flow looks stable for the next 6 months'],
-    riskFactors: [],
-    forecastAccuracy: 85
-  }),
-}));
-
-jest.mock('@/lib/investment-advisor', () => ({
-  generateInvestmentAdvice: jest.fn().mockResolvedValue({
-    riskProfile: 'moderate',
-    recommendations: [
-      {
-        type: 'ETF',
-        allocation: 60,
-        reasoning: 'Diversified growth potential'
-      }
-    ],
-    portfolioAnalysis: {
-      currentAllocation: {},
-      suggestedRebalancing: []
-    }
-  }),
-}));
-
-jest.mock('@/lib/ai-brain-service', () => ({
-  processUnifiedRequest: jest.fn().mockResolvedValue({
-    response: 'Based on your financial data, here are some insights...',
-    type: 'analysis',
-    confidence: 90,
-    actionItems: ['Review your dining budget', 'Consider increasing savings']
-  }),
-}));
-
-// Mock Firestore
+// Mock Firestore first
 const mockFirestore = {
   collection: jest.fn(() => ({
     doc: jest.fn(() => ({
@@ -85,40 +17,103 @@ const mockFirestore = {
                 id: 'txn_123',
                 amount: 45.67,
                 category: ['Groceries'],
-                date: '2024-01-15'
-              }
+                date: '2024-01-15',
+              },
             ],
             accounts: [
               {
                 account_id: 'acc_123',
                 balances: { current: 1000 },
-                name: 'Checking'
-              }
-            ]
-          }
-        })
+                name: 'Checking',
+              },
+            ],
+          },
+        }),
       }),
       collection: jest.fn(() => ({
         get: jest.fn().mockResolvedValue({
-          docs: [{
-            data: () => ({
-              aiCategory: 'Groceries',
-              amount: 45.67,
-              type: 'expense'
-            })
-          }]
-        })
-      }))
-    }))
-  }))
+          docs: [
+            {
+              data: () => ({
+                aiCategory: 'Groceries',
+                amount: 45.67,
+                type: 'expense',
+              }),
+            },
+          ],
+        }),
+      })),
+    })),
+  })),
 };
 
+// Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
-    email: 'test@example.com'
+    email: 'test@example.com',
   }),
   firestore: mockFirestore,
+}));
+
+// Mock AI services
+jest.mock('@/lib/budget-recommendations', () => ({
+  generateBudgetRecommendations: jest.fn().mockResolvedValue({
+    recommendations: [
+      {
+        category: 'Dining Out',
+        currentSpending: 500,
+        recommendedBudget: 400,
+        potentialSavings: 100,
+        priority: 'high',
+      },
+    ],
+    totalPotentialSavings: 100,
+    budgetHealthScore: 75,
+  }),
+}));
+
+jest.mock('@/lib/cash-flow-forecasting', () => ({
+  generateCashFlowForecast: jest.fn().mockResolvedValue({
+    projections: [
+      {
+        month: '2024-02',
+        projectedIncome: 5000,
+        projectedExpenses: 4200,
+        netCashFlow: 800,
+        confidence: 85,
+      },
+    ],
+    insights: ['Your cash flow looks stable for the next 6 months'],
+    riskFactors: [],
+    forecastAccuracy: 85,
+  }),
+}));
+
+jest.mock('@/lib/investment-advisor', () => ({
+  generateInvestmentAdvice: jest.fn().mockResolvedValue({
+    riskProfile: 'moderate',
+    recommendations: [
+      {
+        type: 'ETF',
+        allocation: 60,
+        reasoning: 'Diversified growth potential',
+      },
+    ],
+    portfolioAnalysis: {
+      currentAllocation: {},
+      suggestedRebalancing: [],
+    },
+  }),
+}));
+
+jest.mock('@/lib/ai-brain-service', () => ({
+  processUnifiedRequest: jest.fn().mockResolvedValue({
+    response: 'Based on your financial data, here are some insights...',
+    type: 'analysis',
+    confidence: 90,
+    actionItems: ['Review your dining budget', 'Consider increasing savings'],
+  }),
 }));
 
 describe('AI Features API Endpoints', () => {
@@ -133,9 +128,9 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/budget-recommendations', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await budgetRecommendations(request);
@@ -153,8 +148,8 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/budget-recommendations', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await budgetRecommendations(request);
@@ -172,9 +167,9 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/budget-recommendations', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await budgetRecommendations(request);
@@ -191,9 +186,9 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/cash-flow-forecast', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await cashFlowForecast(request);
@@ -209,17 +204,20 @@ describe('AI Features API Endpoints', () => {
 
     it('should handle insufficient data gracefully', async () => {
       // Mock empty user data
-      mockFirestore.collection().doc().get.mockResolvedValueOnce({
-        exists: true,
-        data: () => ({ overview: { transactions: [], accounts: [] } })
-      });
+      mockFirestore
+        .collection()
+        .doc()
+        .get.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ overview: { transactions: [], accounts: [] } }),
+        });
 
       const request = new NextRequest('http://localhost:3000/api/cash-flow-forecast', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await cashFlowForecast(request);
@@ -237,9 +235,9 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/investment-advisor', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
-        }
+          Authorization: validToken,
+          'Content-Type': 'application/json',
+        },
       });
 
       const response = await investmentAdvisor(request);
@@ -255,16 +253,16 @@ describe('AI Features API Endpoints', () => {
 
     it('should validate risk tolerance parameter', async () => {
       const requestBody = {
-        riskTolerance: 'invalid-risk-level'
+        riskTolerance: 'invalid-risk-level',
       };
 
       const request = new NextRequest('http://localhost:3000/api/investment-advisor', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await investmentAdvisor(request);
@@ -279,16 +277,16 @@ describe('AI Features API Endpoints', () => {
   describe('POST /api/unified-ai-assistant', () => {
     it('should process natural language queries successfully', async () => {
       const requestBody = {
-        message: 'How much did I spend on dining out last month?'
+        message: 'How much did I spend on dining out last month?',
       };
 
       const request = new NextRequest('http://localhost:3000/api/unified-ai-assistant', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await unifiedAI(request);
@@ -308,10 +306,10 @@ describe('AI Features API Endpoints', () => {
       const request = new NextRequest('http://localhost:3000/api/unified-ai-assistant', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await unifiedAI(request);
@@ -327,17 +325,17 @@ describe('AI Features API Endpoints', () => {
         message: 'What can I do to improve my budget?',
         context: {
           timeframe: 'last_3_months',
-          focusArea: 'expense_reduction'
-        }
+          focusArea: 'expense_reduction',
+        },
       };
 
       const request = new NextRequest('http://localhost:3000/api/unified-ai-assistant', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await unifiedAI(request);
@@ -354,16 +352,16 @@ describe('AI Features API Endpoints', () => {
       processUnifiedRequest.mockRejectedValueOnce(new Error('AI processing failed'));
 
       const requestBody = {
-        message: 'Test query'
+        message: 'Test query',
       };
 
       const request = new NextRequest('http://localhost:3000/api/unified-ai-assistant', {
         method: 'POST',
         headers: {
-          'Authorization': validToken,
-          'Content-Type': 'application/json'
+          Authorization: validToken,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await unifiedAI(request);

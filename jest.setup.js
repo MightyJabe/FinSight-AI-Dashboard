@@ -18,7 +18,7 @@ if (typeof global.Request === 'undefined') {
       this.headers = new Headers(init.headers);
       this.body = init.body;
     }
-    
+
     get url() {
       return this._url;
     }
@@ -43,7 +43,12 @@ if (typeof global.Response === 'undefined') {
      *
      */
     json() {
-      return Promise.resolve(JSON.parse(this.body || '{}'));
+      try {
+        return Promise.resolve(JSON.parse(this.body || '{}'));
+      } catch (error) {
+        // If JSON parsing fails, return empty object
+        return Promise.resolve({});
+      }
     }
 
     /**
@@ -52,14 +57,14 @@ if (typeof global.Response === 'undefined') {
     text() {
       return Promise.resolve(this.body || '');
     }
-    
+
     static json(data, init = {}) {
       return new Response(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
-          ...init.headers
-        }
+          ...init.headers,
+        },
       });
     }
   };
@@ -187,7 +192,7 @@ const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
   url: 'http://localhost',
   pretendToBeVisual: true,
-  resources: 'usable'
+  resources: 'usable',
 });
 
 // Set up global environment
@@ -203,13 +208,13 @@ const originalWindow = global.window;
 global.isServerSide = () => {
   Object.defineProperty(global, 'window', {
     value: undefined,
-    writable: true
+    writable: true,
   });
 };
 global.restoreWindow = () => {
   Object.defineProperty(global, 'window', {
     value: originalWindow,
-    writable: true
+    writable: true,
   });
 };
 
@@ -217,6 +222,6 @@ global.restoreWindow = () => {
 jest.mock('@/lib/openai', () => ({
   generateChatCompletion: jest.fn().mockResolvedValue({
     content: '{"category": "Uncategorized", "confidence": 50, "reasoning": "Test response"}',
-    role: 'assistant'
+    role: 'assistant',
   }),
 }));

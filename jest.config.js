@@ -12,6 +12,7 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/tests/e2e/'],
   transformIgnorePatterns: ['/node_modules/(?!(jose|openai|@radix-ui|next-auth)/)'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
