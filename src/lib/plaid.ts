@@ -8,22 +8,32 @@ const PLAID_CLIENT_ID = plaidEnvVars.clientId;
 const PLAID_SECRET = plaidEnvVars.secret; // Changed from PLAID_SECRET_KEY to PLAID_SECRET
 const PLAID_ENV = plaidEnvVars.environment || 'sandbox';
 
-if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
+let plaidClient: PlaidApi;
+
+// Skip validation in CI build environment
+if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
+  console.log('Skipping Plaid configuration validation in CI build environment');
+  // Create dummy client for CI
+  plaidClient = {} as PlaidApi;
+} else if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   throw new Error('PLAID_CLIENT_ID and PLAID_SECRET must be set in environment variables.');
+} else {
+  const plaidConfig = new Configuration({
+    basePath: (PlaidEnvironments[PLAID_ENV as keyof typeof PlaidEnvironments] ||
+      PlaidEnvironments.sandbox) as string,
+    baseOptions: {
+      headers: {
+        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+        'PLAID-SECRET': PLAID_SECRET,
+        'Plaid-Version': '2020-09-14', // Specify Plaid API version
+      },
+    },
+  });
+
+  plaidClient = new PlaidApi(plaidConfig);
 }
 
-const plaidConfig = new Configuration({
-  basePath: (PlaidEnvironments[PLAID_ENV as keyof typeof PlaidEnvironments] || PlaidEnvironments.sandbox) as string,
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-      'PLAID-SECRET': PLAID_SECRET,
-      'Plaid-Version': '2020-09-14', // Specify Plaid API version
-    },
-  },
-});
-
-export const plaidClient = new PlaidApi(plaidConfig);
+export { plaidClient };
 
 // Helper function to create a link token
 /**

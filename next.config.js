@@ -2,14 +2,17 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  
+
   // Performance optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn']
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? {
+            exclude: ['error', 'warn'],
+          }
+        : false,
   },
-  
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -17,7 +20,7 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  
+
   // Security headers
   async headers() {
     return [
@@ -26,7 +29,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'X-Frame-Options',
@@ -46,17 +49,17 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=()',
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
-          }
+            value: 'max-age=31536000; includeSubDomains',
+          },
         ],
       },
     ];
   },
-  
+
   // Bundle analyzer (disabled webpack optimization causing vendor.js issues)
   webpack: (config, { isServer }) => {
     if (process.env.ANALYZE) {
@@ -69,31 +72,36 @@ const nextConfig = {
         })
       );
     }
-    
+
     return config;
   },
-  
+
   // Experimental features for performance
   experimental: {
     optimizeCss: false, // Disabled to fix vendor.js exports error
     scrollRestoration: true,
   },
-  
+
+  // Skip TypeScript errors in CI build (already checked in separate step)
+  typescript: {
+    ignoreBuildErrors: process.env.CI === 'true',
+  },
+
   // Output configuration
   output: 'standalone',
-  
+
   // Disable x-powered-by header
   poweredByHeader: false,
-  
+
   // Compression
   compress: true,
-  
+
   // Generate ETags
   generateEtags: true,
-  
+
   // Page extensions
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  
+
   // Trailing slash
   trailingSlash: false,
 };

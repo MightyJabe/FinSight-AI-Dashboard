@@ -134,7 +134,7 @@ export async function GET(request: Request) {
       .collection('manualAssets')
       .get();
     const manualAssets: ManualAsset[] = assetsSnapshot.docs.map(
-      doc => ({ id: doc.id, ...doc.data() }) as ManualAsset
+      (doc: any) => ({ id: doc.id, ...doc.data() }) as ManualAsset
     );
     const totalManualAssets = manualAssets.reduce((sum, a) => sum + (a.amount || 0), 0);
 
@@ -145,7 +145,7 @@ export async function GET(request: Request) {
       .collection('manualLiabilities')
       .get();
     const manualLiabilities: ManualLiability[] = liabilitiesSnapshot.docs.map(
-      doc => ({ id: doc.id, ...doc.data() }) as ManualLiability
+      (doc: any) => ({ id: doc.id, ...doc.data() }) as ManualLiability
     );
     const totalLiabilities = manualLiabilities.reduce((sum, l) => sum + (l.amount || 0), 0);
 
