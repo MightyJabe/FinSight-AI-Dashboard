@@ -22,6 +22,24 @@ if (typeof global.Request === 'undefined') {
     get url() {
       return this._url;
     }
+
+    /**
+     * Mock json() method for API route testing
+     */
+    async json() {
+      try {
+        return this.body ? JSON.parse(this.body) : {};
+      } catch {
+        return {};
+      }
+    }
+
+    /**
+     * Mock text() method for API route testing
+     */
+    async text() {
+      return this.body || '';
+    }
   };
 }
 
