@@ -65,6 +65,15 @@ jobs:
         run: npx playwright test --project=${{ matrix.project }}
         env:
           CI: true
+          NODE_ENV: test
+          E2E_BASE_URL: http://localhost:3000
+          # Firebase client config for runtime
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:123456789:web:dummy"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -130,6 +139,15 @@ jobs:
         run: npx playwright test --project="Mobile Chrome" --project="Mobile Safari"
         env:
           CI: true
+          NODE_ENV: test
+          E2E_BASE_URL: http://localhost:3000
+          # Firebase client config for runtime
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:123456789:web:dummy"
 
       - name: Upload mobile test results
         uses: actions/upload-artifact@v4
@@ -187,6 +205,15 @@ jobs:
         run: npx playwright test --grep "accessibility|a11y" --project=chromium
         env:
           CI: true
+          NODE_ENV: test
+          E2E_BASE_URL: http://localhost:3000
+          # Firebase client config for runtime
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:123456789:web:dummy"
 
       - name: Upload accessibility results
         uses: actions/upload-artifact@v4
