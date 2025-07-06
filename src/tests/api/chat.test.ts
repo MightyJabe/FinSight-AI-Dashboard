@@ -12,69 +12,66 @@ jest.mock('@/lib/ai-brain-service', () => ({
   }),
 }));
 
-// Mock Firestore
-const mockFirestore = {
-  collection: jest.fn(() => ({
-    doc: jest.fn(id => ({
-      get: jest.fn().mockResolvedValue({
-        exists: id !== 'non-existent',
-        id: id,
-        data: () => ({
-          title: 'Test Conversation',
-          userId: 'test-user-id',
-          messages: [
-            { role: 'user', content: 'How much did I spend on dining?' },
-            { role: 'assistant', content: 'You spent $500 on dining out last month.' },
-          ],
-          updatedAt: new Date(),
-          createdAt: new Date(),
-        }),
-      }),
-      set: jest.fn().mockResolvedValue({}),
-      update: jest.fn().mockResolvedValue({}),
-      delete: jest.fn().mockResolvedValue({}),
-    })),
-    where: jest.fn(() => ({
-      orderBy: jest.fn(() => ({
-        limit: jest.fn(() => ({
-          get: jest.fn().mockResolvedValue({
-            docs: [
-              {
-                id: 'conv_123',
-                data: () => ({
-                  title: 'Dining Expenses Discussion',
-                  userId: 'test-user-id',
-                  messageCount: 4,
-                  updatedAt: new Date().toISOString(),
-                  createdAt: new Date().toISOString(),
-                }),
-              },
-              {
-                id: 'conv_456',
-                data: () => ({
-                  title: 'Budget Planning Chat',
-                  userId: 'test-user-id',
-                  messageCount: 2,
-                  updatedAt: new Date().toISOString(),
-                  createdAt: new Date().toISOString(),
-                }),
-              },
-            ],
-          }),
-        })),
-      })),
-    })),
-    add: jest.fn().mockResolvedValue({ id: 'new_conv_123' }),
-  })),
-};
-
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
     email: 'test@example.com',
   }),
-  firestore: mockFirestore,
+  firestore: {
+    collection: jest.fn(() => ({
+      doc: jest.fn(id => ({
+        get: jest.fn().mockResolvedValue({
+          exists: id !== 'non-existent',
+          id: id,
+          data: () => ({
+            title: 'Test Conversation',
+            userId: 'test-user-id',
+            messages: [
+              { role: 'user', content: 'How much did I spend on dining?' },
+              { role: 'assistant', content: 'You spent $500 on dining out last month.' },
+            ],
+            updatedAt: new Date(),
+            createdAt: new Date(),
+          }),
+        }),
+        set: jest.fn().mockResolvedValue({}),
+        update: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue({}),
+      })),
+      where: jest.fn(() => ({
+        orderBy: jest.fn(() => ({
+          limit: jest.fn(() => ({
+            get: jest.fn().mockResolvedValue({
+              docs: [
+                {
+                  id: 'conv_123',
+                  data: () => ({
+                    title: 'Dining Expenses Discussion',
+                    userId: 'test-user-id',
+                    messageCount: 4,
+                    updatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                  }),
+                },
+                {
+                  id: 'conv_456',
+                  data: () => ({
+                    title: 'Budget Planning Chat',
+                    userId: 'test-user-id',
+                    messageCount: 2,
+                    updatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                  }),
+                },
+              ],
+            }),
+          })),
+        })),
+      })),
+      add: jest.fn().mockResolvedValue({ id: 'new_conv_123' }),
+    })),
+  },
 }));
 
 describe('Chat API Endpoints', () => {

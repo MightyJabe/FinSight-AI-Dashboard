@@ -16,59 +16,52 @@ jest.mock('@/lib/ai-categorization', () => ({
   ]),
 }));
 
-// Mock Firestore
-const mockDoc = {
-  update: jest.fn().mockResolvedValue({}),
-  get: jest.fn().mockResolvedValue({
-    exists: true,
-    data: () => ({
-      id: 'txn_123',
-      aiCategory: 'Groceries',
-      amount: 45.67,
-    }),
-  }),
-};
-
-const mockCollection = {
-  add: jest.fn().mockResolvedValue({ id: 'doc_123' }),
-  get: jest.fn().mockResolvedValue({
-    docs: [
-      {
-        id: 'txn_123',
-        data: () => ({
-          id: 'txn_123',
-          aiCategory: 'Groceries',
-          amount: 45.67,
-          description: 'WHOLE FOODS',
-          date: '2024-01-15',
-          type: 'expense',
-        }),
-      },
-    ],
-  }),
-  doc: jest.fn(() => mockDoc),
-};
-
-const mockFirestore = {
-  collection: jest.fn(() => ({
-    doc: jest.fn(() => ({
-      collection: jest.fn(() => mockCollection),
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ overview: { transactions: [] } }),
-      }),
-      set: jest.fn().mockResolvedValue({}),
-    })),
-  })),
-};
-
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
     email: 'test@example.com',
   }),
-  firestore: mockFirestore,
+  firestore: {
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        collection: jest.fn(() => ({
+          add: jest.fn().mockResolvedValue({ id: 'doc_123' }),
+          get: jest.fn().mockResolvedValue({
+            docs: [
+              {
+                id: 'txn_123',
+                data: () => ({
+                  id: 'txn_123',
+                  aiCategory: 'Groceries',
+                  amount: 45.67,
+                  description: 'WHOLE FOODS',
+                  date: '2024-01-15',
+                  type: 'expense',
+                }),
+              },
+            ],
+          }),
+          doc: jest.fn(() => ({
+            update: jest.fn().mockResolvedValue({}),
+            get: jest.fn().mockResolvedValue({
+              exists: true,
+              data: () => ({
+                id: 'txn_123',
+                aiCategory: 'Groceries',
+                amount: 45.67,
+              }),
+            }),
+          })),
+        })),
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({ overview: { transactions: [] } }),
+        }),
+        set: jest.fn().mockResolvedValue({}),
+      })),
+    })),
+  },
 }));
 
 // Import route handlers after mocks

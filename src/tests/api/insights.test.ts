@@ -9,41 +9,38 @@ import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
 import { getTransactions } from '@/lib/plaid';
 
-// Mock Firestore first
-const mockFirestore = {
-  collection: jest.fn(() => ({
-    doc: jest.fn(() => ({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({
-          overview: {
-            manualAssets: [],
-            manualLiabilities: [],
-          },
-        }),
-      }),
-      collection: jest.fn(() => ({
-        get: jest.fn().mockResolvedValue({
-          docs: [], // Empty plaidItems collection
-        }),
-        doc: jest.fn(() => ({
-          set: jest.fn().mockResolvedValue({}),
-          get: jest.fn().mockResolvedValue({
-            exists: false,
-          }),
-        })),
-      })),
-    })),
-  })),
-};
-
 // Mock Firebase Admin auth
 jest.mock('@/lib/firebase-admin', () => ({
   auth: {
     createCustomToken: jest.fn().mockResolvedValue('mock-token'),
     verifyIdToken: jest.fn().mockResolvedValue({ uid: 'test-user-id' }),
   },
-  db: mockFirestore,
+  db: {
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({
+            overview: {
+              manualAssets: [],
+              manualLiabilities: [],
+            },
+          }),
+        }),
+        collection: jest.fn(() => ({
+          get: jest.fn().mockResolvedValue({
+            docs: [], // Empty plaidItems collection
+          }),
+          doc: jest.fn(() => ({
+            set: jest.fn().mockResolvedValue({}),
+            get: jest.fn().mockResolvedValue({
+              exists: false,
+            }),
+          })),
+        })),
+      })),
+    })),
+  },
 }));
 
 jest.mock('@/lib/openai', () => ({

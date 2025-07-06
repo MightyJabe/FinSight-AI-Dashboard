@@ -4,56 +4,53 @@ import { POST as cashFlowForecast } from '@/app/api/cash-flow-forecast/route';
 import { POST as investmentAdvisor } from '@/app/api/investment-advisor/route';
 import { POST as unifiedAI } from '@/app/api/unified-ai-assistant/route';
 
-// Mock Firestore first
-const mockFirestore = {
-  collection: jest.fn(() => ({
-    doc: jest.fn(() => ({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({
-          overview: {
-            transactions: [
-              {
-                id: 'txn_123',
-                amount: 45.67,
-                category: ['Groceries'],
-                date: '2024-01-15',
-              },
-            ],
-            accounts: [
-              {
-                account_id: 'acc_123',
-                balances: { current: 1000 },
-                name: 'Checking',
-              },
-            ],
-          },
-        }),
-      }),
-      collection: jest.fn(() => ({
-        get: jest.fn().mockResolvedValue({
-          docs: [
-            {
-              data: () => ({
-                aiCategory: 'Groceries',
-                amount: 45.67,
-                type: 'expense',
-              }),
-            },
-          ],
-        }),
-      })),
-    })),
-  })),
-};
-
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockResolvedValue({
     uid: 'test-user-id',
     email: 'test@example.com',
   }),
-  firestore: mockFirestore,
+  firestore: {
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({
+            overview: {
+              transactions: [
+                {
+                  id: 'txn_123',
+                  amount: 45.67,
+                  category: ['Groceries'],
+                  date: '2024-01-15',
+                },
+              ],
+              accounts: [
+                {
+                  account_id: 'acc_123',
+                  balances: { current: 1000 },
+                  name: 'Checking',
+                },
+              ],
+            },
+          }),
+        }),
+        collection: jest.fn(() => ({
+          get: jest.fn().mockResolvedValue({
+            docs: [
+              {
+                data: () => ({
+                  aiCategory: 'Groceries',
+                  amount: 45.67,
+                  type: 'expense',
+                }),
+              },
+            ],
+          }),
+        })),
+      })),
+    })),
+  },
 }));
 
 // Mock AI services

@@ -3,63 +3,6 @@ import { GET as getSession } from '@/app/api/auth/session/route';
 import { GET as getAccounts } from '@/app/api/accounts/route';
 import { GET as getHealth } from '@/app/api/health/route';
 
-// Mock Firestore
-const mockFirestore = {
-  collection: jest.fn(() => ({
-    doc: jest.fn(() => ({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({
-          overview: {
-            accounts: [
-              {
-                account_id: 'acc_checking_123',
-                name: 'Checking Account',
-                official_name: 'Premium Checking',
-                type: 'depository',
-                subtype: 'checking',
-                balances: {
-                  current: 2500.0,
-                  available: 2500.0,
-                  iso_currency_code: 'USD',
-                },
-              },
-              {
-                account_id: 'acc_savings_456',
-                name: 'Savings Account',
-                official_name: 'High Yield Savings',
-                type: 'depository',
-                subtype: 'savings',
-                balances: {
-                  current: 10000.0,
-                  available: 10000.0,
-                  iso_currency_code: 'USD',
-                },
-              },
-            ],
-            total_balances: {
-              current: 12500.0,
-              available: 12500.0,
-            },
-          },
-          profile: {
-            name: 'Test User',
-            email: 'test@example.com',
-            preferences: {
-              currency: 'USD',
-              theme: 'light',
-            },
-          },
-        }),
-      }),
-      set: jest.fn().mockResolvedValue({}),
-      collection: jest.fn().mockReturnValue({
-        get: jest.fn().mockResolvedValue({ docs: [] }),
-      }),
-    })),
-  })),
-};
-
 // Mock Firebase Admin
 jest.mock('@/lib/firebase-admin', () => ({
   verifyIdToken: jest.fn().mockImplementation(token => {
@@ -72,7 +15,61 @@ jest.mock('@/lib/firebase-admin', () => ({
     }
     throw new Error('Invalid token');
   }),
-  firestore: mockFirestore,
+  firestore: {
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({
+            overview: {
+              accounts: [
+                {
+                  account_id: 'acc_checking_123',
+                  name: 'Checking Account',
+                  official_name: 'Premium Checking',
+                  type: 'depository',
+                  subtype: 'checking',
+                  balances: {
+                    current: 2500.0,
+                    available: 2500.0,
+                    iso_currency_code: 'USD',
+                  },
+                },
+                {
+                  account_id: 'acc_savings_456',
+                  name: 'Savings Account',
+                  official_name: 'High Yield Savings',
+                  type: 'depository',
+                  subtype: 'savings',
+                  balances: {
+                    current: 10000.0,
+                    available: 10000.0,
+                    iso_currency_code: 'USD',
+                  },
+                },
+              ],
+              total_balances: {
+                current: 12500.0,
+                available: 12500.0,
+              },
+            },
+            profile: {
+              name: 'Test User',
+              email: 'test@example.com',
+              preferences: {
+                currency: 'USD',
+                theme: 'light',
+              },
+            },
+          }),
+        }),
+        set: jest.fn().mockResolvedValue({}),
+        collection: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({ docs: [] }),
+        }),
+      })),
+    })),
+  },
 }));
 
 describe('Auth & Accounts API Endpoints', () => {
