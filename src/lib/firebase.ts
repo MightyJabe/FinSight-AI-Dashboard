@@ -1,13 +1,20 @@
-import { getConfig } from './config';
-
-const { firebase: firebaseEnv } = getConfig();
-
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+import { getConfig } from './config';
+
+const { firebase: firebaseEnv } = getConfig();
+
 // Validate Firebase configuration
-if (!firebaseEnv.apiKey || !firebaseEnv.authDomain || !firebaseEnv.projectId || !firebaseEnv.appId || !firebaseEnv.storageBucket || !firebaseEnv.messagingSenderId) {
+if (
+  !firebaseEnv.apiKey ||
+  !firebaseEnv.authDomain ||
+  !firebaseEnv.projectId ||
+  !firebaseEnv.appId ||
+  !firebaseEnv.storageBucket ||
+  !firebaseEnv.messagingSenderId
+) {
   throw new Error('Firebase configuration is incomplete. Please check your environment variables.');
 }
 

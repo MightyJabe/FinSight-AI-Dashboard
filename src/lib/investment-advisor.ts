@@ -90,25 +90,51 @@ const ALLOCATION_MODELS = {
  */
 const ASSET_CLASS_MAPPING = {
   stocks: [
-    'equity', 'stock', 'etf', 'mutual fund', 'growth', 'value',
-    'large cap', 'mid cap', 'small cap', 'international', 'domestic',
-    'sp500', 's&p', 'nasdaq', 'russell', 'vanguard', 'fidelity',
-    'technology', 'healthcare', 'financial', 'energy'
+    'equity',
+    'stock',
+    'etf',
+    'mutual fund',
+    'growth',
+    'value',
+    'large cap',
+    'mid cap',
+    'small cap',
+    'international',
+    'domestic',
+    'sp500',
+    's&p',
+    'nasdaq',
+    'russell',
+    'vanguard',
+    'fidelity',
+    'technology',
+    'healthcare',
+    'financial',
+    'energy',
   ],
   bonds: [
-    'bond', 'treasury', 'corporate', 'municipal', 'government',
-    'fixed income', 'debt', 'notes', 'bills', 'tips'
+    'bond',
+    'treasury',
+    'corporate',
+    'municipal',
+    'government',
+    'fixed income',
+    'debt',
+    'notes',
+    'bills',
+    'tips',
   ],
-  reits: [
-    'reit', 'real estate', 'property', 'residential', 'commercial'
-  ],
+  reits: ['reit', 'real estate', 'property', 'residential', 'commercial'],
   commodities: [
-    'gold', 'silver', 'oil', 'commodity', 'precious metals',
-    'natural resources', 'energy'
+    'gold',
+    'silver',
+    'oil',
+    'commodity',
+    'precious metals',
+    'natural resources',
+    'energy',
   ],
-  cash: [
-    'cash', 'money market', 'savings', 'cd', 'certificate of deposit'
-  ],
+  cash: ['cash', 'money market', 'savings', 'cd', 'certificate of deposit'],
 };
 
 /**
@@ -120,17 +146,17 @@ export function analyzePortfolio(
   riskTolerance: 'conservative' | 'moderate' | 'aggressive' | 'very_aggressive' = 'moderate'
 ): PortfolioAnalysis {
   const totalValue = accounts.reduce((sum, account) => sum + account.currentBalance, 0);
-  
+
   if (totalValue === 0) {
     return createEmptyAnalysis();
   }
 
   // Categorize holdings by asset class
   const currentAllocations = categorizeHoldings(accounts);
-  
+
   // Determine target allocation based on age and risk tolerance
   const targetAllocation = getTargetAllocation(userAge, riskTolerance);
-  
+
   // Calculate allocation recommendations
   const allocations = calculateAllocationRecommendations(
     currentAllocations,
@@ -154,7 +180,7 @@ export function analyzePortfolio(
 
   // Check if rebalancing is needed
   const rebalancingNeeded = allocations.some(alloc => Math.abs(alloc.variance) > 5);
-  
+
   // Calculate next rebalance date (quarterly)
   const nextRebalanceDate = new Date();
   nextRebalanceDate.setMonth(nextRebalanceDate.getMonth() + 3);
@@ -192,22 +218,26 @@ function categorizeHoldings(accounts: InvestmentAccount[]): { [key: string]: num
     // In a real implementation, you'd use security master data
     const accountName = account.name.toLowerCase();
     const accountType = account.type.toLowerCase();
-    
+
     let classified = false;
-    
+
     for (const [assetClass, keywords] of Object.entries(ASSET_CLASS_MAPPING)) {
-      if (keywords.some(keyword => 
-        accountName.includes(keyword) || accountType.includes(keyword)
-      )) {
+      if (
+        keywords.some(keyword => accountName.includes(keyword) || accountType.includes(keyword))
+      ) {
         allocations[assetClass] = (allocations[assetClass] || 0) + account.currentBalance;
         classified = true;
         break;
       }
     }
-    
+
     if (!classified) {
       // Default classification based on account type
-      if (accountType.includes('401k') || accountType.includes('ira') || accountType.includes('retirement')) {
+      if (
+        accountType.includes('401k') ||
+        accountType.includes('ira') ||
+        accountType.includes('retirement')
+      ) {
         allocations.stocks = (allocations.stocks || 0) + account.currentBalance * 0.7; // Assume 70% stocks
         allocations.bonds = (allocations.bonds || 0) + account.currentBalance * 0.3; // 30% bonds
       } else if (accountType.includes('savings') || accountType.includes('checking')) {
@@ -230,13 +260,13 @@ function getTargetAllocation(
 ): { [key: string]: number } {
   // Map very_aggressive to veryAggressive
   const modelKey = riskTolerance === 'very_aggressive' ? 'veryAggressive' : riskTolerance;
-  let baseModel = ALLOCATION_MODELS[modelKey as keyof typeof ALLOCATION_MODELS];
-  
+  const baseModel = ALLOCATION_MODELS[modelKey as keyof typeof ALLOCATION_MODELS];
+
   // Age-based adjustments (rule of thumb: stocks = 100 - age)
   const ageAdjustedStockPercentage = Math.max(20, Math.min(90, 100 - age));
   const currentStockPercentage = baseModel.stocks;
   const adjustment = ageAdjustedStockPercentage - currentStockPercentage;
-  
+
   return {
     stocks: Math.max(0, baseModel.stocks + adjustment),
     bonds: Math.max(0, baseModel.bonds - adjustment * 0.7),
@@ -263,7 +293,7 @@ function calculateAllocationRecommendations(
     const targetValue = (targetPercentage / 100) * totalValue;
     const variance = currentPercentage - targetPercentage;
     const amount = Math.abs(targetValue - currentValue);
-    
+
     let recommendation: 'buy' | 'sell' | 'hold' = 'hold';
     if (variance > 2) {
       recommendation = 'sell';
@@ -294,7 +324,7 @@ function assessPortfolioRisk(
   _accounts: InvestmentAccount[]
 ): RiskAssessment {
   const totalValue = Object.values(allocations).reduce((sum, val) => sum + val, 0);
-  
+
   if (totalValue === 0) {
     return {
       riskScore: 1,
@@ -309,9 +339,10 @@ function assessPortfolioRisk(
   // Calculate risk score based on asset allocation
   const stockPercentage = (allocations.stocks || 0) / totalValue;
   const bondPercentage = (allocations.bonds || 0) / totalValue;
-  const riskScore = Math.min(10, Math.max(1, 
-    1 + (stockPercentage * 8) + (allocations.reits || 0) / totalValue * 2
-  ));
+  const riskScore = Math.min(
+    10,
+    Math.max(1, 1 + stockPercentage * 8 + ((allocations.reits || 0) / totalValue) * 2)
+  );
 
   // Determine risk level
   let riskLevel: RiskAssessment['riskLevel'] = 'Conservative';
@@ -320,13 +351,13 @@ function assessPortfolioRisk(
   else if (riskScore >= 4) riskLevel = 'Moderate';
 
   // Estimate volatility (simplified)
-  const volatility = stockPercentage * 0.16 + bondPercentage * 0.04 + 
-                    ((allocations.reits || 0) / totalValue) * 0.18;
+  const volatility =
+    stockPercentage * 0.16 + bondPercentage * 0.04 + ((allocations.reits || 0) / totalValue) * 0.18;
 
   // Simplified metrics (in real app, calculate from historical data)
   const sharpeRatio = Math.max(0, (riskScore * 0.8 - 2) / volatility);
   const beta = 0.5 + stockPercentage * 0.8;
-  
+
   // Diversification score based on number of different asset classes
   const assetClassCount = Object.values(allocations).filter(val => val > 0).length;
   const diversificationScore = Math.min(100, (assetClassCount / 5) * 100);
@@ -347,7 +378,7 @@ function assessPortfolioRisk(
 function calculatePerformanceMetrics(_accounts: InvestmentAccount[]) {
   // Simplified performance calculation
   // In real implementation, use historical data and benchmark comparisons
-  
+
   // Mock performance data (replace with real calculations)
   const totalReturn = 0.08; // 8% total return
   const annualizedReturn = 0.07; // 7% annualized
@@ -388,8 +419,9 @@ function generatePortfolioRecommendations(
       description: `Your portfolio has drifted from target allocations. ${significantVariances.length} asset classes need rebalancing.`,
       expectedBenefit: 'Restore target risk level and optimize returns',
       timeframe: 'Next 30 days',
-      steps: significantVariances.map(alloc => 
-        `${alloc.recommendation.charAt(0).toUpperCase() + alloc.recommendation.slice(1)} $${alloc.amount.toLocaleString()} in ${alloc.assetClass}`
+      steps: significantVariances.map(
+        alloc =>
+          `${alloc.recommendation.charAt(0).toUpperCase() + alloc.recommendation.slice(1)} $${alloc.amount.toLocaleString()} in ${alloc.assetClass}`
       ),
     });
   }
@@ -415,7 +447,8 @@ function generatePortfolioRecommendations(
   const stockAllocation = allocations.find(alloc => alloc.assetClass === 'Stocks');
   const idealStockPercentage = Math.max(20, 100 - userAge);
   if (stockAllocation && Math.abs(stockAllocation.currentPercentage - idealStockPercentage) > 10) {
-    const direction = stockAllocation.currentPercentage > idealStockPercentage ? 'reduce' : 'increase';
+    const direction =
+      stockAllocation.currentPercentage > idealStockPercentage ? 'reduce' : 'increase';
     recommendations.push({
       type: 'risk_adjustment',
       priority: 'medium',
@@ -467,7 +500,7 @@ function generatePortfolioInsights(
   }
 
   // Asset allocation insights
-  const dominantAsset = allocations.reduce((prev, current) => 
+  const dominantAsset = allocations.reduce((prev, current) =>
     prev.currentPercentage > current.currentPercentage ? prev : current
   );
   insights.push(
@@ -500,9 +533,7 @@ function generatePortfolioInsights(
   }
 
   // Volatility insight
-  insights.push(
-    `Expected portfolio volatility is ${risk.volatility}% based on current allocation`
-  );
+  insights.push(`Expected portfolio volatility is ${risk.volatility}% based on current allocation`);
 
   return insights;
 }
@@ -522,20 +553,23 @@ function createEmptyAnalysis(): PortfolioAnalysis {
       beta: 0,
       diversificationScore: 0,
     },
-    recommendations: [{
-      type: 'diversify',
-      priority: 'high',
-      title: 'Start Building Your Investment Portfolio',
-      description: 'You don\'t have any investment accounts yet. Consider starting with a diversified portfolio.',
-      expectedBenefit: 'Begin building long-term wealth',
-      timeframe: 'Next 30 days',
-      steps: [
-        'Open a retirement account (401k, IRA)',
-        'Start with low-cost index funds',
-        'Set up automatic monthly contributions',
-        'Consider target-date funds for simplicity',
-      ],
-    }],
+    recommendations: [
+      {
+        type: 'diversify',
+        priority: 'high',
+        title: 'Start Building Your Investment Portfolio',
+        description:
+          "You don't have any investment accounts yet. Consider starting with a diversified portfolio.",
+        expectedBenefit: 'Begin building long-term wealth',
+        timeframe: 'Next 30 days',
+        steps: [
+          'Open a retirement account (401k, IRA)',
+          'Start with low-cost index funds',
+          'Set up automatic monthly contributions',
+          'Consider target-date funds for simplicity',
+        ],
+      },
+    ],
     performance: {
       totalReturn: 0,
       annualizedReturn: 0,
@@ -562,7 +596,10 @@ export function calculateRebalancingStrategy(
   allocations: PortfolioAllocation[],
   _totalValue: number,
   minTradeAmount: number = 100
-): { trades: Array<{ assetClass: string; action: 'buy' | 'sell'; amount: number }>, totalCost: number } {
+): {
+  trades: Array<{ assetClass: string; action: 'buy' | 'sell'; amount: number }>;
+  totalCost: number;
+} {
   const trades: Array<{ assetClass: string; action: 'buy' | 'sell'; amount: number }> = [];
   let totalCost = 0;
 
@@ -574,7 +611,7 @@ export function calculateRebalancingStrategy(
         action,
         amount: allocation.amount,
       });
-      
+
       // Estimate trading costs (simplified)
       totalCost += Math.max(5, allocation.amount * 0.001); // $5 minimum or 0.1%
     }

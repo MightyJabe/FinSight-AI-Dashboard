@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth, db } from '@/lib/firebase-admin';
+
+import { validateAuthToken } from '@/lib/auth-server';
+import { db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -9,29 +11,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: Request) {
   try {
-    // Authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // Authentication using centralized helper
+    const authResult = await validateAuthToken(request);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Missing token' },
-        { status: 401 }
-      );
-    }
-
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Invalid user ID' },
-        { status: 401 }
-      );
-    }
+    const userId = authResult.userId!;
 
     // Get categorized transactions
     const categorizedSnapshot = await db

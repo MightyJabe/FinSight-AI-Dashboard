@@ -1,36 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useSpendingTrends, TrendTimeframe, TrendAnalysisType } from '@/hooks/useSpendingTrends';
-import { Button } from '@/components/ui/Button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import {
-  LineChart,
+  AlertTriangle,
+  Calendar,
+  DollarSign,
+  Lightbulb,
+  Target,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
   Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  AlertTriangle,
-  Target,
-  Lightbulb,
-} from 'lucide-react';
+
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Select } from '@/components/ui/Select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/useSpendingTrends';
 
 const CHART_COLORS = [
   '#8884d8',

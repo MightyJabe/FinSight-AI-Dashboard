@@ -2,9 +2,11 @@
 
 import { ArrowUpDown, Filter } from 'lucide-react';
 import { useState } from 'react';
+
 import { useSession } from '@/components/providers/SessionProvider';
-import { CategoryEditor } from './CategoryEditor';
 import { formatCurrency } from '@/utils/format';
+
+import { CategoryEditor } from './CategoryEditor';
 
 // Enhanced transaction interface
 interface EnhancedTransaction {
@@ -77,7 +79,11 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
     }
   };
 
-  const handleCategoryUpdate = async (transactionId: string, newCategory: string, transactionType: 'income' | 'expense') => {
+  const handleCategoryUpdate = async (
+    transactionId: string,
+    newCategory: string,
+    transactionType: 'income' | 'expense'
+  ) => {
     if (!firebaseUser) return;
 
     setUpdatingCategories(prev => new Set(prev).add(transactionId));
@@ -87,7 +93,7 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
       const response = await fetch('/api/transactions/update-category', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          Authorization: `Bearer ${idToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -103,7 +109,6 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
 
       // Trigger a refresh of the parent component
       window.dispatchEvent(new CustomEvent('transaction-updated'));
-      
     } catch (error) {
       console.error('Error updating category:', error);
       // You could add a toast notification here
@@ -188,15 +193,18 @@ export function TransactionsList({ transactions: initialTransactions }: Transact
                     aiCategory={transaction.aiCategory}
                     aiConfidence={transaction.aiConfidence}
                     transactionType={transaction.type}
-                    onCategoryChange={(newCategory) => 
+                    onCategoryChange={newCategory =>
                       handleCategoryUpdate(transaction.id, newCategory, transaction.type)
                     }
                     disabled={updatingCategories.has(transaction.id)}
                   />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
-                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
+                  <span
+                    className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}
+                  >
+                    {transaction.type === 'income' ? '+' : '-'}
+                    {formatCurrency(Math.abs(transaction.amount))}
                   </span>
                 </td>
               </tr>

@@ -37,7 +37,7 @@ export function BalanceOverview({ overview }: BalanceOverviewProps) {
             <Wallet className="h-5 w-5 text-blue-600" />
           </div>
           <div className="space-y-2">
-            <p className="text-3xl font-bold">{formatCurrency(totalCashAssets)}</p>
+            <p className="text-3xl font-bold">{formatCurrency(totalCashAssets || 0)}</p>
             <p className="text-sm text-gray-500">
               Sum of cash, bank accounts, and other liquid assets.
             </p>

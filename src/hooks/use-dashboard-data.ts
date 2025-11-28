@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { useSession } from '@/components/providers/SessionProvider';
 import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/lib/finance';
 
 interface DashboardData {
@@ -22,6 +23,7 @@ interface UseDashboardDataOptions {
  */
 export function useDashboardData(options: UseDashboardDataOptions = {}): DashboardData {
   const { refetchOnFocus = false, refetchInterval } = options;
+  const { firebaseUser } = useSession();
 
   const [data, setData] = useState<DashboardData>({
     overview: null,
@@ -55,55 +57,105 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): Dashboa
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!cacheKey) return;
+    if (!cacheKey || !firebaseUser) return;
 
     try {
       setData(prev => ({ ...prev, loading: true, error: null }));
 
-      // Fetch all data in parallel for better performance
-      const [overviewRes, budgetRes, investmentRes, liabilitiesRes] = await Promise.allSettled([
-        fetch('/api/accounts'),
-        fetch('/api/budget'),
-        fetch('/api/investment-accounts'),
-        fetch('/api/liabilities'),
-      ]);
+      // Get auth token for authenticated requests
+      const token = await firebaseUser.getIdToken();
+      const headers = { Authorization: `Bearer ${token}` };
 
-      const newData: Partial<DashboardData> = {};
+      // Fetch all data from single consolidated endpoint
+      const response = await fetch(
+        '/api/financial-overview?includeTransactions=false&includePlatforms=true',
+        {
+          headers,
+        }
+      );
 
-      // Handle overview data
-      if (overviewRes.status === 'fulfilled' && overviewRes.value.ok) {
-        const overviewData = await overviewRes.value.json();
-        newData.overview = overviewData;
-      } else {
-        throw new Error('Failed to fetch overview data');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Handle budget data
-      if (budgetRes.status === 'fulfilled' && budgetRes.value.ok) {
-        const budgetData = await budgetRes.value.json();
-        newData.budget = budgetData;
-      } else {
-        console.warn('Failed to fetch budget data, using fallback');
-        newData.budget = { monthlyExpenses: 0, budgetCategories: [], spendingByCategory: [] };
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch financial data');
       }
 
-      // Handle investment accounts data
-      if (investmentRes.status === 'fulfilled' && investmentRes.value.ok) {
-        const investmentData = await investmentRes.value.json();
-        newData.investmentAccounts = investmentData;
-      } else {
-        console.warn('Failed to fetch investment data, using fallback');
-        newData.investmentAccounts = { accounts: [] };
-      }
+      const financialData = result.data;
+      const summary = financialData.summary;
 
-      // Handle liabilities data
-      if (liabilitiesRes.status === 'fulfilled' && liabilitiesRes.value.ok) {
-        const liabilitiesData = await liabilitiesRes.value.json();
-        newData.liabilities = liabilitiesData;
-      } else {
-        console.warn('Failed to fetch liabilities data, using fallback');
-        newData.liabilities = { accounts: [], totalDebt: 0 };
-      }
+      // Transform the consolidated data into the expected dashboard format
+      const newData: Partial<DashboardData> = {
+        overview: {
+          totalBalance: summary.liquidAssets,
+          totalAssets: summary.totalAssets,
+          totalLiabilities: summary.totalLiabilities,
+          netWorth: summary.netWorth,
+          monthlyIncome: summary.monthlyIncome,
+          monthlyExpenses: summary.monthlyExpenses,
+          accounts: financialData.accounts.bank || [],
+          manualAssets: financialData.manualAssets || [],
+          manualLiabilities: financialData.manualLiabilities?.length || 0,
+          liabilities: [
+            ...(financialData.accounts.credit || []),
+            ...(financialData.accounts.loan || []),
+            ...(financialData.manualLiabilities || []),
+          ],
+          emergencyFundStatus: 0, // Will be calculated
+          savingsRate:
+            summary.monthlyIncome > 0 ? summary.monthlyCashFlow / summary.monthlyIncome : 0,
+        },
+        budget: {
+          monthlyExpenses: summary.monthlyExpenses,
+          budgetCategories: [], // Will be calculated from transactions if needed
+          spendingByCategory: [], // Will be calculated from transactions if needed
+          totalCategories: 0,
+        },
+        investmentAccounts: {
+          accounts: [
+            ...(financialData.accounts.investment || []),
+            ...(financialData.platforms || []),
+          ],
+          totalValue: summary.investments,
+          totalInvestmentValue: summary.investments,
+          totalManualInvestments:
+            financialData.platforms?.reduce(
+              (sum: number, p: any) => sum + (p.currentBalance || 0),
+              0
+            ) || 0,
+          accountCount:
+            (financialData.accounts.investment?.length || 0) +
+            (financialData.platforms?.length || 0),
+          performance: {
+            monthlyGain: summary.investments * 0.02, // Mock data
+            yearToDate: summary.investments * 0.08,
+            allTimeGain: summary.investments * 0.15,
+          },
+        },
+        liabilities: {
+          accounts: [
+            ...(financialData.accounts.credit || []),
+            ...(financialData.accounts.loan || []),
+            ...(financialData.manualLiabilities || []),
+          ],
+          totalDebt: summary.totalLiabilities,
+          creditAccounts: financialData.accounts.credit?.length || 0,
+          manualLiabilities: financialData.manualLiabilities?.length || 0,
+          totalCreditDebt:
+            financialData.accounts.credit?.reduce(
+              (sum: number, acc: any) => sum + Math.abs(acc.balance || 0),
+              0
+            ) || 0,
+          totalManualDebt:
+            financialData.manualLiabilities?.reduce(
+              (sum: number, l: any) => sum + (l.amount || 0),
+              0
+            ) || 0,
+        },
+      };
 
       setData(prev => ({
         ...prev,
@@ -121,14 +173,14 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): Dashboa
         error: error instanceof Error ? error.message : 'Failed to load dashboard data',
       }));
     }
-  }, [cacheKey]);
+  }, [cacheKey, firebaseUser]);
 
   // Initial data fetch
   useEffect(() => {
-    if (cacheKey) {
+    if (cacheKey && firebaseUser) {
       fetchData();
     }
-  }, [fetchData, cacheKey]);
+  }, [fetchData, cacheKey, firebaseUser]);
 
   // Refetch on focus (if enabled)
   useEffect(() => {

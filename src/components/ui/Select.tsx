@@ -1,6 +1,7 @@
-import { cn } from '@/lib/utils';
-import { forwardRef } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { forwardRef } from 'react';
+
+import { cn } from '@/lib/utils';
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
 
@@ -83,4 +84,4 @@ const SelectItem = forwardRef<
 ));
 SelectItem.displayName = 'SelectItem';
 
-export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue };

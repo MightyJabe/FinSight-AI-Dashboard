@@ -2,10 +2,10 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, db } from '@/lib/firebase-admin';
-import { plaidClient } from '@/lib/plaid';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
+import { auth, db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { plaidClient } from '@/lib/plaid';
 
 // Zod schema for input validation
 const removeItemSchema = z.object({
@@ -74,17 +74,17 @@ export async function POST(request: Request) {
           accessToken = storedAccessToken as string;
           logger.warn('Found unencrypted Plaid access token during removal', { itemId });
         }
-        
+
         if (accessToken) {
           await plaidClient.itemRemove({ access_token: accessToken });
         }
       } catch (error: unknown) {
         // This catches both decryption errors and Plaid API errors
         if (error instanceof Error && error.message.includes('decrypt')) {
-          logger.error('Failed to decrypt Plaid access token for removal', { 
-            error, 
+          logger.error('Failed to decrypt Plaid access token for removal', {
+            error,
             itemId,
-            userId 
+            userId,
           });
         } else {
           // Log the error but proceed with removing from Firestore, as the token might be already invalid

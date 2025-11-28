@@ -1,8 +1,9 @@
 'use client';
 
+import { AlertCircle, BarChart3, Calendar, TrendingUp } from 'lucide-react';
 import React from 'react';
-import SpendingTrends from '@/components/analytics/SpendingTrendsSimple';
-import { TrendingUp, BarChart3, Calendar, AlertCircle } from 'lucide-react';
+
+import SpendingTrends from '@/components/analytics/SpendingTrends';
 
 export default function TrendsPage() {
   return (
@@ -13,8 +14,8 @@ export default function TrendsPage() {
           Spending Trends & Patterns
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-          Discover insights in your spending behavior with AI-powered trend analysis. 
-          Identify patterns, seasonal changes, and unusual spending activities.
+          Discover insights in your spending behavior with AI-powered trend analysis. Identify
+          patterns, seasonal changes, and unusual spending activities.
         </p>
       </div>
 
@@ -24,7 +25,9 @@ export default function TrendsPage() {
           <div className="flex items-center gap-3">
             <TrendingUp className="w-8 h-8 text-blue-600" />
             <div>
-              <h3 className="font-semibold text-blue-800 dark:text-blue-200">Pattern Recognition</h3>
+              <h3 className="font-semibold text-blue-800 dark:text-blue-200">
+                Pattern Recognition
+              </h3>
               <p className="text-sm text-blue-600 dark:text-blue-300">
                 Identify spending patterns over time
               </p>
@@ -36,7 +39,9 @@ export default function TrendsPage() {
           <div className="flex items-center gap-3">
             <BarChart3 className="w-8 h-8 text-green-600" />
             <div>
-              <h3 className="font-semibold text-green-800 dark:text-green-200">Category Analysis</h3>
+              <h3 className="font-semibold text-green-800 dark:text-green-200">
+                Category Analysis
+              </h3>
               <p className="text-sm text-green-600 dark:text-green-300">
                 Break down spending by categories
               </p>
@@ -48,7 +53,9 @@ export default function TrendsPage() {
           <div className="flex items-center gap-3">
             <Calendar className="w-8 h-8 text-purple-600" />
             <div>
-              <h3 className="font-semibold text-purple-800 dark:text-purple-200">Seasonal Insights</h3>
+              <h3 className="font-semibold text-purple-800 dark:text-purple-200">
+                Seasonal Insights
+              </h3>
               <p className="text-sm text-purple-600 dark:text-purple-300">
                 Understand seasonal spending habits
               </p>
@@ -60,7 +67,9 @@ export default function TrendsPage() {
           <div className="flex items-center gap-3">
             <AlertCircle className="w-8 h-8 text-orange-600" />
             <div>
-              <h3 className="font-semibold text-orange-800 dark:text-orange-200">Anomaly Detection</h3>
+              <h3 className="font-semibold text-orange-800 dark:text-orange-200">
+                Anomaly Detection
+              </h3>
               <p className="text-sm text-orange-600 dark:text-orange-300">
                 Spot unusual spending activities
               </p>
@@ -79,7 +88,8 @@ export default function TrendsPage() {
           <div className="p-4 border rounded-lg">
             <h4 className="font-semibold mb-2">📊 Category Analysis</h4>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              See which categories consume most of your budget and identify opportunities for savings.
+              See which categories consume most of your budget and identify opportunities for
+              savings.
             </p>
           </div>
 

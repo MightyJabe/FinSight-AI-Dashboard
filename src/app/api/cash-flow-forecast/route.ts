@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { generateCashFlowForecast } from '@/lib/cash-flow-forecasting';
-import { auth } from '@/lib/firebase-admin';
 import { getDisplayableAccounts } from '@/lib/finance';
+import { auth } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import type { Transaction } from '@/types/finance';
 

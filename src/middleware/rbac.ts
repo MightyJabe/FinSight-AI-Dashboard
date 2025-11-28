@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
 import { auth, db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
@@ -9,7 +10,7 @@ import logger from '@/lib/logger';
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
-  READONLY = 'readonly'
+  READONLY = 'readonly',
 }
 
 /**
@@ -20,7 +21,7 @@ export enum Permission {
   WRITE_FINANCIAL_DATA = 'write:financial_data',
   DELETE_FINANCIAL_DATA = 'delete:financial_data',
   MANAGE_USERS = 'manage:users',
-  SYSTEM_ADMIN = 'system:admin'
+  SYSTEM_ADMIN = 'system:admin',
 }
 
 /**
@@ -32,16 +33,14 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     Permission.WRITE_FINANCIAL_DATA,
     Permission.DELETE_FINANCIAL_DATA,
     Permission.MANAGE_USERS,
-    Permission.SYSTEM_ADMIN
+    Permission.SYSTEM_ADMIN,
   ],
   [UserRole.USER]: [
     Permission.READ_FINANCIAL_DATA,
     Permission.WRITE_FINANCIAL_DATA,
-    Permission.DELETE_FINANCIAL_DATA
+    Permission.DELETE_FINANCIAL_DATA,
   ],
-  [UserRole.READONLY]: [
-    Permission.READ_FINANCIAL_DATA
-  ]
+  [UserRole.READONLY]: [Permission.READ_FINANCIAL_DATA],
 };
 
 /**
@@ -51,18 +50,18 @@ async function getUserRole(userId: string): Promise<UserRole> {
   try {
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data();
-    
+
     if (!userData) {
       logger.warn('User document not found, defaulting to USER role', { userId });
       return UserRole.USER;
     }
-    
+
     const role = userData.role as UserRole;
     if (!Object.values(UserRole).includes(role)) {
       logger.warn('Invalid user role found, defaulting to USER', { userId, role });
       return UserRole.USER;
     }
-    
+
     return role;
   } catch (error) {
     logger.error('Failed to get user role, defaulting to USER', { error, userId });
@@ -84,7 +83,9 @@ function hasPermission(userRole: UserRole, requiredPermission: Permission): bool
 export async function validateUserAccess(
   request: NextRequest,
   requiredPermission: Permission
-): Promise<{ success: true; userId: string; role: UserRole } | { success: false; response: NextResponse }> {
+): Promise<
+  { success: true; userId: string; role: UserRole } | { success: false; response: NextResponse }
+> {
   try {
     // Extract token from Authorization header
     const authHeader = request.headers.get('Authorization');
@@ -94,7 +95,7 @@ export async function validateUserAccess(
         response: NextResponse.json(
           { error: 'Unauthorized: Missing or invalid authorization header' },
           { status: 401 }
-        )
+        ),
       };
     }
 
@@ -102,10 +103,7 @@ export async function validateUserAccess(
     if (!idToken) {
       return {
         success: false,
-        response: NextResponse.json(
-          { error: 'Unauthorized: Missing token' },
-          { status: 401 }
-        )
+        response: NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 }),
       };
     }
 
@@ -116,10 +114,7 @@ export async function validateUserAccess(
     if (!userId) {
       return {
         success: false,
-        response: NextResponse.json(
-          { error: 'Unauthorized: Invalid user ID' },
-          { status: 401 }
-        )
+        response: NextResponse.json({ error: 'Unauthorized: Invalid user ID' }, { status: 401 }),
       };
     }
 
@@ -128,47 +123,43 @@ export async function validateUserAccess(
 
     // Check permissions
     if (!hasPermission(userRole, requiredPermission)) {
-      logger.warn('User lacks required permission', { 
-        userId, 
-        userRole, 
+      logger.warn('User lacks required permission', {
+        userId,
+        userRole,
         requiredPermission,
-        endpoint: request.nextUrl.pathname 
+        endpoint: request.nextUrl.pathname,
       });
-      
+
       return {
         success: false,
         response: NextResponse.json(
           { error: 'Forbidden: Insufficient permissions' },
           { status: 403 }
-        )
+        ),
       };
     }
 
-    logger.info('User access validated successfully', { 
-      userId, 
-      userRole, 
+    logger.info('User access validated successfully', {
+      userId,
+      userRole,
       requiredPermission,
-      endpoint: request.nextUrl.pathname 
+      endpoint: request.nextUrl.pathname,
     });
 
     return {
       success: true,
       userId,
-      role: userRole
+      role: userRole,
     };
-
   } catch (error) {
-    logger.error('Failed to validate user access', { 
+    logger.error('Failed to validate user access', {
       error,
-      endpoint: request.nextUrl.pathname 
+      endpoint: request.nextUrl.pathname,
     });
-    
+
     return {
       success: false,
-      response: NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      )
+      response: NextResponse.json({ error: 'Authentication failed' }, { status: 401 }),
     };
   }
 }
@@ -179,20 +170,20 @@ export async function validateUserAccess(
 export function createPermissionMiddleware(requiredPermission: Permission) {
   return async (request: NextRequest) => {
     const validation = await validateUserAccess(request, requiredPermission);
-    
+
     if (!validation.success) {
       return validation.response;
     }
-    
+
     // Add user context to request headers for downstream use
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('X-User-ID', validation.userId);
     requestHeaders.set('X-User-Role', validation.role);
-    
+
     return NextResponse.next({
       request: {
-        headers: requestHeaders
-      }
+        headers: requestHeaders,
+      },
     });
   };
 }
@@ -206,13 +197,16 @@ export async function createUserWithRole(
   role: UserRole = UserRole.USER
 ): Promise<void> {
   try {
-    await db.collection('users').doc(userId).set({
-      email,
-      role,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }, { merge: true });
-    
+    await db.collection('users').doc(userId).set(
+      {
+        email,
+        role,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    );
+
     logger.info('User created with role', { userId, email, role });
   } catch (error) {
     logger.error('Failed to create user with role', { error, userId, email, role });
@@ -223,16 +217,13 @@ export async function createUserWithRole(
 /**
  * Helper function to update user role (for admin use)
  */
-export async function updateUserRole(
-  userId: string,
-  newRole: UserRole
-): Promise<void> {
+export async function updateUserRole(userId: string, newRole: UserRole): Promise<void> {
   try {
     await db.collection('users').doc(userId).update({
       role: newRole,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
-    
+
     logger.info('User role updated', { userId, newRole });
   } catch (error) {
     logger.error('Failed to update user role', { error, userId, newRole });
@@ -246,7 +237,7 @@ const rbacUtils = {
   validateUserAccess,
   createPermissionMiddleware,
   createUserWithRole,
-  updateUserRole
+  updateUserRole,
 };
 
 export default rbacUtils;

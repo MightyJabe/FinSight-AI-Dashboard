@@ -1,11 +1,33 @@
 'use client';
 
-import { AlertCircle, BarChart3, Bot, CheckCircle2, Clock, Copy, Download, Edit3, History, PiggyBank, Plus, RefreshCw, RotateCcw, Send, ThumbsDown, ThumbsUp, TrendingDown, TrendingUp, Trash2, Wifi, WifiOff } from 'lucide-react';
+import {
+  AlertCircle,
+  BarChart3,
+  Bot,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Download,
+  Edit3,
+  History,
+  PiggyBank,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Send,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ChatVisualization } from '@/components/chat/ChatVisualization';
-import { useSession } from '@/components/providers/SessionProvider';
 import { CardSkeleton } from '@/components/common/SkeletonLoader';
+import { useSession } from '@/components/providers/SessionProvider';
 
 interface Message {
   id: string;
@@ -61,7 +83,9 @@ export default function ChatPage() {
   const [editingContent, setEditingContent] = useState('');
   const [messageRatings, setMessageRatings] = useState<Record<string, 'like' | 'dislike'>>({});
   const [isOnline, setIsOnline] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connected' | 'connecting' | 'disconnected'
+  >('connected');
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [financialOverview, setFinancialOverview] = useState<{
     netWorth: number;
@@ -87,21 +111,25 @@ export default function ChatPage() {
     if (!failedMessage || failedMessage.role !== 'user') return;
 
     setRetryingMessageId(messageId);
-    
+
     // Update message status to sending
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, status: 'sending' as const, error: undefined } : msg
-    ));
-    
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === messageId ? { ...msg, status: 'sending' as const, error: undefined } : msg
+      )
+    );
+
     setIsLoading(true);
-    
+
     try {
       const token = await firebaseUser?.getIdToken();
       if (!token) throw new Error('Authentication required');
-      
+
       const requestBody: Record<string, unknown> = {
         message: failedMessage.content,
-        history: messages.filter(msg => msg.id !== messageId && !msg.id.startsWith('delete-error-')).map(m => ({ role: m.role, content: m.content })),
+        history: messages
+          .filter(msg => msg.id !== messageId && !msg.id.startsWith('delete-error-'))
+          .map(m => ({ role: m.role, content: m.content })),
       };
       if (typeof currentConversationId === 'string') {
         requestBody.conversationId = currentConversationId;
@@ -121,15 +149,15 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-      
+
       // Update message status to sent
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, status: 'sent' } : msg
-      ));
-      
+      setMessages(prev =>
+        prev.map(msg => (msg.id === messageId ? { ...msg, status: 'sent' } : msg))
+      );
+
       // Extract visualization data from the response
       const visualizationData = extractVisualizationData(data.response);
-      
+
       // Add AI response
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -139,9 +167,9 @@ export default function ChatPage() {
         status: 'sent',
         visualizationData,
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
-      
+
       // Update conversation ID if this is a new conversation
       if (!currentConversationId && data.conversationId) {
         setCurrentConversationId(data.conversationId);
@@ -149,9 +177,17 @@ export default function ChatPage() {
       }
     } catch (error) {
       // Mark message as failed again
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, status: 'error', error: error instanceof Error ? error.message : 'Retry failed' } : msg
-      ));
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Retry failed',
+              }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
       setRetryingMessageId(null);
@@ -165,7 +201,7 @@ export default function ChatPage() {
     // Find the user message that prompted this response
     const messageIndex = messages.findIndex(msg => msg.id === messageId);
     if (messageIndex <= 0) return;
-    
+
     const userMessage = messages[messageIndex - 1];
     if (!userMessage || userMessage.role !== 'user') return;
 
@@ -203,17 +239,28 @@ export default function ChatPage() {
       const visualizationData = extractVisualizationData(data.response);
 
       // Replace the assistant message with the new response
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, content: data.response, timestamp: new Date(), status: 'sent' as const, visualizationData }
-          : msg
-      ));
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                content: data.response,
+                timestamp: new Date(),
+                status: 'sent' as const,
+                visualizationData,
+              }
+            : msg
+        )
+      );
     } catch (error) {
       // Show error message
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: error instanceof Error ? `Failed to regenerate: ${error.message}` : 'Failed to regenerate response. Please try again.',
+        content:
+          error instanceof Error
+            ? `Failed to regenerate: ${error.message}`
+            : 'Failed to regenerate response. Please try again.',
         timestamp: new Date(),
         status: 'error',
       };
@@ -236,14 +283,12 @@ export default function ChatPage() {
 
   const saveEditMessage = (messageId: string) => {
     if (!editingContent.trim()) return;
-    
+
     // Update the message content
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, content: editingContent.trim() }
-        : msg
-    ));
-    
+    setMessages(prev =>
+      prev.map(msg => (msg.id === messageId ? { ...msg, content: editingContent.trim() } : msg))
+    );
+
     setEditingMessageId(null);
     setEditingContent('');
   };
@@ -252,7 +297,7 @@ export default function ChatPage() {
     // Find the message and remove it along with any subsequent assistant responses
     const messageIndex = messages.findIndex(msg => msg.id === messageId);
     if (messageIndex === -1) return;
-    
+
     // Remove the message and any assistant responses that came after it
     setMessages(prev => prev.slice(0, messageIndex));
   };
@@ -260,7 +305,7 @@ export default function ChatPage() {
   const rateMessage = (messageId: string, rating: 'like' | 'dislike') => {
     const currentRating = messageRatings[messageId];
     const newRating = currentRating === rating ? undefined : rating;
-    
+
     if (newRating) {
       setMessageRatings(prev => ({ ...prev, [messageId]: newRating }));
     } else {
@@ -270,18 +315,16 @@ export default function ChatPage() {
         return newRatings;
       });
     }
-    
+
     // Update message with rating
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, rating: newRating || null }
-        : msg
-    ));
+    setMessages(prev =>
+      prev.map(msg => (msg.id === messageId ? { ...msg, rating: newRating || null } : msg))
+    );
   };
 
   const exportConversation = () => {
     if (messages.length === 0) return;
-    
+
     const conversationText = messages
       .map(msg => {
         const timestamp = new Date(msg.timestamp).toLocaleString();
@@ -290,10 +333,10 @@ export default function ChatPage() {
         return `[${timestamp}] ${role}${rating}:\n${msg.content}\n`;
       })
       .join('\n---\n\n');
-    
+
     const conversationTitle = getCurrentConversationTitle() || 'Chat Conversation';
     const exportText = `${conversationTitle}\n${'='.repeat(conversationTitle.length)}\n\n${conversationText}`;
-    
+
     const blob = new Blob([exportText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -344,7 +387,7 @@ export default function ChatPage() {
 
     try {
       const token = await firebaseUser.getIdToken();
-      
+
       // Fetch from the accounts endpoint which has overview data
       const response = await fetch('/api/accounts', {
         headers: {
@@ -439,13 +482,16 @@ export default function ChatPage() {
         }
       } catch (error) {
         console.error('Error loading conversation:', error);
-        setMessages([{
-          id: 'error-' + Date.now(),
-          role: 'assistant',
-          content: 'Unable to load this conversation. It may have been deleted or you may not have access to it.',
-          timestamp: new Date(),
-          status: 'error',
-        }]);
+        setMessages([
+          {
+            id: 'error-' + Date.now(),
+            role: 'assistant',
+            content:
+              'Unable to load this conversation. It may have been deleted or you may not have access to it.',
+            timestamp: new Date(),
+            status: 'error',
+          },
+        ]);
       } finally {
         setIsLoading(false);
       }
@@ -488,13 +534,14 @@ export default function ChatPage() {
     e.preventDefault();
 
     if (!input.trim() || !firebaseUser) return;
-    
+
     // Show offline message if not online
     if (!isOnline) {
       const offlineMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: 'You are currently offline. Your message will be sent when your connection is restored. Please check your internet connection.',
+        content:
+          'You are currently offline. Your message will be sent when your connection is restored. Please check your internet connection.',
         timestamp: new Date(),
         status: 'error',
       };
@@ -514,12 +561,12 @@ export default function ChatPage() {
     setInput('');
     setIsLoading(true);
     setConnectionStatus('connecting');
-    
+
     // Update message status to sent after a short delay
     setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === userMessage.id ? { ...msg, status: 'sent' } : msg
-      ));
+      setMessages(prev =>
+        prev.map(msg => (msg.id === userMessage.id ? { ...msg, status: 'sent' } : msg))
+      );
     }, 500);
 
     try {
@@ -544,10 +591,10 @@ export default function ChatPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        
+
         let errorMessage = 'Unable to send message';
         let errorDetails = '';
-        
+
         switch (response.status) {
           case 401:
             errorMessage = 'Authentication error';
@@ -561,7 +608,8 @@ export default function ChatPage() {
           case 502:
           case 503:
             errorMessage = 'Server error';
-            errorDetails = 'Our servers are experiencing issues. Please try again in a few moments.';
+            errorDetails =
+              'Our servers are experiencing issues. Please try again in a few moments.';
             break;
           case 400:
             if (errorData.details?.fieldErrors?.message) {
@@ -576,7 +624,7 @@ export default function ChatPage() {
             errorMessage = 'Connection error';
             errorDetails = 'Please check your internet connection and try again.';
         }
-        
+
         throw new Error(`${errorMessage}: ${errorDetails}`);
       }
 
@@ -606,14 +654,25 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Error sending message:', error);
       // Mark user message as error with retry capability
-      setMessages(prev => prev.map(msg => 
-        msg.id === userMessage.id ? { ...msg, status: 'error', error: error instanceof Error ? error.message : 'Unknown error' } : msg
-      ));
-      
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === userMessage.id
+            ? {
+                ...msg,
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Unknown error',
+              }
+            : msg
+        )
+      );
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: error instanceof Error ? error.message : 'Sorry, I encountered an unexpected error. Please try again.',
+        content:
+          error instanceof Error
+            ? error.message
+            : 'Sorry, I encountered an unexpected error. Please try again.',
         timestamp: new Date(),
         status: 'error',
       };
@@ -627,9 +686,13 @@ export default function ChatPage() {
   // Extract visualization data from AI response
   const extractVisualizationData = (content: string) => {
     const lowerContent = content.toLowerCase();
-    
+
     // Net worth visualization
-    if (lowerContent.includes('net worth') || lowerContent.includes('assets') || lowerContent.includes('liabilities')) {
+    if (
+      lowerContent.includes('net worth') ||
+      lowerContent.includes('assets') ||
+      lowerContent.includes('liabilities')
+    ) {
       const netWorthMatch = content.match(/\$([0-9,]+(?:\.[0-9]{2})?)/g);
       if (netWorthMatch && netWorthMatch.length >= 2) {
         const amounts = netWorthMatch.map(match => parseFloat(match.replace(/[$,]/g, '')));
@@ -639,15 +702,21 @@ export default function ChatPage() {
             netWorth: amounts[amounts.length - 1], // Last mentioned amount is usually net worth
             assets: amounts[0] || 0,
             liabilities: amounts[1] || 0,
-          }
+          },
         };
       }
     }
 
     // Spending visualization
-    if (lowerContent.includes('spending') || lowerContent.includes('expenses') || lowerContent.includes('spent')) {
+    if (
+      lowerContent.includes('spending') ||
+      lowerContent.includes('expenses') ||
+      lowerContent.includes('spent')
+    ) {
       // Look for category spending patterns like "restaurants: $123" or "food $456"
-      const categoryMatches = content.match(/(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi);
+      const categoryMatches = content.match(
+        /(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi
+      );
       if (categoryMatches && categoryMatches.length > 1) {
         const categories = categoryMatches.map(match => {
           const parts = match.split(/[:$]/);
@@ -657,7 +726,7 @@ export default function ChatPage() {
         });
         return {
           type: 'spending' as const,
-          data: categories
+          data: categories,
         };
       }
     }
@@ -665,7 +734,9 @@ export default function ChatPage() {
     // Account balances visualization
     if (lowerContent.includes('account') || lowerContent.includes('balance')) {
       // Look for account patterns like "Checking: $1,234" or "Savings Account $5,678"
-      const accountMatches = content.match(/(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi);
+      const accountMatches = content.match(
+        /(\w+(?:\s+\w+)*)\s*[:$]\s*\$?([0-9,]+(?:\.[0-9]{2})?)/gi
+      );
       if (accountMatches && accountMatches.length > 1) {
         const accounts = accountMatches.map(match => {
           const parts = match.split(/[:$]/);
@@ -675,7 +746,7 @@ export default function ChatPage() {
         });
         return {
           type: 'accounts' as const,
-          data: accounts
+          data: accounts,
         };
       }
     }
@@ -690,7 +761,7 @@ export default function ChatPage() {
           data: {
             income: values[0] || 0,
             expenses: values[1] || 0,
-          }
+          },
         };
       }
     }
@@ -722,13 +793,16 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Error deleting conversation:', error);
       // Show temporary error message
-      setMessages(prev => [...prev, {
-        id: 'delete-error-' + Date.now(),
-        role: 'assistant',
-        content: 'Unable to delete conversation. Please try again.',
-        timestamp: new Date(),
-        status: 'error',
-      }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: 'delete-error-' + Date.now(),
+          role: 'assistant',
+          content: 'Unable to delete conversation. Please try again.',
+          timestamp: new Date(),
+          status: 'error',
+        },
+      ]);
       // Remove error message after 3 seconds
       setTimeout(() => {
         setMessages(prev => prev.filter(msg => !msg.id.startsWith('delete-error-')));
@@ -763,7 +837,7 @@ export default function ChatPage() {
               {!currentConversationId && conversations.length > 0 && (
                 <p className="mt-1 text-sm text-green-600 font-medium">📝 New conversation ready</p>
               )}
-              
+
               {/* Connection Status */}
               <div className="mt-2 flex items-center gap-2 text-xs">
                 {connectionStatus === 'connected' && isOnline && (
@@ -834,12 +908,14 @@ export default function ChatPage() {
           {/* Conversation List Sidebar */}
           {showConversationList && (
             <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 order-2 lg:order-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Conversation History</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Conversation History
+              </h3>
               {isLoadingConversations ? (
                 <div className="space-y-2">
                   {Array.from({ length: 5 }).map((_, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 animate-pulse"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
@@ -858,7 +934,9 @@ export default function ChatPage() {
                   ))}
                 </div>
               ) : conversations.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">No conversations yet</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No conversations yet
+                </p>
               ) : (
                 <div className="space-y-2">
                   {conversations.map(conversation => (
@@ -910,7 +988,9 @@ export default function ChatPage() {
           {/* Analytics Sidebar */}
           {showAnalytics && (
             <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 order-3 lg:order-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Financial Overview</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Financial Overview
+              </h3>
               {financialOverview ? (
                 <div className="space-y-4">
                   {/* Net Worth */}
@@ -918,7 +998,9 @@ export default function ChatPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Net Worth</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Net Worth
+                        </span>
                       </div>
                     </div>
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -931,7 +1013,9 @@ export default function ChatPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Income</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Monthly Income
+                        </span>
                       </div>
                     </div>
                     <p className="text-lg font-bold text-green-600 dark:text-green-400">
@@ -944,7 +1028,9 @@ export default function ChatPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <TrendingDown className="h-4 w-4 text-red-600" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Expenses</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Monthly Expenses
+                        </span>
                       </div>
                     </div>
                     <p className="text-lg font-bold text-red-600 dark:text-red-400">
@@ -957,7 +1043,9 @@ export default function ChatPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <PiggyBank className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Savings Rate</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Savings Rate
+                        </span>
                       </div>
                     </div>
                     <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
@@ -970,7 +1058,9 @@ export default function ChatPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Fund</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Emergency Fund
+                        </span>
                       </div>
                     </div>
                     <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
@@ -992,10 +1082,10 @@ export default function ChatPage() {
           {/* Chat Interface */}
           <div
             className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-[500px] sm:h-[600px] lg:h-[700px] flex flex-col order-1 lg:order-2 w-full min-w-0 ${
-              showConversationList && showAnalytics 
-                ? 'lg:col-span-2' 
-                : showConversationList || showAnalytics 
-                  ? 'lg:col-span-3' 
+              showConversationList && showAnalytics
+                ? 'lg:col-span-2'
+                : showConversationList || showAnalytics
+                  ? 'lg:col-span-3'
                   : 'lg:col-span-4'
             }`}
           >
@@ -1012,7 +1102,7 @@ export default function ChatPage() {
                         : 'Start a new conversation'}
                   </p>
                   <p className="text-sm mb-6">
-                    {!isOnline 
+                    {!isOnline
                       ? 'You are currently offline. Please check your internet connection to chat with the AI assistant.'
                       : conversations.length === 0
                         ? 'Ask me anything about your finances to get started.'
@@ -1047,7 +1137,8 @@ export default function ChatPage() {
                         <span className="font-medium">Offline Mode</span>
                       </div>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        Chat functionality is unavailable while offline. Your conversations will sync when you reconnect.
+                        Chat functionality is unavailable while offline. Your conversations will
+                        sync when you reconnect.
                       </p>
                     </div>
                   )}
@@ -1071,9 +1162,11 @@ export default function ChatPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Message Container */}
-                  <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[75%]`}>
+                  <div
+                    className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[75%]`}
+                  >
                     {/* Message Bubble */}
                     <div
                       className={`relative rounded-2xl px-5 py-3 shadow-sm transition-all duration-300 ease-out hover:shadow-lg hover:scale-[1.02] group ${
@@ -1089,7 +1182,7 @@ export default function ChatPage() {
                             <div className="flex-1 space-y-2">
                               <textarea
                                 value={editingContent}
-                                onChange={(e) => setEditingContent(e.target.value)}
+                                onChange={e => setEditingContent(e.target.value)}
                                 className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
                                 rows={3}
                                 autoFocus
@@ -1112,18 +1205,20 @@ export default function ChatPage() {
                             </div>
                           ) : (
                             <div className="flex-1">
-                              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-                              
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                {message.content}
+                              </p>
+
                               {/* Chat Visualization for assistant messages */}
                               {message.role === 'assistant' && message.visualizationData && (
-                                <ChatVisualization 
-                                  data={message.visualizationData.data} 
-                                  type={message.visualizationData.type} 
+                                <ChatVisualization
+                                  data={message.visualizationData.data}
+                                  type={message.visualizationData.type}
                                 />
                               )}
                             </div>
                           )}
-                          
+
                           {editingMessageId !== message.id && (
                             <div className="flex items-center gap-1 flex-shrink-0">
                               {/* Edit button for user messages */}
@@ -1136,7 +1231,7 @@ export default function ChatPage() {
                                   <Edit3 className="w-4 h-4 text-white/70 hover:text-white" />
                                 </button>
                               )}
-                              
+
                               {/* Delete button for user messages */}
                               {message.role === 'user' && (
                                 <button
@@ -1147,7 +1242,7 @@ export default function ChatPage() {
                                   <Trash2 className="w-4 h-4 text-white/70 hover:text-red-400" />
                                 </button>
                               )}
-                              
+
                               {/* Rating buttons for assistant messages */}
                               {message.role === 'assistant' && message.status !== 'error' && (
                                 <>
@@ -1158,11 +1253,13 @@ export default function ChatPage() {
                                     }`}
                                     title="Like this response"
                                   >
-                                    <ThumbsUp className={`w-4 h-4 ${
-                                      messageRatings[message.id] === 'like' 
-                                        ? 'text-green-600 dark:text-green-400 fill-current'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400'
-                                    }`} />
+                                    <ThumbsUp
+                                      className={`w-4 h-4 ${
+                                        messageRatings[message.id] === 'like'
+                                          ? 'text-green-600 dark:text-green-400 fill-current'
+                                          : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400'
+                                      }`}
+                                    />
                                   </button>
                                   <button
                                     onClick={() => rateMessage(message.id, 'dislike')}
@@ -1171,15 +1268,17 @@ export default function ChatPage() {
                                     }`}
                                     title="Dislike this response"
                                   >
-                                    <ThumbsDown className={`w-4 h-4 ${
-                                      messageRatings[message.id] === 'dislike'
-                                        ? 'text-red-600 dark:text-red-400 fill-current'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
-                                    }`} />
+                                    <ThumbsDown
+                                      className={`w-4 h-4 ${
+                                        messageRatings[message.id] === 'dislike'
+                                          ? 'text-red-600 dark:text-red-400 fill-current'
+                                          : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                                      }`}
+                                    />
                                   </button>
                                 </>
                               )}
-                              
+
                               {/* Regenerate button for assistant messages */}
                               {message.role === 'assistant' && message.status !== 'error' && (
                                 <button
@@ -1188,12 +1287,14 @@ export default function ChatPage() {
                                   className="opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out transform group-hover:scale-110 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50"
                                   title="Regenerate response"
                                 >
-                                  <RotateCcw className={`w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 ${
-                                    regeneratingMessageId === message.id ? 'animate-spin' : ''
-                                  }`} />
+                                  <RotateCcw
+                                    className={`w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 ${
+                                      regeneratingMessageId === message.id ? 'animate-spin' : ''
+                                    }`}
+                                  />
                                 </button>
                               )}
-                              
+
                               {/* Copy button */}
                               <button
                                 onClick={() => copyMessageToClipboard(message.content, message.id)}
@@ -1201,20 +1302,32 @@ export default function ChatPage() {
                                 title="Copy message"
                               >
                                 {copiedMessageId === message.id ? (
-                                  <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  <svg
+                                    className="w-4 h-4 text-green-600 dark:text-green-400"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
                                   </svg>
                                 ) : (
-                                  <Copy className={`w-4 h-4 ${
-                                    message.role === 'user' ? 'text-white/70 hover:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                                  }`} />
+                                  <Copy
+                                    className={`w-4 h-4 ${
+                                      message.role === 'user'
+                                        ? 'text-white/70 hover:text-white'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                    }`}
+                                  />
                                 )}
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Message tail */}
                       {message.role === 'user' ? (
                         <div className="absolute -right-2 top-3 w-3 h-3 bg-gradient-to-br from-primary to-primary/90 transform rotate-45 rounded-sm"></div>
@@ -1222,16 +1335,22 @@ export default function ChatPage() {
                         <div className="absolute -left-2 top-3 w-3 h-3 bg-white dark:bg-gray-800 border-l border-t border-gray-200 dark:border-gray-700 transform rotate-45 rounded-sm"></div>
                       )}
                     </div>
-                    
+
                     {/* Timestamp and Status */}
-                    <div className={`mt-1 px-2 flex items-center gap-2 text-xs ${
-                      message.role === 'user' ? 'text-gray-600 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                      <span>{new Date(message.timestamp).toLocaleTimeString([], { 
-                        hour: 'numeric', 
-                        minute: '2-digit',
-                        hour12: true 
-                      })}</span>
+                    <div
+                      className={`mt-1 px-2 flex items-center gap-2 text-xs ${
+                        message.role === 'user'
+                          ? 'text-gray-600 dark:text-gray-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}
+                    >
+                      <span>
+                        {new Date(message.timestamp).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </span>
                       {message.role === 'user' && message.status && (
                         <span className="flex items-center gap-1">
                           {message.status === 'sending' && (
@@ -1243,7 +1362,9 @@ export default function ChatPage() {
                           {message.status === 'sent' && (
                             <>
                               <CheckCircle2 className="w-3 h-3 text-green-500" />
-                              <span className="text-xs text-green-600 dark:text-green-400">Sent</span>
+                              <span className="text-xs text-green-600 dark:text-green-400">
+                                Sent
+                              </span>
                             </>
                           )}
                           {message.status === 'error' && (
@@ -1256,7 +1377,9 @@ export default function ChatPage() {
                                 className="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50 flex items-center gap-1 transition-colors"
                                 title="Retry message"
                               >
-                                <RefreshCw className={`w-3 h-3 ${retryingMessageId === message.id ? 'animate-spin' : ''}`} />
+                                <RefreshCw
+                                  className={`w-3 h-3 ${retryingMessageId === message.id ? 'animate-spin' : ''}`}
+                                />
                                 {retryingMessageId === message.id ? 'Retrying...' : 'Retry'}
                               </button>
                             </>
@@ -1271,13 +1394,15 @@ export default function ChatPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* User Avatar */}
                   {message.role === 'user' && (
                     <div className="flex-shrink-0">
                       <div className="relative">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold shadow-lg ring-2 ring-white dark:ring-gray-800">
-                          {firebaseUser?.displayName?.charAt(0)?.toUpperCase() || firebaseUser?.email?.charAt(0)?.toUpperCase() || 'U'}
+                          {firebaseUser?.displayName?.charAt(0)?.toUpperCase() ||
+                            firebaseUser?.email?.charAt(0)?.toUpperCase() ||
+                            'U'}
                         </div>
                       </div>
                     </div>
@@ -1295,19 +1420,30 @@ export default function ChatPage() {
                       <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></div>
                     </div>
                   </div>
-                  
+
                   {/* Typing Indicator */}
                   <div className="flex flex-col items-start max-w-[85%] sm:max-w-[75%]">
                     <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-sm px-5 py-3 shadow-sm">
                       <div className="flex items-center gap-3">
                         <div className="flex gap-1.5">
-                          <div className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
-                          <div className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                          <div
+                            className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse"
+                            style={{ animationDelay: '0ms' }}
+                          ></div>
+                          <div
+                            className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse"
+                            style={{ animationDelay: '200ms' }}
+                          ></div>
+                          <div
+                            className="w-2.5 h-2.5 bg-primary/60 rounded-full animate-pulse"
+                            style={{ animationDelay: '400ms' }}
+                          ></div>
                         </div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">AI is composing a response...</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                          AI is composing a response...
+                        </span>
                       </div>
-                      
+
                       {/* Message tail */}
                       <div className="absolute -left-2 top-3 w-3 h-3 bg-white dark:bg-gray-800 border-l border-t border-gray-200 dark:border-gray-700 transform rotate-45 rounded-sm"></div>
                     </div>
@@ -1323,7 +1459,9 @@ export default function ChatPage() {
                   type="text"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder={isOnline ? "Ask about your finances..." : "Offline - Check your connection"}
+                  placeholder={
+                    isOnline ? 'Ask about your finances...' : 'Offline - Check your connection'
+                  }
                   className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500"
                   disabled={isLoading}
                 />

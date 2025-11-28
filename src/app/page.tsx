@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ArrowUpRight,
   BarChart3,
@@ -6,13 +8,37 @@ import {
   PieChart,
   TrendingUp,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
+import { useSession } from '@/components/providers/SessionProvider';
 import { Button } from '@/components/ui/Button';
 
 /**
  *
  */
 export default function Home() {
+  const { user, loading } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return null;
+  }
+
   return (
     <div className="space-y-16">
       {/* Hero Section */}

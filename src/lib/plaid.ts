@@ -1,4 +1,13 @@
-import { Configuration, CountryCode, PlaidApi, PlaidEnvironments, Products } from 'plaid';
+import {
+  AccountsGetRequest,
+  Configuration,
+  CountryCode,
+  InvestmentsHoldingsGetRequest,
+  LiabilitiesGetRequest,
+  PlaidApi,
+  PlaidEnvironments,
+  Products,
+} from 'plaid';
 
 import { getConfig } from './config';
 
@@ -44,7 +53,13 @@ export async function createLinkToken(userId: string) {
     const request = {
       user: { client_user_id: userId },
       client_name: 'FinSight AI Dashboard',
-      products: [Products.Transactions],
+      products: [
+        Products.Transactions,
+        Products.Balance,
+        Products.Investments,
+        Products.Liabilities,
+        Products.Identity,
+      ],
       country_codes: [CountryCode.Us],
       language: 'en',
       // redirect_uri: process.env.PLAID_REDIRECT_URI, // Optional: Add if using OAuth redirect flow
@@ -120,6 +135,73 @@ export async function getTransactions(
       throw new Error(`Plaid API error: ${error.message}`);
     }
     throw new Error('An unknown error occurred while fetching transactions.');
+  }
+}
+
+// Helper function to get investment holdings
+export async function getInvestmentHoldings(accessToken: string): Promise<{
+  holdings: import('plaid').Holding[];
+  securities: import('plaid').Security[];
+  accounts: import('plaid').AccountBase[];
+}> {
+  try {
+    const request: InvestmentsHoldingsGetRequest = {
+      access_token: accessToken,
+    };
+    const response = await plaidClient.investmentsHoldingsGet(request);
+    return {
+      holdings: response.data.holdings,
+      securities: response.data.securities,
+      accounts: response.data.accounts,
+    };
+  } catch (error: unknown) {
+    console.error('Error fetching investment holdings from Plaid:', error);
+    if (error instanceof Error) {
+      throw new Error(`Plaid API error: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while fetching investment holdings.');
+  }
+}
+
+// Helper function to get liabilities
+export async function getLiabilities(accessToken: string): Promise<{
+  liabilities: import('plaid').LiabilitiesObject;
+  accounts: import('plaid').AccountBase[];
+}> {
+  try {
+    const request: LiabilitiesGetRequest = {
+      access_token: accessToken,
+    };
+    const response = await plaidClient.liabilitiesGet(request);
+    return {
+      liabilities: response.data.liabilities,
+      accounts: response.data.accounts,
+    };
+  } catch (error: unknown) {
+    console.error('Error fetching liabilities from Plaid:', error);
+    if (error instanceof Error) {
+      throw new Error(`Plaid API error: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while fetching liabilities.');
+  }
+}
+
+// Helper function to get detailed account information
+export async function getDetailedAccounts(
+  accessToken: string
+): Promise<import('plaid').AccountBase[]> {
+  try {
+    const request: AccountsGetRequest = {
+      access_token: accessToken,
+    };
+    const response = await plaidClient.accountsGet(request);
+    return response.data.accounts;
+  } catch (error: unknown) {
+    console.error('Error fetching detailed accounts from Plaid:', error);
+    if (error instanceof Error) {
+      throw new Error(`Plaid API error: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while fetching account details.');
   }
 }
 

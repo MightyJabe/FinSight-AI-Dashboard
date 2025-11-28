@@ -1,20 +1,24 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { MessageCircle } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { ComprehensiveCryptoPortfolio } from '@/components/crypto/ComprehensiveCryptoPortfolio';
 import { AIInsights } from '@/components/dashboard/AIInsights';
 import { BudgetRecommendations } from '@/components/dashboard/BudgetRecommendations';
 import { BudgetSection } from '@/components/dashboard/BudgetSection';
 import { CashFlowForecast } from '@/components/dashboard/CashFlowForecast';
 import { ChartsSection } from '@/components/dashboard/ChartsSection';
+import { ComprehensiveInvestmentPerformance } from '@/components/dashboard/ComprehensiveInvestmentPerformance';
 import { FinancialHealthScore } from '@/components/dashboard/FinancialHealthScore';
 import { InvestmentAdvisor } from '@/components/dashboard/InvestmentAdvisor';
+import InvestmentOverview from '@/components/dashboard/InvestmentOverview';
 import { NetWorthDisplay } from '@/components/dashboard/NetWorthDisplay';
 import { OverviewCards } from '@/components/dashboard/OverviewCards';
+import { EnhancedSpendingInsights } from '@/components/insights/EnhancedSpendingInsights';
 import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/types/finance';
 
 // Dynamic imports for heavy components that are conditionally rendered
@@ -29,16 +33,7 @@ const DebtPayoffTimeline = dynamic(
   }
 );
 
-const InvestmentPerformance = dynamic(
-  () =>
-    import('@/components/dashboard/InvestmentPerformance').then(mod => ({
-      default: mod.InvestmentPerformance,
-    })),
-  {
-    loading: () => <LoadingSpinner message="Loading investment data..." />,
-    ssr: false, // Disable SSR for chart components
-  }
-);
+// Removed InvestmentPerformance - using ComprehensiveInvestmentPerformance instead
 
 interface DashboardContentProps {
   overview: Overview;
@@ -53,9 +48,8 @@ interface DashboardContentProps {
 export function DashboardContent({
   overview,
   budget,
-  investmentAccounts,
   liabilities,
-}: DashboardContentProps) {
+}: Omit<DashboardContentProps, 'investmentAccounts'>) {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(false);
 
@@ -95,8 +89,8 @@ export function DashboardContent({
           <div className="rounded-lg border bg-card/50 p-4">
             <h3 className="text-lg font-semibold mb-2">Detailed View: {selectedMetric}</h3>
             <p className="text-sm text-muted-foreground">
-              Drill-down analytics for {selectedMetric} would appear here. This could include historical trends, 
-              comparisons, and actionable insights.
+              Drill-down analytics for {selectedMetric} would appear here. This could include
+              historical trends, comparisons, and actionable insights.
             </p>
           </div>
         )}
@@ -110,14 +104,15 @@ export function DashboardContent({
               <MessageCircle className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Ask Your AI Financial Assistant</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                Ask Your AI Financial Assistant
+              </h3>
               <p className="text-gray-600 text-sm">
-                Get instant answers about your finances with visual analytics and conversation history
+                Get instant answers about your finances with visual analytics and conversation
+                history
               </p>
             </div>
-            <div className="text-primary group-hover:translate-x-1 transition-transform">
-              →
-            </div>
+            <div className="text-primary group-hover:translate-x-1 transition-transform">→</div>
           </div>
         </div>
       </Link>
@@ -125,8 +120,14 @@ export function DashboardContent({
       {/* Financial Health Score */}
       <FinancialHealthScore overview={overview} />
 
+      {/* Investment Overview */}
+      <InvestmentOverview />
+
       {/* Charts Section */}
       <ChartsSection overview={overview} />
+
+      {/* Enhanced Spending Insights */}
+      <EnhancedSpendingInsights />
 
       {/* Budget Recommendations */}
       <BudgetRecommendations />
@@ -150,12 +151,11 @@ export function DashboardContent({
         </Suspense>
       )}
 
-      {/* Investment Performance - Dynamically loaded */}
-      {investmentAccounts.accounts.length > 0 && (
-        <Suspense fallback={<LoadingSpinner message="Loading investment data..." />}>
-          <InvestmentPerformance investmentAccounts={investmentAccounts.accounts} />
-        </Suspense>
-      )}
+      {/* Comprehensive Investment Performance */}
+      <ComprehensiveInvestmentPerformance />
+
+      {/* Comprehensive Crypto Portfolio */}
+      <ComprehensiveCryptoPortfolio />
 
       {/* Budget Section */}
       {budget.budgetCategories.length > 0 && (

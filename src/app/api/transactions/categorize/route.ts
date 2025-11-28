@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { auth, db } from '@/lib/firebase-admin';
+
 import { categorizeTransactionsBatch } from '@/lib/ai-categorization';
+import { validateAuthToken } from '@/lib/auth-server';
+import { db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { getTransactions } from '@/lib/plaid';
+import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,29 +34,12 @@ const categorizeSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
-    // Authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // Authentication using centralized helper
+    const authResult = await validateAuthToken(request);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Missing token' },
-        { status: 401 }
-      );
-    }
-
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Invalid user ID' },
-        { status: 401 }
-      );
-    }
+    const userId = authResult.userId!;
 
     // Parse and validate request body
     const body = await request.json();
@@ -83,35 +70,40 @@ export async function POST(request: Request) {
     if (inputTransactions && inputTransactions.length > 0) {
       transactionsToProcess = inputTransactions;
     } else {
-      // Fetch transactions from Plaid API and any stored manual transactions
-      const [plaidResponse, manualResponse] = await Promise.all([
-        fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`,
-          {
-            headers: {
-              Authorization: authHeader,
-            },
-          }
-        ),
-        db.collection('users').doc(userId).collection('manualTransactions').get(),
-      ]);
-
+      // Fetch transactions from Plaid directly using our helper
+      const accessToken = await getPlaidAccessToken(userId);
       const allTransactions = [];
 
       // Process Plaid transactions
-      if (plaidResponse.ok) {
-        const plaidData = await plaidResponse.json();
-        const plaidTransactions = plaidData.transactions.map((txn: any) => ({
-          id: txn.transaction_id,
-          amount: txn.amount,
-          description: txn.name,
-          date: txn.date,
-          originalCategory: txn.category || undefined,
-          merchant_name: undefined,
-          payment_channel: txn.payment_channel || undefined,
-        }));
-        allTransactions.push(...plaidTransactions);
+      if (accessToken) {
+        try {
+          const txnEndDate = endDate || new Date().toISOString().split('T')[0];
+          const txnStartDate =
+            startDate ||
+            new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+          const plaidTransactions = await getTransactions(accessToken, txnStartDate!, txnEndDate!);
+          const formattedTransactions = plaidTransactions.map((txn: any) => ({
+            id: txn.transaction_id,
+            amount: txn.amount,
+            description: txn.name,
+            date: txn.date,
+            originalCategory: txn.category || undefined,
+            merchant_name: txn.merchant_name || undefined,
+            payment_channel: txn.payment_channel || undefined,
+          }));
+          allTransactions.push(...formattedTransactions);
+        } catch (error) {
+          logger.error('Error fetching Plaid transactions for categorization', { userId, error });
+        }
       }
+
+      // Process manual transactions
+      const manualResponse = await db
+        .collection('users')
+        .doc(userId)
+        .collection('manualTransactions')
+        .get();
 
       // Process manual transactions
       if (!manualResponse.empty) {
@@ -247,38 +239,24 @@ export async function POST(request: Request) {
  */
 export async function GET(request: Request) {
   try {
-    // Authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // Authentication using centralized helper
+    const authResult = await validateAuthToken(request);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Missing token' },
-        { status: 401 }
-      );
-    }
-
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Invalid user ID' },
-        { status: 401 }
-      );
-    }
+    const userId = authResult.userId!;
 
     // Get categorization statistics from both Plaid and manual transactions
+    const authHeader = request.headers.get('Authorization');
     const [plaidResponse, manualResponse, categorizedResponse] = await Promise.all([
       fetch(
         `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/plaid/transactions`,
         {
-          headers: {
-            Authorization: authHeader,
-          },
+          headers: authHeader
+            ? {
+                Authorization: authHeader,
+              }
+            : {},
         }
       ),
       db.collection('users').doc(userId).collection('manualTransactions').get(),

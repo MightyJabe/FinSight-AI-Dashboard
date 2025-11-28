@@ -67,8 +67,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -91,22 +90,34 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : 'button';
-    const isButton = !asChild;
-
     // If icon-only, require aria-label
     const isIconOnly = !children && (size === 'icon' || size === 'icon-sm' || size === 'icon-lg');
 
+    // When using asChild, we need to pass props to the child element
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(buttonVariants({ variant, size, fullWidth, isLoading, className }))}
+          ref={ref}
+          aria-busy={isLoading || undefined}
+          aria-disabled={disabled || isLoading || undefined}
+          tabIndex={disabled || isLoading ? -1 : undefined}
+          {...(isIconOnly && { 'aria-label': props['aria-label'] })}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         className={cn(buttonVariants({ variant, size, fullWidth, isLoading, className }))}
         ref={ref}
-        type={isButton ? (props.type as 'button' | 'submit' | 'reset') || 'button' : undefined}
+        type={(props.type as 'button' | 'submit' | 'reset') || 'button'}
         aria-busy={isLoading || undefined}
         aria-disabled={disabled || isLoading || undefined}
-        disabled={isButton ? Boolean(disabled || isLoading) : undefined}
-        role={!isButton ? 'button' : undefined}
-        tabIndex={!isButton && (disabled || isLoading) ? -1 : undefined}
+        disabled={Boolean(disabled || isLoading)}
         {...(isIconOnly && { 'aria-label': props['aria-label'] })}
         {...props}
       >
@@ -122,7 +133,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {leftIcon && <span className="mr-2">{leftIcon}</span>}
         {children}
         {rightIcon && <span className="ml-2">{rightIcon}</span>}
-      </Comp>
+      </button>
     );
   }
 );

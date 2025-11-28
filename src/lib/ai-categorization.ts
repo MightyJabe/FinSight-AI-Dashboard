@@ -1,6 +1,8 @@
 // Only import on server-side to avoid client-side initialization issues
 let generateChatCompletion: any;
 let logger: any;
+let getModelConfig: any;
+let getEnhancedPrompt: any;
 
 if (typeof window === 'undefined') {
   // In test environment, use static imports to work with Jest mocks
@@ -8,8 +10,11 @@ if (typeof window === 'undefined') {
     try {
       const openaiModule = require('@/lib/openai');
       const loggerModule = require('@/lib/logger');
+      const modelConfigModule = require('@/lib/ai-model-config');
       generateChatCompletion = openaiModule.generateChatCompletion;
       logger = loggerModule.default;
+      getModelConfig = modelConfigModule.getModelConfig;
+      getEnhancedPrompt = modelConfigModule.getEnhancedPrompt;
 
       // Ensure we have valid functions
       if (!generateChatCompletion) {
@@ -19,14 +24,18 @@ if (typeof window === 'undefined') {
         throw new Error('logger not found');
       }
     } catch (error) {
-      // Fallback for tests - use mock functions if jest is available
-      const mockFn = typeof jest !== 'undefined' ? jest.fn() : () => {};
+      // Fallback for tests - use mock functions
+      const mockFn = () => {};
       generateChatCompletion = mockFn;
       logger = { error: mockFn, warn: mockFn, info: mockFn };
+      getModelConfig = () => ({ model: 'gpt-4o', temperature: 0.7 });
+      getEnhancedPrompt = () => '';
     }
   } else {
     generateChatCompletion = require('./openai').generateChatCompletion;
     logger = require('./logger').default;
+    getModelConfig = require('./ai-model-config').getModelConfig;
+    getEnhancedPrompt = require('./ai-model-config').getEnhancedPrompt;
   }
 }
 
@@ -115,7 +124,11 @@ export async function categorizeTransaction(transaction: {
     const isIncome = transaction.amount < 0; // Plaid uses negative amounts for income
     const categories = isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-    const systemPrompt = `You are a financial transaction categorization expert. Your job is to categorize financial transactions into the most appropriate category.
+    // Use enhanced prompt if available, otherwise fall back to standard prompt
+    const enhancedPrompt = getEnhancedPrompt ? getEnhancedPrompt('categorization') : '';
+    const systemPrompt =
+      enhancedPrompt ||
+      `You are a financial transaction categorization expert. Your job is to categorize financial transactions into the most appropriate category.
 
 Available categories for ${isIncome ? 'INCOME' : 'EXPENSES'}:
 ${Object.values(categories)
@@ -136,6 +149,23 @@ Respond in this exact JSON format:
   "reasoning": "brief explanation of your choice"
 }`;
 
+    // Add category list to enhanced prompt
+    const finalSystemPrompt = enhancedPrompt
+      ? `${enhancedPrompt}
+
+Available categories for ${isIncome ? 'INCOME' : 'EXPENSES'}:
+${Object.values(categories)
+  .map(cat => `- ${cat}`)
+  .join('\n')}
+
+Respond in this exact JSON format:
+{
+  "category": "exact category name from the list",
+  "confidence": number between 0-100,
+  "reasoning": "brief explanation of your choice"
+}`
+      : systemPrompt;
+
     const userPrompt = `Categorize this transaction:
 - Description: "${transaction.description}"
 - Amount: $${Math.abs(transaction.amount).toFixed(2)} ${isIncome ? '(income)' : '(expense)'}
@@ -144,16 +174,21 @@ ${transaction.merchant_name ? `- Merchant: ${transaction.merchant_name}` : ''}
 ${transaction.payment_channel ? `- Payment Method: ${transaction.payment_channel}` : ''}
 ${transaction.originalCategory?.length ? `- Bank Category: ${transaction.originalCategory.join(', ')}` : ''}`;
 
+    // Get optimized model configuration for categorization
+    const modelConfig = getModelConfig
+      ? getModelConfig('categorization')
+      : {
+          model: 'gpt-4o-mini',
+          temperature: 0.2,
+          maxTokens: 300,
+        };
+
     const response = await generateChatCompletion(
       [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: finalSystemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      {
-        model: 'gpt-4o',
-        temperature: 0.3, // Lower temperature for more consistent categorization
-        maxTokens: 300,
-      }
+      modelConfig
     );
 
     // Parse AI response
@@ -185,12 +220,22 @@ ${transaction.originalCategory?.length ? `- Bank Category: ${transaction.origina
         transaction: transaction.description,
       });
 
-      // Fallback categorization
-      return fallbackCategorization(transaction, isIncome);
+      // Return uncategorized instead of fallback
+      return {
+        category: isIncome ? INCOME_CATEGORIES.OTHER_INCOME : EXPENSE_CATEGORIES.UNCATEGORIZED,
+        confidence: 0,
+        reasoning: 'AI categorization failed - needs retry',
+      };
     }
   } catch (error) {
     logger?.error('Error in AI categorization', { error, transaction: transaction.description });
-    return fallbackCategorization(transaction, transaction.amount < 0);
+    // Return uncategorized instead of fallback
+    return {
+      category:
+        transaction.amount < 0 ? INCOME_CATEGORIES.OTHER_INCOME : EXPENSE_CATEGORIES.UNCATEGORIZED,
+      confidence: 0,
+      reasoning: 'AI categorization error - needs retry',
+    };
   }
 }
 
@@ -244,115 +289,6 @@ export async function categorizeTransactionsBatch(
   }
 
   return results;
-}
-
-/**
- * Fallback categorization using rule-based logic
- */
-function fallbackCategorization(
-  transaction: {
-    amount: number;
-    description: string;
-    originalCategory?: string[] | undefined;
-  },
-  isIncome: boolean
-): CategorySuggestion {
-  const description = transaction.description.toLowerCase();
-
-  if (isIncome) {
-    if (description.includes('salary') || description.includes('payroll')) {
-      return {
-        category: INCOME_CATEGORIES.SALARY,
-        confidence: 80,
-        reasoning: 'Pattern match: salary/payroll',
-      };
-    }
-    if (description.includes('freelance') || description.includes('contractor')) {
-      return {
-        category: INCOME_CATEGORIES.FREELANCE,
-        confidence: 75,
-        reasoning: 'Pattern match: freelance',
-      };
-    }
-    return {
-      category: INCOME_CATEGORIES.OTHER_INCOME,
-      confidence: 50,
-      reasoning: 'Fallback: general income',
-    };
-  }
-
-  // Expense categorization
-  if (
-    description.includes('grocery') ||
-    description.includes('supermarket') ||
-    description.includes('food')
-  ) {
-    return {
-      category: EXPENSE_CATEGORIES.GROCERIES,
-      confidence: 85,
-      reasoning: 'Pattern match: grocery/food',
-    };
-  }
-  if (
-    description.includes('gas') ||
-    description.includes('fuel') ||
-    description.includes('uber') ||
-    description.includes('lyft')
-  ) {
-    return {
-      category: EXPENSE_CATEGORIES.TRANSPORTATION,
-      confidence: 80,
-      reasoning: 'Pattern match: transportation',
-    };
-  }
-  if (
-    description.includes('restaurant') ||
-    description.includes('cafe') ||
-    description.includes('starbucks')
-  ) {
-    return {
-      category: EXPENSE_CATEGORIES.DINING_OUT,
-      confidence: 85,
-      reasoning: 'Pattern match: dining out',
-    };
-  }
-  if (description.includes('rent') || description.includes('mortgage')) {
-    return {
-      category: EXPENSE_CATEGORIES.HOUSING,
-      confidence: 90,
-      reasoning: 'Pattern match: housing',
-    };
-  }
-  if (
-    description.includes('electric') ||
-    description.includes('water') ||
-    description.includes('internet')
-  ) {
-    return {
-      category: EXPENSE_CATEGORIES.UTILITIES,
-      confidence: 85,
-      reasoning: 'Pattern match: utilities',
-    };
-  }
-  if (
-    description.includes('netflix') ||
-    description.includes('spotify') ||
-    description.includes('entertainment') ||
-    description.includes('movie') ||
-    description.includes('subscription')
-  ) {
-    return {
-      category: EXPENSE_CATEGORIES.ENTERTAINMENT,
-      confidence: 80,
-      reasoning: 'Pattern match: entertainment',
-    };
-  }
-
-  return {
-    category: EXPENSE_CATEGORIES.UNCATEGORIZED,
-    confidence: 30,
-    reasoning: 'Fallback: no pattern match',
-  };
 }
 
 /**
@@ -435,7 +371,11 @@ async function generateSpendingInsights(
     if (typeof window !== 'undefined') {
       throw new Error('AI insights generation can only run on server-side');
     }
-    const systemPrompt = `You are a financial advisor analyzing spending patterns. Provide 3-5 actionable insights based on the spending data. Focus on:
+    // Use enhanced prompt for insights if available
+    const enhancedPrompt = getEnhancedPrompt ? getEnhancedPrompt('insights') : '';
+    const systemPrompt =
+      enhancedPrompt ||
+      `You are a financial advisor analyzing spending patterns. Provide 3-5 actionable insights based on the spending data. Focus on:
 1. Spending patterns and potential areas for optimization
 2. Budget recommendations
 3. Trends that need attention
@@ -456,16 +396,21 @@ ${monthlyTrends
 
 Provide 3-5 specific, actionable insights.`;
 
+    // Get optimized model configuration for analysis
+    const modelConfig = getModelConfig
+      ? getModelConfig('analysis')
+      : {
+          model: 'gpt-4o',
+          temperature: 0.3,
+          maxTokens: 500,
+        };
+
     const response = await generateChatCompletion(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      {
-        model: 'gpt-4o',
-        temperature: 0.7,
-        maxTokens: 500,
-      }
+      modelConfig
     );
 
     // Parse insights from response

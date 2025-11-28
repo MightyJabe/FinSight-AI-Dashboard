@@ -6,9 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { DateRangeSelector } from './DateRangeSelector';
-import { TransactionsList } from './TransactionsList';
-import { AICategorization } from './AICategorization';
 import { SpendingBreakdown } from './SpendingBreakdown';
+import { TransactionsList } from './TransactionsList';
 
 // Enhanced transaction interface
 interface EnhancedTransaction {
@@ -51,11 +50,6 @@ export function TransactionsContent({
     return dateMatch && categoryMatch;
   });
 
-  const handleCategorizationComplete = () => {
-    // Trigger a refresh by updating the key prop
-    window.dispatchEvent(new CustomEvent('categorization-complete'));
-  };
-
   const handleCategoryFilter = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
   };
@@ -90,37 +84,27 @@ export function TransactionsContent({
 
       {/* Spending Overview at Top */}
       <div className="mb-8">
-        <SpendingBreakdown 
+        <SpendingBreakdown
           onCategoryFilter={handleCategoryFilter}
           selectedCategory={selectedCategory}
         />
       </div>
 
-      {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar - AI Tools */}
-        <div className="lg:col-span-1">
-          <AICategorization onCategorizationComplete={handleCategorizationComplete} />
-        </div>
-        
-        {/* Main Content - Transactions */}
-        <div className="lg:col-span-3">
-          <Tabs defaultValue="list" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="list">List View</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
-            </TabsList>
+      {/* Main Content - Transactions */}
+      <Tabs defaultValue="list" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="list" className="space-y-4">
-              <TransactionsList transactions={filteredTransactions} />
-            </TabsContent>
+        <TabsContent value="list" className="space-y-4">
+          <TransactionsList transactions={filteredTransactions} />
+        </TabsContent>
 
-            <TabsContent value="categories" className="space-y-4">
-              <CategoryBreakdown transactions={filteredTransactions} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+        <TabsContent value="categories" className="space-y-4">
+          <CategoryBreakdown transactions={filteredTransactions} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

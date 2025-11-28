@@ -1,11 +1,25 @@
 'use client';
 
-import { AlertTriangle, CheckCircle, DollarSign, Target, TrendingDown, TrendingUp, Lightbulb, Bell, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Bell,
+  CheckCircle,
+  DollarSign,
+  Lightbulb,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useSession } from '@/components/providers/SessionProvider';
-import type { BudgetAlert, BudgetRecommendation, SmartBudgetAnalysis } from '@/lib/budget-recommendations';
+import type {
+  BudgetAlert,
+  BudgetRecommendation,
+  SmartBudgetAnalysis,
+} from '@/lib/budget-recommendations';
 
 interface BudgetRecommendationsProps {
   className?: string;
@@ -56,61 +70,63 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
     }
   }, [firebaseUser]);
 
-  const acceptRecommendation = useCallback(async (category: string, recommendedBudget: number) => {
-    if (!firebaseUser || !analysis) return;
+  const acceptRecommendation = useCallback(
+    async (category: string, recommendedBudget: number) => {
+      if (!firebaseUser || !analysis) return;
 
-    try {
-      setUpdating(true);
-      
-      // Update local state immediately for better UX
-      setAcceptedRecommendations(prev => new Set([...prev, category]));
-      
-      // Prepare updated budgets
-      const currentBudgets: { [key: string]: number } = {};
-      analysis.recommendedAllocations.forEach(rec => {
-        if (rec.category === category) {
-          currentBudgets[rec.category] = recommendedBudget;
-        } else if (acceptedRecommendations.has(rec.category)) {
-          currentBudgets[rec.category] = rec.recommendedBudget;
-        } else {
-          currentBudgets[rec.category] = rec.currentBudget;
+      try {
+        setUpdating(true);
+
+        // Update local state immediately for better UX
+        setAcceptedRecommendations(prev => new Set([...prev, category]));
+
+        // Prepare updated budgets
+        const currentBudgets: { [key: string]: number } = {};
+        analysis.recommendedAllocations.forEach(rec => {
+          if (rec.category === category) {
+            currentBudgets[rec.category] = recommendedBudget;
+          } else if (acceptedRecommendations.has(rec.category)) {
+            currentBudgets[rec.category] = rec.recommendedBudget;
+          } else {
+            currentBudgets[rec.category] = rec.currentBudget;
+          }
+        });
+
+        const idToken = await firebaseUser.getIdToken();
+        const response = await fetch('/api/budget-recommendations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            budgets: currentBudgets,
+            acceptedRecommendations: [category],
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to update budget');
         }
-      });
 
-      const idToken = await firebaseUser.getIdToken();
-      const response = await fetch('/api/budget-recommendations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          budgets: currentBudgets,
-          acceptedRecommendations: [category],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update budget');
+        // Refresh recommendations after update
+        setTimeout(() => fetchRecommendations(), 1000);
+      } catch (err) {
+        console.error('Error accepting recommendation:', err);
+        // Revert local state on error
+        setAcceptedRecommendations(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(category);
+          return newSet;
+        });
+        setError(err instanceof Error ? err.message : 'Failed to update budget');
+      } finally {
+        setUpdating(false);
       }
-
-      // Refresh recommendations after update
-      setTimeout(() => fetchRecommendations(), 1000);
-
-    } catch (err) {
-      console.error('Error accepting recommendation:', err);
-      // Revert local state on error
-      setAcceptedRecommendations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(category);
-        return newSet;
-      });
-      setError(err instanceof Error ? err.message : 'Failed to update budget');
-    } finally {
-      setUpdating(false);
-    }
-  }, [firebaseUser, analysis, acceptedRecommendations, fetchRecommendations]);
+    },
+    [firebaseUser, analysis, acceptedRecommendations, fetchRecommendations]
+  );
 
   const dismissAlert = useCallback((alertId: string) => {
     setDismissedAlerts(prev => new Set([...prev, alertId]));
@@ -205,7 +221,9 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
         <div className="text-center py-8">
           <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Budget Data</h3>
-          <p className="text-gray-600">Add transactions to get personalized budget recommendations.</p>
+          <p className="text-gray-600">
+            Add transactions to get personalized budget recommendations.
+          </p>
         </div>
       </div>
     );
@@ -255,9 +273,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
             <p className="text-xl font-bold text-gray-900">
               {analysis.insights.budgetEfficiency.toFixed(0)}%
             </p>
-            <p className="text-xs text-gray-500">
-              How well budgets match spending
-            </p>
+            <p className="text-xs text-gray-500">How well budgets match spending</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4">
@@ -266,11 +282,11 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
               <span className="text-sm font-medium text-gray-700">Potential Savings</span>
             </div>
             <p className="text-xl font-bold text-gray-900">
-              {formatCurrency(analysis.recommendedAllocations.reduce((sum, rec) => sum + rec.potentialSavings, 0))}
+              {formatCurrency(
+                analysis.recommendedAllocations.reduce((sum, rec) => sum + rec.potentialSavings, 0)
+              )}
             </p>
-            <p className="text-xs text-gray-500">
-              From optimization
-            </p>
+            <p className="text-xs text-gray-500">From optimization</p>
           </div>
         </div>
 
@@ -282,7 +298,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
               Budget Alerts ({visibleAlerts.length})
             </h4>
             <div className="space-y-3">
-              {visibleAlerts.slice(0, 4).map((alert) => (
+              {visibleAlerts.slice(0, 4).map(alert => (
                 <div
                   key={alert.id}
                   className={`p-4 rounded-lg border ${getSeverityColor(alert.severity)}`}
@@ -317,7 +333,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
               Top Recommendations
             </h4>
             <div className="space-y-4">
-              {topRecommendations.map((recommendation) => (
+              {topRecommendations.map(recommendation => (
                 <div
                   key={recommendation.category}
                   className={`p-4 rounded-lg border ${getPriorityColor(recommendation.priority)}`}
@@ -328,13 +344,15 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
                       <p className="text-sm text-gray-600">{recommendation.reasoning}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        recommendation.priority === 'high' 
-                          ? 'bg-red-100 text-red-800'
-                          : recommendation.priority === 'medium'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          recommendation.priority === 'high'
+                            ? 'bg-red-100 text-red-800'
+                            : recommendation.priority === 'medium'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-green-100 text-green-800'
+                        }`}
+                      >
                         {recommendation.priority} priority
                       </span>
                     </div>
@@ -343,21 +361,32 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
                   <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                     <div>
                       <span className="text-gray-500">Current Spending:</span>
-                      <p className="font-medium">{formatCurrency(recommendation.currentSpending)}</p>
+                      <p className="font-medium">
+                        {formatCurrency(recommendation.currentSpending)}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Recommended Budget:</span>
-                      <p className="font-medium text-green-600">{formatCurrency(recommendation.recommendedBudget)}</p>
+                      <p className="font-medium text-green-600">
+                        {formatCurrency(recommendation.recommendedBudget)}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Potential Savings:</span>
-                      <p className="font-medium text-purple-600">{formatCurrency(recommendation.potentialSavings)}</p>
+                      <p className="font-medium text-purple-600">
+                        {formatCurrency(recommendation.potentialSavings)}
+                      </p>
                     </div>
                   </div>
 
                   {!acceptedRecommendations.has(recommendation.category) && (
                     <button
-                      onClick={() => acceptRecommendation(recommendation.category, recommendation.recommendedBudget)}
+                      onClick={() =>
+                        acceptRecommendation(
+                          recommendation.category,
+                          recommendation.recommendedBudget
+                        )
+                      }
                       disabled={updating}
                       className="w-full py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                     >

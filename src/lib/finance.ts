@@ -1,10 +1,9 @@
 // import { getAuth } from 'firebase-admin/auth'; // Removed unused import
 import { cookies } from 'next/headers';
 
-import { auth } from '@/lib/firebase-admin';
+import { auth, db } from '@/lib/firebase-admin';
 import type { Overview } from '@/types/finance';
 
-import { db } from './firebase-admin';
 import { plaidClient } from './plaid'; // Make sure plaidClient is exported from plaid.ts
 
 // Define asset types considered as liquid cash
@@ -31,6 +30,7 @@ export interface Budget {
     category: string;
     amount: number;
   }>;
+  totalCategories?: number;
 }
 
 export interface InvestmentAccounts {
@@ -39,12 +39,21 @@ export interface InvestmentAccounts {
     name: string;
     balance: number;
     type: string;
-    performance: {
+    performance?: {
       daily: number;
       monthly: number;
       yearly: number;
     };
   }>;
+  totalValue?: number;
+  totalInvestmentValue?: number;
+  totalManualInvestments?: number;
+  accountCount?: number;
+  performance?: {
+    monthlyGain: number;
+    yearToDate: number;
+    allTimeGain: number;
+  };
 }
 
 export interface Liabilities {
@@ -53,12 +62,16 @@ export interface Liabilities {
     name: string;
     amount: number;
     type: string;
-    interestRate: number;
-    minimumPayment: number;
-    remainingPayments: number;
-    payoffDate: string;
+    interestRate?: number;
+    minimumPayment?: number;
+    remainingPayments?: number;
+    payoffDate?: string;
   }>;
   totalDebt: number;
+  creditAccounts?: number;
+  manualLiabilities?: number;
+  totalCreditDebt?: number;
+  totalManualDebt?: number;
 }
 
 export interface Transaction {

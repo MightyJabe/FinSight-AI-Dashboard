@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
 import { getConfig } from '@/lib/config';
-import { db } from '@/lib/firebase-admin';
 import { executeFinancialTool, financialTools } from '@/lib/financial-tools';
+import { db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getAccountService } from '@/lib/services/account-service';
 import { getUserBudgets } from '@/lib/services/budget-service';
@@ -392,14 +392,35 @@ Remember: You have access to the user's complete financial picture. Use this dat
         throw new Error('OpenAI client not initialized');
       }
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        tools: financialTools,
-        tool_choice: 'auto',
-        temperature: 0.7,
-        max_tokens: 1500,
-      });
+      // Try GPT-5 first, with fallback to GPT-4o
+      let completion;
+      try {
+        completion = await openai.chat.completions.create({
+          model: 'gpt-5',
+          messages,
+          tools: financialTools,
+          tool_choice: 'auto',
+          temperature: 0.7,
+          max_tokens: 1500,
+          // GPT-5 parameters (conditionally added)
+          ...(true && { verbosity: 'medium' as any }),
+          ...(true && { reasoning_effort: 'standard' as any }),
+        });
+      } catch (modelError: any) {
+        if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
+          logger.warn('GPT-5 not available, falling back to GPT-4o for AI brain service');
+          completion = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages,
+            tools: financialTools,
+            tool_choice: 'auto',
+            temperature: 0.7,
+            max_tokens: 1500,
+          });
+        } else {
+          throw modelError;
+        }
+      }
 
       const responseMessage = completion.choices[0]?.message;
       if (!responseMessage) {
@@ -435,12 +456,30 @@ Remember: You have access to the user's complete financial picture. Use this dat
 
         // Get final response with tool results
         try {
-          const finalCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [...messages, responseMessage, ...toolResults],
-            temperature: 0.7,
-            max_tokens: 1500,
-          });
+          // Try GPT-5 first for final response
+          let finalCompletion;
+          try {
+            finalCompletion = await openai.chat.completions.create({
+              model: 'gpt-5',
+              messages: [...messages, responseMessage, ...toolResults],
+              temperature: 0.7,
+              max_tokens: 1500,
+              // GPT-5 parameters (conditionally added)
+              ...(true && { verbosity: 'medium' as any }),
+              ...(true && { reasoning_effort: 'standard' as any }),
+            });
+          } catch (modelError: any) {
+            if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
+              finalCompletion = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: [...messages, responseMessage, ...toolResults],
+                temperature: 0.7,
+                max_tokens: 1500,
+              });
+            } else {
+              throw modelError;
+            }
+          }
 
           finalResponse =
             finalCompletion.choices[0]?.message?.content ||
@@ -504,12 +543,30 @@ If it's general, still relate it back to their financial goals when appropriate.
         throw new Error('OpenAI client not initialized');
       }
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        temperature: 0.7,
-        max_tokens: 800,
-      });
+      // Try GPT-5 first for chat responses
+      let completion;
+      try {
+        completion = await openai.chat.completions.create({
+          model: 'gpt-5',
+          messages,
+          temperature: 0.7,
+          max_tokens: 800,
+          // GPT-5 parameters (conditionally added)
+          ...(true && { verbosity: 'medium' as any }),
+          ...(true && { reasoning_effort: 'standard' as any }),
+        });
+      } catch (modelError: any) {
+        if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
+          completion = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages,
+            temperature: 0.7,
+            max_tokens: 800,
+          });
+        } else {
+          throw modelError;
+        }
+      }
 
       const response =
         completion.choices[0]?.message?.content ||

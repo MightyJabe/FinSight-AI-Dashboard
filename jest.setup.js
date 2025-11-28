@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 // Add Web Fetch API shim for OpenAI
 import 'openai/shims/node';
 
+import { TextDecoder, TextEncoder } from 'util';
+
 // Mock fetch globally
 global.fetch = jest.fn();
 
@@ -195,8 +197,6 @@ jest.mock('firebase/auth', () => ({
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn(),
 }));
-
-import { TextDecoder, TextEncoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 

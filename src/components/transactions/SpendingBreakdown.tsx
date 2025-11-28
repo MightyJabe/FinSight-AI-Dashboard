@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { PieChart, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
-import { useSession } from '@/components/providers/SessionProvider';
-import { ChartSkeleton } from '@/components/common/SkeletonLoader';
+import { BarChart3, DollarSign, PieChart, TrendingUp } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { ChartSkeleton } from '@/components/common/SkeletonLoader';
+import { useSession } from '@/components/providers/SessionProvider';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface CategorySpending {
@@ -22,7 +23,6 @@ interface SpendingData {
   categories: CategorySpending[];
   period: string;
 }
-
 
 interface SpendingBreakdownProps {
   onCategoryFilter?: (category: string) => void;
@@ -43,12 +43,12 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       clearError();
 
       const idToken = await firebaseUser.getIdToken();
-      
+
       // Fetch categorized transactions
       const response = await fetch('/api/transactions/categorize', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
@@ -57,7 +57,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch data');
       }
@@ -66,7 +66,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       const categorizedResponse = await fetch('/api/transactions/spending-analysis', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          Authorization: `Bearer ${idToken}`,
         },
       });
 
@@ -76,7 +76,6 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
           setSpendingData(analysisData.data);
         }
       }
-
     } catch (err) {
       handleError(err, 'SpendingBreakdown.fetchSpendingData');
     } finally {
@@ -91,7 +90,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
     const handleRefresh = () => {
       setTimeout(() => fetchSpendingData(), 1000); // Small delay to ensure data is saved
     };
-    
+
     window.addEventListener('categorization-complete', handleRefresh);
     return () => window.removeEventListener('categorization-complete', handleRefresh);
   }, [fetchSpendingData]);
@@ -168,8 +167,11 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
               <DollarSign className="h-4 w-4 text-blue-500" />
               <span className="text-sm font-medium text-gray-700">Net Flow</span>
             </div>
-            <p className={`text-2xl font-bold ${spendingData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${spendingData.netCashFlow >= 0 ? '+' : ''}${spendingData.netCashFlow.toLocaleString()}
+            <p
+              className={`text-2xl font-bold ${spendingData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}
+            >
+              ${spendingData.netCashFlow >= 0 ? '+' : ''}$
+              {spendingData.netCashFlow.toLocaleString()}
             </p>
           </div>
         </div>
@@ -179,14 +181,14 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       <div className="p-4">
         <h4 className="text-md font-semibold text-gray-900 mb-4">Categories</h4>
         <div className="space-y-3">
-          {spendingData.categories.map((category) => (
+          {spendingData.categories.map(category => (
             <div key={category.category} className="flex items-center gap-4">
               {/* Color indicator */}
-              <div 
+              <div
                 className="w-4 h-4 rounded-full flex-shrink-0"
                 style={{ backgroundColor: category.color }}
               />
-              
+
               {/* Category info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
@@ -201,28 +203,27 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
                     {selectedCategory === category.category && ' (filtered)'}
                   </button>
                   <span className="text-sm text-gray-600">
-                    {category.transactionCount} transaction{category.transactionCount !== 1 ? 's' : ''}
+                    {category.transactionCount} transaction
+                    {category.transactionCount !== 1 ? 's' : ''}
                   </span>
                 </div>
-                
+
                 {/* Progress bar */}
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                  <div 
+                  <div
                     className="h-2 rounded-full transition-all duration-500"
-                    style={{ 
+                    style={{
                       width: `${category.percentage}%`,
-                      backgroundColor: category.color
+                      backgroundColor: category.color,
                     }}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-900">
                     ${Math.abs(category.amount).toLocaleString()}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {category.percentage.toFixed(1)}%
-                  </span>
+                  <span className="text-xs text-gray-500">{category.percentage.toFixed(1)}%</span>
                 </div>
               </div>
             </div>

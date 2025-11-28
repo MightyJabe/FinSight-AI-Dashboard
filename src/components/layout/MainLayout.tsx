@@ -3,11 +3,11 @@
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 
+import { OfflineBanner } from '@/components/common/ConnectionStatus';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Footer } from '@/components/common/Footer';
 import { Header } from '@/components/common/Header';
 import { Navigation } from '@/components/common/Navigation';
-import { OfflineBanner } from '@/components/common/ConnectionStatus';
 import { useSession } from '@/components/providers/SessionProvider';
 import { SWRProvider } from '@/components/providers/SWRProvider';
 
@@ -57,7 +57,9 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
             <Navigation />
             <div className="flex-1 min-w-0 w-full">
               <Header />
-              <main className="flex-1 w-full max-w-none px-4 py-8 pt-16 lg:pt-8 lg:px-8 overflow-x-hidden">{children}</main>
+              <main className="flex-1 w-full max-w-none px-4 py-8 pt-16 lg:pt-8 lg:px-8 overflow-x-hidden">
+                {children}
+              </main>
               <Footer />
               <Toaster position="top-right" />
             </div>

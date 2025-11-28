@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimitMiddleware } from './src/middleware/rate-limit';
 
 export function middleware(request: NextRequest) {

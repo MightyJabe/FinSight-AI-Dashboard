@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth } from '@/lib/firebase-admin';
-import { db } from '@/lib/firebase-admin';
+import { auth, db } from '@/lib/firebase-admin';
 
 // Zod schemas for input validation
 const manualAssetSchema = z.object({

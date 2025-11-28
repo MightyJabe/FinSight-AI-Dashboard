@@ -1,7 +1,8 @@
 'use client';
 
+import { Brain, Check, Edit3, X } from 'lucide-react';
 import { useState } from 'react';
-import { Edit3, Check, X, Brain } from 'lucide-react';
+
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/ai-categorization';
 
 interface CategoryEditorProps {
@@ -19,14 +20,15 @@ export function CategoryEditor({
   aiConfidence,
   transactionType,
   onCategoryChange,
-  disabled = false
+  disabled = false,
 }: CategoryEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(currentCategory);
 
-  const categories = transactionType === 'income' 
-    ? Object.values(INCOME_CATEGORIES)
-    : Object.values(EXPENSE_CATEGORIES);
+  const categories =
+    transactionType === 'income'
+      ? Object.values(INCOME_CATEGORIES)
+      : Object.values(EXPENSE_CATEGORIES);
 
   const handleSave = () => {
     onCategoryChange(selectedCategory);
@@ -48,10 +50,8 @@ export function CategoryEditor({
   if (!isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-gray-900">
-          {currentCategory}
-        </span>
-        
+        <span className="text-sm font-medium text-gray-900">{currentCategory}</span>
+
         {/* AI Confidence Badge */}
         {aiCategory && aiConfidence && (
           <div className="flex items-center gap-1">
@@ -91,11 +91,11 @@ export function CategoryEditor({
     <div className="flex items-center gap-2">
       <select
         value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
+        onChange={e => setSelectedCategory(e.target.value)}
         className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         autoFocus
       >
-        {categories.map((category) => (
+        {categories.map(category => (
           <option key={category} value={category}>
             {category}
           </option>

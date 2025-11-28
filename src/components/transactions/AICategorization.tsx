@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Brain, CheckCircle, AlertCircle, Loader, Play, BarChart3 } from 'lucide-react';
+import { AlertCircle, BarChart3, Brain, CheckCircle, Loader, Play } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { useAICategorization } from '@/hooks/useAICategorization';
 
 interface AICategorization {
@@ -9,13 +10,8 @@ interface AICategorization {
 }
 
 export function AICategorization({ onCategorizationComplete }: AICategorization) {
-  const {
-    categorizeAllTransactions,
-    getCategorizationStatus,
-    isLoading,
-    error,
-    clearError
-  } = useAICategorization();
+  const { categorizeAllTransactions, getCategorizationStatus, isLoading, error, clearError } =
+    useAICategorization();
 
   const [status, setStatus] = useState<{
     total: number;
@@ -44,7 +40,7 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
   const handleCategorizeAll = async () => {
     clearError();
     const result = await categorizeAllTransactions();
-    
+
     if (result) {
       setLastResult(result.summary);
       await loadStatus(); // Refresh status
@@ -73,7 +69,7 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
         <div>
           <h3 className="text-lg font-semibold text-gray-900">AI Categorization</h3>
           <p className="text-sm text-gray-600">
-            Automatically categorize your transactions for better insights
+            Upgrade from basic categorization to AI-powered insights
           </p>
         </div>
       </div>
@@ -90,7 +86,7 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
               {status.percentage}%
             </span>
           </div>
-          
+
           {status.total === 0 ? (
             <div className="text-center py-4">
               <p className="text-sm text-gray-600 mb-2">No transactions found</p>
@@ -106,19 +102,23 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
                   <span className="font-medium">{status.total.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">AI Categorized:</span>
-                  <span className="font-medium text-green-600">{status.categorized.toLocaleString()}</span>
+                  <span className="text-gray-600">AI Enhanced:</span>
+                  <span className="font-medium text-green-600">
+                    {status.categorized.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Uncategorized:</span>
-                  <span className="font-medium text-orange-600">{status.uncategorized.toLocaleString()}</span>
+                  <span className="text-gray-600">Basic Categories:</span>
+                  <span className="font-medium text-blue-600">
+                    {status.uncategorized.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               {/* Progress Bar */}
               <div className="mt-3">
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
                     style={{ width: `${status.percentage}%` }}
                   />
@@ -138,9 +138,7 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
           </div>
           <div className="text-xs text-green-700 space-y-1">
             <div>✓ {lastResult.categorized} transactions categorized</div>
-            {lastResult.failed > 0 && (
-              <div>⚠ {lastResult.failed} transactions failed</div>
-            )}
+            {lastResult.failed > 0 && <div>⚠ {lastResult.failed} transactions failed</div>}
           </div>
         </div>
       )}
@@ -163,12 +161,8 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
           disabled={isLoading}
           className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          {isLoading ? (
-            <Loader className="h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-          {isLoading ? 'Categorizing...' : 'Categorize All Transactions'}
+          {isLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+          {isLoading ? 'Analyzing with AI...' : 'Upgrade to AI Categorization'}
         </button>
 
         <button
@@ -185,10 +179,10 @@ export function AICategorization({ onCategorizationComplete }: AICategorization)
       <div className="mt-6 pt-4 border-t border-gray-200">
         <p className="text-xs font-medium text-gray-700 mb-2">Benefits of AI Categorization:</p>
         <ul className="text-xs text-gray-600 space-y-1">
-          <li>• More accurate spending insights</li>
-          <li>• Better budget tracking and recommendations</li>
-          <li>• Automated pattern recognition</li>
-          <li>• Natural language financial queries</li>
+          <li>• AI learns your unique spending patterns</li>
+          <li>• Personalized category suggestions</li>
+          <li>• Advanced financial insights & predictions</li>
+          <li>• Continuous improvement with usage</li>
         </ul>
       </div>
     </div>

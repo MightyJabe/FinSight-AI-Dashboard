@@ -44,3 +44,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# testing and reports
+/test-results/
+/playwright-report/
+/coverage/
+/.nyc_output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+*.tmp
+*.temp
+
+# AI assistant files
+.amazonq/

@@ -1,6 +1,13 @@
 'use client';
 
-import { TrendingDown, TrendingUp, AlertTriangle, DollarSign, Calendar, BarChart3 } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+  DollarSign,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -21,38 +28,44 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedMonths, setSelectedMonths] = useState(6);
 
-  const fetchForecast = useCallback(async (months: number = 6) => {
-    if (!firebaseUser) return;
+  const fetchForecast = useCallback(
+    async (months: number = 6) => {
+      if (!firebaseUser) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      const idToken = await firebaseUser.getIdToken();
-      const response = await fetch(`/api/cash-flow-forecast?months=${months}&includeRecurring=true`, {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
+        const idToken = await firebaseUser.getIdToken();
+        const response = await fetch(
+          `/api/cash-flow-forecast?months=${months}&includeRecurring=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+            },
+          }
+        );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch forecast (${response.status})`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to fetch forecast (${response.status})`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          setForecast(data.data);
+        } else {
+          throw new Error(data.error || 'Failed to fetch forecast');
+        }
+      } catch (err) {
+        console.error('Error fetching cash flow forecast:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch forecast');
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-      if (data.success) {
-        setForecast(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch forecast');
-      }
-    } catch (err) {
-      console.error('Error fetching cash flow forecast:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch forecast');
-    } finally {
-      setLoading(false);
-    }
-  }, [firebaseUser]);
+    },
+    [firebaseUser]
+  );
 
   useEffect(() => {
     fetchForecast(selectedMonths);
@@ -76,10 +89,10 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
   const getBalanceTrend = (predictions: CashFlowPrediction[]) => {
     if (predictions.length < 2) return 'stable';
-    
+
     const firstBalance = predictions[0]?.predictedBalance ?? 0;
     const lastBalance = predictions[predictions.length - 1]?.predictedBalance ?? 0;
-    
+
     if (lastBalance > firstBalance * 1.1) return 'increasing';
     if (lastBalance < firstBalance * 0.9) return 'decreasing';
     return 'stable';
@@ -141,7 +154,9 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
         <div className="text-center py-8">
           <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Forecast Data</h3>
-          <p className="text-gray-600">Unable to generate forecast. Please ensure you have transaction history.</p>
+          <p className="text-gray-600">
+            Unable to generate forecast. Please ensure you have transaction history.
+          </p>
         </div>
       </div>
     );
@@ -162,17 +177,21 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Cash Flow Forecast</h3>
-              <p className="text-sm text-gray-600">Predicted financial trends based on your history</p>
+              <p className="text-sm text-gray-600">
+                Predicted financial trends based on your history
+              </p>
             </div>
           </div>
-          
+
           {/* Time Period Selector */}
           <div className="flex items-center gap-2">
-            <label htmlFor="months-select" className="text-sm text-gray-600">Forecast:</label>
+            <label htmlFor="months-select" className="text-sm text-gray-600">
+              Forecast:
+            </label>
             <select
               id="months-select"
               value={selectedMonths}
-              onChange={(e) => setSelectedMonths(parseInt(e.target.value))}
+              onChange={e => setSelectedMonths(parseInt(e.target.value))}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value={3}>3 months</option>
@@ -221,7 +240,9 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
               {getTrendIcon(balanceTrend)}
               <span className="text-sm font-medium text-gray-700">Trend</span>
             </div>
-            <p className={`text-xl font-bold capitalize ${getTrendColor(balanceTrend).split(' ')[0]}`}>
+            <p
+              className={`text-xl font-bold capitalize ${getTrendColor(balanceTrend).split(' ')[0]}`}
+            >
               {balanceTrend}
             </p>
           </div>
@@ -236,9 +257,15 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Month</th>
                   <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">Income</th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">Expenses</th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">Balance</th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">Confidence</th>
+                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                    Expenses
+                  </th>
+                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                    Balance
+                  </th>
+                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                    Confidence
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -256,19 +283,23 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
                     <td className="py-3 px-3 text-sm text-right text-red-600 font-medium">
                       {formatCurrency(prediction.predictedExpenses)}
                     </td>
-                    <td className={`py-3 px-3 text-sm text-right font-medium ${
-                      prediction.predictedBalance >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <td
+                      className={`py-3 px-3 text-sm text-right font-medium ${
+                        prediction.predictedBalance >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    >
                       {formatCurrency(prediction.predictedBalance)}
                     </td>
                     <td className="py-3 px-3 text-sm text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        prediction.confidence >= 0.7 
-                          ? 'bg-green-100 text-green-800'
-                          : prediction.confidence >= 0.5
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          prediction.confidence >= 0.7
+                            ? 'bg-green-100 text-green-800'
+                            : prediction.confidence >= 0.5
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
                         {Math.round(prediction.confidence * 100)}%
                       </span>
                     </td>
@@ -298,7 +329,11 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
             <span className="font-medium">Monthly Net Change:</span>{' '}
-            <span className={forecast.insights.monthlyNetChange >= 0 ? 'text-green-600' : 'text-red-600'}>
+            <span
+              className={
+                forecast.insights.monthlyNetChange >= 0 ? 'text-green-600' : 'text-red-600'
+              }
+            >
               {formatCurrency(forecast.insights.monthlyNetChange)}
             </span>
           </div>
@@ -307,12 +342,18 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
             {forecast.insights.recurringTransactions} detected
           </div>
           <div>
-            <span className="font-medium">Balance Range:</span>{' '}
-            {formatCurrency(lowestBalance)} to {formatCurrency(highestBalance)}
+            <span className="font-medium">Balance Range:</span> {formatCurrency(lowestBalance)} to{' '}
+            {formatCurrency(highestBalance)}
           </div>
           <div>
             <span className="font-medium">Volatility:</span>{' '}
-            <span className={forecast.insights.volatility > forecast.insights.avgMonthlyIncome * 0.3 ? 'text-red-600' : 'text-green-600'}>
+            <span
+              className={
+                forecast.insights.volatility > forecast.insights.avgMonthlyIncome * 0.3
+                  ? 'text-red-600'
+                  : 'text-green-600'
+              }
+            >
               {formatCurrency(forecast.insights.volatility)}
             </span>
           </div>

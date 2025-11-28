@@ -59,19 +59,21 @@ export interface Overview {
   netWorth: number;
   totalAssets: number;
   totalLiabilities: number;
-  monthlySavings: number;
+  monthlySavings?: number;
   monthlyIncome: number;
   monthlyExpenses: number;
   accounts: Account[];
   manualAssets: ManualAsset[];
+  manualLiabilities?: number;
   liabilities: Liability[];
-  netWorthHistory: Array<{ date: string; value: number }>;
-  budgetCategories: BudgetCategory[];
-  spendingByCategory: SpendingCategory[];
-  totalCashAssets: number;
+  netWorthHistory?: Array<{ date: string; value: number }>;
+  budgetCategories?: BudgetCategory[];
+  spendingByCategory?: SpendingCategory[];
+  totalCashAssets?: number;
   emergencyFundStatus: number;
   savingsRate: number;
-  debtToIncomeRatio: number;
+  debtToIncomeRatio?: number;
+  totalBalance?: number; // For compatibility
 }
 
 export interface Insight {

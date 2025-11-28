@@ -1,7 +1,8 @@
 'use client';
 
-import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface ConnectionStatusProps {
@@ -13,10 +14,10 @@ interface ConnectionStatusProps {
 /**
  * Connection status indicator component
  */
-export function ConnectionStatus({ 
-  className, 
-  showLabel = true, 
-  size = 'md' 
+export function ConnectionStatus({
+  className,
+  showLabel = true,
+  size = 'md',
 }: ConnectionStatusProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -36,17 +37,17 @@ export function ConnectionStatus({
 
     // Check connection periodically when offline
     let intervalId: NodeJS.Timeout | null = null;
-    
+
     if (!isOnline) {
       intervalId = setInterval(async () => {
         try {
           setIsConnecting(true);
           // Try to fetch a small resource to test connectivity
-          const response = await fetch('/api/health', { 
+          const response = await fetch('/api/health', {
             method: 'HEAD',
-            cache: 'no-cache' 
+            cache: 'no-cache',
           });
-          
+
           if (response.ok) {
             setIsOnline(true);
             setIsConnecting(false);
@@ -74,22 +75,24 @@ export function ConnectionStatus({
   const sizeClasses = {
     sm: 'h-3 w-3',
     md: 'h-4 w-4',
-    lg: 'h-5 w-5'
+    lg: 'h-5 w-5',
   };
 
   const textSizeClasses = {
     sm: 'text-xs',
     md: 'text-sm',
-    lg: 'text-base'
+    lg: 'text-base',
   };
 
   const getIcon = () => {
     if (isConnecting) {
       return <RefreshCw className={cn(sizeClasses[size], 'animate-spin')} />;
     }
-    return isOnline ? 
-      <Wifi className={sizeClasses[size]} /> : 
-      <WifiOff className={sizeClasses[size]} />;
+    return isOnline ? (
+      <Wifi className={sizeClasses[size]} />
+    ) : (
+      <WifiOff className={sizeClasses[size]} />
+    );
   };
 
   const getStatusText = () => {
@@ -99,22 +102,14 @@ export function ConnectionStatus({
 
   const getStatusColor = () => {
     if (isConnecting) return 'text-amber-600 dark:text-amber-400';
-    return isOnline ? 
-      'text-green-600 dark:text-green-400' : 
-      'text-red-600 dark:text-red-400';
+    return isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
   };
 
   return (
-    <div className={cn(
-      'flex items-center gap-2',
-      getStatusColor(),
-      className
-    )}>
+    <div className={cn('flex items-center gap-2', getStatusColor(), className)}>
       {getIcon()}
       {showLabel && (
-        <span className={cn('font-medium', textSizeClasses[size])}>
-          {getStatusText()}
-        </span>
+        <span className={cn('font-medium', textSizeClasses[size])}>{getStatusText()}</span>
       )}
     </div>
   );
@@ -156,12 +151,12 @@ export function OfflineBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className={cn(
-      'fixed top-0 left-0 right-0 z-50 p-3 text-center text-sm font-medium transition-all duration-300',
-      isOffline 
-        ? 'bg-red-600 text-white' 
-        : 'bg-green-600 text-white'
-    )}>
+    <div
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 p-3 text-center text-sm font-medium transition-all duration-300',
+        isOffline ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+      )}
+    >
       <div className="flex items-center justify-center gap-2">
         {isOffline ? (
           <>

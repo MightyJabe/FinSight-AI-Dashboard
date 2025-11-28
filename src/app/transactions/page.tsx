@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { TableSkeleton } from '@/components/common/SkeletonLoader';
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
-import { TableSkeleton } from '@/components/common/SkeletonLoader';
 
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
@@ -45,13 +45,46 @@ interface ManualTransaction {
 }
 
 /**
- *
+ * Trigger AI categorization for uncategorized transactions
  */
+async function triggerAICategorization(idToken: string, transactions: any[]) {
+  try {
+    // Format transactions for categorization API
+    const transactionsToProcess = transactions.map(t => ({
+      id: t.id,
+      amount: t.type === 'income' ? -Math.abs(t.amount) : Math.abs(t.amount),
+      description: t.description,
+      date: t.date,
+      originalCategory: t.category ? [t.category] : undefined,
+    }));
+
+    // Call categorization API
+    const response = await fetch('/api/transactions/categorize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ transactions: transactionsToProcess }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('AI categorization completed:', result.data?.summary);
+      // Dispatch event to refresh transactions
+      window.dispatchEvent(new Event('categorization-complete'));
+    }
+  } catch (error) {
+    console.error('Failed to trigger AI categorization:', error);
+  }
+}
+
 export default function TransactionsPage() {
   const { user: _user, firebaseUser, loading: authLoading } = useSession();
   const [transactions, setTransactions] = useState<EnhancedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aiCategorizationTriggered, setAiCategorizationTriggered] = useState(false);
 
   const fetchTransactions = useCallback(async () => {
     if (!firebaseUser) return;
@@ -107,12 +140,15 @@ export default function TransactionsPage() {
       // Map Plaid transactions to our internal format
       const plaidTransactions = plaidData.transactions.map((t: PlaidTransaction) => {
         const categorizedInfo = categorizedData.categorizedTransactions[t.transaction_id];
+        // Use AI category if available, otherwise mark as uncategorized for AI processing
+        const category = categorizedInfo?.aiCategory || 'Uncategorized';
+
         return {
           id: t.transaction_id,
           date: t.date,
           description: t.name,
           amount: -t.amount, // Invert Plaid amounts
-          category: categorizedInfo?.aiCategory || t.category?.[0] || 'Uncategorized',
+          category,
           aiCategory: categorizedInfo?.aiCategory,
           aiConfidence: categorizedInfo?.aiConfidence,
           account: t.account_name,
@@ -143,13 +179,26 @@ export default function TransactionsPage() {
       );
 
       setTransactions(allTransactions);
+
+      // Automatically trigger AI categorization for uncategorized transactions
+      if (!aiCategorizationTriggered) {
+        const uncategorizedTransactions = allTransactions.filter(
+          t => t.category === 'Uncategorized' && !t.aiCategory
+        );
+
+        if (uncategorizedTransactions.length > 0) {
+          setAiCategorizationTriggered(true);
+          // Trigger AI categorization in the background
+          triggerAICategorization(idToken, uncategorizedTransactions);
+        }
+      }
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
     } finally {
       setLoading(false);
     }
-  }, [firebaseUser]);
+  }, [firebaseUser, aiCategorizationTriggered]);
 
   useEffect(() => {
     fetchTransactions();
@@ -158,9 +207,17 @@ export default function TransactionsPage() {
     const handleTransactionUpdate = () => {
       setTimeout(() => fetchTransactions(), 500); // Small delay to ensure data is saved
     };
-    
+
+    const handleCategorizationComplete = () => {
+      setTimeout(() => fetchTransactions(), 1000); // Longer delay for categorization to complete
+    };
+
     window.addEventListener('transaction-updated', handleTransactionUpdate);
-    return () => window.removeEventListener('transaction-updated', handleTransactionUpdate);
+    window.addEventListener('categorization-complete', handleCategorizationComplete);
+    return () => {
+      window.removeEventListener('transaction-updated', handleTransactionUpdate);
+      window.removeEventListener('categorization-complete', handleCategorizationComplete);
+    };
   }, [fetchTransactions]);
 
   if (authLoading || loading) {

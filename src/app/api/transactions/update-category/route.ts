@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { auth, db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
@@ -19,10 +20,7 @@ export async function POST(request: Request) {
     // Authentication
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -49,9 +47,9 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { 
-          success: false, 
-          errors: parsed.error.formErrors.fieldErrors 
+        {
+          success: false,
+          errors: parsed.error.formErrors.fieldErrors,
         },
         { status: 400 }
       );
@@ -68,7 +66,7 @@ export async function POST(request: Request) {
 
     // Check if document exists
     const existingDoc = await docRef.get();
-    
+
     if (existingDoc.exists) {
       // Update existing categorization
       await docRef.update({
@@ -95,19 +93,15 @@ export async function POST(request: Request) {
       userId,
       transactionId,
       category,
-      type
+      type,
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Category updated successfully'
+      message: 'Category updated successfully',
     });
-
   } catch (error) {
     logger.error('Error updating transaction category', { error });
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

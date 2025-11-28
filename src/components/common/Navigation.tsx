@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  Bitcoin,
   HelpCircle,
   LayoutDashboard,
   ListChecks,
@@ -13,19 +14,22 @@ import {
   Sun,
   TrendingUp,
   Users,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { NavigationSkeleton } from '@/components/common/SkeletonLoader';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/lib/auth';
 import { auth as firebaseAuth } from '@/lib/firebase';
-import { useTheme } from '@/hooks/useTheme';
-import { NavigationSkeleton } from '@/components/common/SkeletonLoader';
 
 const primaryNavigationItems = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'AI Chat', href: '/chat', icon: MessageCircle },
+  { name: 'Investments', href: '/investments', icon: Wallet },
+  { name: 'Crypto Portfolio', href: '/crypto', icon: Bitcoin },
   { name: 'Accounts & Balances', href: '/accounts', icon: Users },
   { name: 'Spending & Budget', href: '/transactions', icon: ListChecks },
   { name: 'AI Insights', href: '/insights', icon: BarChart3 },
@@ -69,12 +73,12 @@ export function Navigation() {
     <>
       {/* Mobile menu overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
-      
+
       {/* Mobile menu button */}
       <button
         className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-background border shadow-sm"
@@ -83,9 +87,19 @@ export function Navigation() {
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           )}
         </svg>
       </button>
@@ -97,130 +111,136 @@ export function Navigation() {
         role="navigation"
         aria-label="Main navigation"
       >
-      <div className="p-6 border-b">
-        <Link
-          href={user ? '/dashboard' : '/'}
-          className="text-2xl font-bold text-gray-800 hover:text-primary transition-colors"
-        >
-          FinSight AI
-        </Link>
-      </div>
+        <div className="p-6 border-b">
+          <Link
+            href={user ? '/dashboard' : '/'}
+            className="text-2xl font-bold text-gray-800 hover:text-primary transition-colors"
+          >
+            FinSight AI
+          </Link>
+        </div>
 
-      <div className="flex-grow overflow-y-auto p-4 space-y-1">
-        <ul>
-          {primaryNavigationItems.map(item => {
-            const isActive =
-              pathname === item.href ||
-              (item.href === '/dashboard' && pathname.startsWith('/dashboard'));
-            return (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isActive
-                      ? 'bg-primary/10 text-primary shadow-sm'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <item.icon
-                    className={`h-5 w-5 transition-transform duration-200 ${
+        <div className="flex-grow overflow-y-auto p-4 space-y-1">
+          <ul>
+            {primaryNavigationItems.map(item => {
+              const isActive =
+                pathname === item.href ||
+                (item.href === '/dashboard' && pathname.startsWith('/dashboard'));
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isActive
-                        ? 'text-primary'
-                        : 'text-muted-foreground group-hover:text-accent-foreground'
+                        ? 'bg-primary/10 text-primary shadow-sm'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
                     }`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <item.icon
+                      className={`h-5 w-5 transition-transform duration-200 ${
+                        isActive
+                          ? 'text-primary'
+                          : 'text-muted-foreground group-hover:text-accent-foreground'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className="mt-auto p-4 border-t space-y-1">
+          <ul>
+            {secondaryNavigationItems.map(item => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      isActive
+                        ? 'bg-accent/80 text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <item.icon
+                      className={`h-5 w-5 transition-transform duration-200 ${
+                        isActive
+                          ? 'text-accent-foreground'
+                          : 'text-muted-foreground group-hover:text-accent-foreground'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                aria-label="Logout"
+                onClick={handleLogout}
+                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              >
+                <LogOut
+                  className="h-5 w-5 text-muted-foreground group-hover:text-red-600"
+                  aria-hidden="true"
+                />
+                <span className="truncate">Logout</span>
+              </button>
+            </li>
+            <li>
+              <button
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                onClick={toggleTheme}
+                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {theme === 'dark' ? (
+                  <Sun
+                    className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground"
                     aria-hidden="true"
                   />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      <div className="mt-auto p-4 border-t space-y-1">
-        <ul>
-          {secondaryNavigationItems.map(item => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isActive
-                      ? 'bg-accent/80 text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <item.icon
-                    className={`h-5 w-5 transition-transform duration-200 ${
-                      isActive
-                        ? 'text-accent-foreground'
-                        : 'text-muted-foreground group-hover:text-accent-foreground'
-                    }`}
+                ) : (
+                  <Moon
+                    className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground"
                     aria-hidden="true"
                   />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              </li>
-            );
-          })}
-          <li>
-            <button
-              aria-label="Logout"
-              onClick={handleLogout}
-              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-            >
-              <LogOut
-                className="h-5 w-5 text-muted-foreground group-hover:text-red-600"
+                )}
+                <span className="truncate">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div className="p-4 border-t">
+          {!loading && user ? (
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold"
                 aria-hidden="true"
-              />
-              <span className="truncate">Logout</span>
-            </button>
-          </li>
-          <li>
-            <button
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              onClick={toggleTheme}
-              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true" />
-              ) : (
-                <Moon className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true" />
-              )}
-              <span className="truncate">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <div className="p-4 border-t">
-        {!loading && user ? (
-          <div className="flex items-center gap-3">
-            <div
-              className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold"
-              aria-hidden="true"
-            >
-              {displayName.charAt(0).toUpperCase()}
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-medium truncate" title={displayName}>
+                  {displayName}
+                </span>
+                <span className="text-xs text-muted-foreground truncate" title={displayEmail}>
+                  {displayEmail}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-medium truncate" title={displayName}>
-                {displayName}
-              </span>
-              <span className="text-xs text-muted-foreground truncate" title={displayEmail}>
-                {displayEmail}
-              </span>
-            </div>
-          </div>
-        ) : loading ? (
-          <div className="text-sm text-muted-foreground">Loading user...</div>
-        ) : (
-          <div className="text-sm text-muted-foreground">Not signed in</div>
-        )}
-      </div>
+          ) : loading ? (
+            <div className="text-sm text-muted-foreground">Loading user...</div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Not signed in</div>
+          )}
+        </div>
       </nav>
     </>
   );

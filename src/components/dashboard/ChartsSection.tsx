@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipItem,
 } from 'chart.js';
-import { HelpCircle, PieChart, TrendingUp, Maximize2 } from 'lucide-react';
+import { HelpCircle, Maximize2, PieChart, TrendingUp } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { Line, Pie } from 'react-chartjs-2';
 
@@ -47,7 +47,10 @@ interface ChartsSectionProps {
 /**
  * Optimized charts section with memoization and proper cleanup
  */
-export const ChartsSection = memo(function ChartsSection({ overview, isInteractive = true }: ChartsSectionProps) {
+export const ChartsSection = memo(function ChartsSection({
+  overview,
+  isInteractive = true,
+}: ChartsSectionProps) {
   const { netWorthHistory, monthlyIncome, monthlyExpenses, monthlySavings, accounts, liabilities } =
     overview;
 
@@ -189,11 +192,15 @@ export const ChartsSection = memo(function ChartsSection({ overview, isInteracti
 
   return (
     <TooltipProvider>
-      <div className={`grid gap-6 ${expandedChart ? 'grid-cols-1' : 'lg:grid-cols-2'} transition-all duration-300`}>
+      <div
+        className={`grid gap-6 ${expandedChart ? 'grid-cols-1' : 'lg:grid-cols-2'} transition-all duration-300`}
+      >
         {/* Net Worth Trend */}
-        <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 transition-all duration-200 ${
-          expandedChart === 'networth' ? 'col-span-full' : ''
-        }`}>
+        <div
+          className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 transition-all duration-200 ${
+            expandedChart === 'networth' ? 'col-span-full' : ''
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-gray-100">
@@ -209,7 +216,7 @@ export const ChartsSection = memo(function ChartsSection({ overview, isInteracti
               </h2>
               {isInteractive && (
                 <div className="flex items-center gap-2">
-                  {(['7d', '30d', '90d', '1y'] as const).map((range) => (
+                  {(['7d', '30d', '90d', '1y'] as const).map(range => (
                     <button
                       key={range}
                       onClick={() => setSelectedTimeRange(range)}
@@ -238,7 +245,9 @@ export const ChartsSection = memo(function ChartsSection({ overview, isInteracti
               )}
             </div>
           </div>
-          <div className={`${expandedChart === 'networth' ? 'h-96' : 'h-64'} transition-all duration-300`}>
+          <div
+            className={`${expandedChart === 'networth' ? 'h-96' : 'h-64'} transition-all duration-300`}
+          >
             {renderChart(
               <Line
                 data={netWorthData}
@@ -294,7 +303,7 @@ export const ChartsSection = memo(function ChartsSection({ overview, isInteracti
                       callbacks: {
                         label: (context: TooltipItem<ChartType>) => {
                           const value = context.raw as number;
-                          const total = monthlyIncome + monthlyExpenses + monthlySavings;
+                          const total = monthlyIncome + monthlyExpenses + (monthlySavings || 0);
                           const percentage = total > 0 ? (value / total) * 100 : 0;
                           return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
                         },

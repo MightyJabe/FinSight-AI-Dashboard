@@ -1,4 +1,5 @@
-import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync } from 'crypto';
+import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'crypto';
+
 import logger from './logger';
 
 /**
@@ -8,7 +9,7 @@ import logger from './logger';
 
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32; // 256 bits
-const IV_LENGTH = 16;  // 128 bits
+const IV_LENGTH = 16; // 128 bits
 const SALT_LENGTH = 32; // 256 bits
 // const TAG_LENGTH = 16; // 128 bits (not used directly, managed by cipher)
 const ITERATIONS = 100000; // PBKDF2 iterations
@@ -26,6 +27,15 @@ interface EncryptedData {
 function getEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
+    // Development fallback - generate a temporary key and warn
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️  ENCRYPTION_KEY not found! Using temporary key for development.');
+      console.warn('⚠️  Add ENCRYPTION_KEY to your .env.local file for secure operation.');
+      console.warn(
+        "⚠️  Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+      );
+      return 'dev-fallback-key-' + '0'.repeat(48); // 64 chars total
+    }
     throw new Error('ENCRYPTION_KEY environment variable is required for data protection');
   }
   if (key.length < 32) {
@@ -58,17 +68,17 @@ export function encryptSensitiveData(plaintext: string): EncryptedData {
     const key = deriveKey(password, salt);
 
     const cipher = createCipheriv(ALGORITHM, key, iv);
-    
+
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const tag = cipher.getAuthTag();
 
     return {
       encrypted,
       iv: iv.toString('hex'),
       salt: salt.toString('hex'),
-      tag: tag.toString('hex')
+      tag: tag.toString('hex'),
     };
   } catch (error) {
     logger.error('Failed to encrypt sensitive data', { error });
@@ -83,7 +93,13 @@ export function encryptSensitiveData(plaintext: string): EncryptedData {
  */
 export function decryptSensitiveData(encryptedData: EncryptedData): string {
   try {
-    if (!encryptedData || !encryptedData.encrypted || !encryptedData.iv || !encryptedData.salt || !encryptedData.tag) {
+    if (
+      !encryptedData ||
+      !encryptedData.encrypted ||
+      !encryptedData.iv ||
+      !encryptedData.salt ||
+      !encryptedData.tag
+    ) {
       throw new Error('Invalid encrypted data format');
     }
 
@@ -95,10 +111,10 @@ export function decryptSensitiveData(encryptedData: EncryptedData): string {
 
     const decipher = createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(tag);
-    
+
     let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   } catch (error) {
     logger.error('Failed to decrypt sensitive data', { error });
@@ -115,7 +131,7 @@ export function encryptPlaidToken(accessToken: string): EncryptedData {
   if (!accessToken || typeof accessToken !== 'string') {
     throw new Error('Invalid Plaid access token');
   }
-  
+
   logger.info('Encrypting Plaid access token');
   return encryptSensitiveData(accessToken);
 }
@@ -129,7 +145,7 @@ export function decryptPlaidToken(encryptedToken: EncryptedData): string {
   if (!encryptedToken) {
     throw new Error('No encrypted token provided');
   }
-  
+
   logger.info('Decrypting Plaid access token');
   return decryptSensitiveData(encryptedToken);
 }
@@ -140,12 +156,14 @@ export function decryptPlaidToken(encryptedToken: EncryptedData): string {
  * @returns True if the data appears to be encrypted
  */
 export function isEncryptedData(data: any): data is EncryptedData {
-  return typeof data === 'object' && 
-         data !== null &&
-         typeof data.encrypted === 'string' &&
-         typeof data.iv === 'string' &&
-         typeof data.salt === 'string' &&
-         typeof data.tag === 'string';
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof data.encrypted === 'string' &&
+    typeof data.iv === 'string' &&
+    typeof data.salt === 'string' &&
+    typeof data.tag === 'string'
+  );
 }
 
 /**
@@ -187,7 +205,7 @@ const encryptionUtils = {
   decryptPlaidToken,
   isEncryptedData,
   secureClear,
-  generateEncryptionKey
+  generateEncryptionKey,
 };
 
 export default encryptionUtils;

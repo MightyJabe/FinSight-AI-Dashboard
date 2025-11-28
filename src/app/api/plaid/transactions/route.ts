@@ -1,12 +1,18 @@
 import { formatISO } from 'date-fns';
 import { NextResponse } from 'next/server';
 
-import { db } from '@/lib/firebase-admin';
-import { getTransactions } from '@/lib/plaid';
+import {
+  AuditEventType,
+  AuditSeverity,
+  logFinancialAccess,
+  logPlaidOperation,
+  logSecurityEvent,
+} from '@/lib/audit-logger';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
-import { Permission, validateUserAccess } from '@/middleware/rbac';
-import { logFinancialAccess, logPlaidOperation, logSecurityEvent, AuditEventType, AuditSeverity } from '@/lib/audit-logger';
+import { db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { getTransactions } from '@/lib/plaid';
+import { Permission, validateUserAccess } from '@/middleware/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,36 +21,30 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: Request) {
   const startTime = Date.now();
-  const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const ipAddress =
+    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
-  
+
   try {
     // Validate user access with RBAC
-    const validation = await validateUserAccess(
-      request as any, 
-      Permission.READ_FINANCIAL_DATA
-    );
-    
+    const validation = await validateUserAccess(request as any, Permission.READ_FINANCIAL_DATA);
+
     if (!validation.success) {
       // Log unauthorized access attempt
-      await logSecurityEvent(
-        AuditEventType.UNAUTHORIZED_ACCESS,
-        AuditSeverity.HIGH,
-        {
-          ipAddress,
-          userAgent,
-          endpoint: '/api/plaid/transactions',
-          method: 'GET',
-          resource: 'plaid_transactions',
-          success: false,
-          errorMessage: 'Unauthorized access attempt',
-          details: { reason: 'Invalid or missing authorization' }
-        }
-      );
-      
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        ipAddress,
+        userAgent,
+        endpoint: '/api/plaid/transactions',
+        method: 'GET',
+        resource: 'plaid_transactions',
+        success: false,
+        errorMessage: 'Unauthorized access attempt',
+        details: { reason: 'Invalid or missing authorization' },
+      });
+
       return validation.response;
     }
-    
+
     const { userId } = validation;
 
     // Fetch all Plaid access tokens for this user
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         if (isEncryptedData(storedAccessToken)) {
           accessToken = decryptPlaidToken(storedAccessToken);
           logger.info('Successfully decrypted Plaid access token', { itemId: plaidItemDoc.id });
-          
+
           // Log decryption operation
           await logPlaidOperation(userId, 'decrypt_token', {
             itemId: plaidItemDoc.id,
@@ -82,37 +82,35 @@ export async function GET(request: Request) {
             userAgent,
             endpoint: '/api/plaid/transactions',
             success: true,
-            details: { operation: 'decrypt_for_transactions' }
+            details: { operation: 'decrypt_for_transactions' },
           });
         } else {
           // Handle legacy unencrypted tokens (migration support)
           accessToken = storedAccessToken as string;
-          logger.warn('Found unencrypted Plaid access token - migration needed', { itemId: plaidItemDoc.id });
+          logger.warn('Found unencrypted Plaid access token - migration needed', {
+            itemId: plaidItemDoc.id,
+          });
         }
       } catch (error) {
-        logger.error('Failed to decrypt Plaid access token', { 
-          error, 
+        logger.error('Failed to decrypt Plaid access token', {
+          error,
           itemId: plaidItemDoc.id,
-          userId 
+          userId,
         });
-        
+
         // Log decryption failure
-        await logSecurityEvent(
-          AuditEventType.DECRYPTION_OPERATION,
-          AuditSeverity.HIGH,
-          {
-            userId,
-            ipAddress,
-            userAgent,
-            endpoint: '/api/plaid/transactions',
-            method: 'GET',
-            resource: 'plaid_access_token',
-            success: false,
-            errorMessage: 'Failed to decrypt Plaid access token',
-            details: { error: error instanceof Error ? error.message : 'Unknown error' }
-          }
-        );
-        
+        await logSecurityEvent(AuditEventType.DECRYPTION_OPERATION, AuditSeverity.HIGH, {
+          userId,
+          ipAddress,
+          userAgent,
+          endpoint: '/api/plaid/transactions',
+          method: 'GET',
+          resource: 'plaid_access_token',
+          success: false,
+          errorMessage: 'Failed to decrypt Plaid access token',
+          details: { error: error instanceof Error ? error.message : 'Unknown error' },
+        });
+
         continue; // Skip this item if decryption fails
       }
 
@@ -149,48 +147,39 @@ export async function GET(request: Request) {
     allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // Log successful transaction fetch
-    await logFinancialAccess(
-      userId,
-      'read',
-      'plaid_transactions',
-      {
-        ipAddress,
-        userAgent,
-        endpoint: '/api/plaid/transactions',
-        method: 'GET',
-        success: true,
-        details: {
-          transactionCount: allTransactions.length,
-          plaidItemsCount: plaidItemsSnapshot.size,
-          processingTime: Date.now() - startTime
-        }
-      }
-    );
+    await logFinancialAccess(userId, 'read', 'plaid_transactions', {
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/transactions',
+      method: 'GET',
+      success: true,
+      details: {
+        transactionCount: allTransactions.length,
+        plaidItemsCount: plaidItemsSnapshot.size,
+        processingTime: Date.now() - startTime,
+      },
+    });
 
     return NextResponse.json({ transactions: allTransactions });
   } catch (error) {
     console.error('Error in Plaid transactions API:', error);
-    
+
     // Log system error
-    await logSecurityEvent(
-      AuditEventType.SYSTEM_ERROR,
-      AuditSeverity.HIGH,
-      {
-        userId: 'unknown',
-        ipAddress,
-        userAgent,
-        endpoint: '/api/plaid/transactions',
-        method: 'GET',
-        resource: 'plaid_transactions',
-        success: false,
-        errorMessage: 'System error in transactions API',
-        details: { 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          processingTime: Date.now() - startTime
-        }
-      }
-    );
-    
+    await logSecurityEvent(AuditEventType.SYSTEM_ERROR, AuditSeverity.HIGH, {
+      userId: 'unknown',
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/transactions',
+      method: 'GET',
+      resource: 'plaid_transactions',
+      success: false,
+      errorMessage: 'System error in transactions API',
+      details: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        processingTime: Date.now() - startTime,
+      },
+    });
+
     return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { validateAuthToken } from '@/lib/auth-server';
 import { db } from '@/lib/firebase-admin';
 import { getAccountBalances, getTransactions } from '@/lib/plaid';
+import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -20,14 +21,8 @@ export async function GET(request: Request) {
     }
     const userId = authResult.userId!;
 
-    // Get the user's Plaid access token from Firestore
-    const accessTokenDoc = await db
-      .collection('users')
-      .doc(userId)
-      .collection('plaid')
-      .doc('access_token')
-      .get();
-    const accessToken = accessTokenDoc.exists ? accessTokenDoc.data()?.accessToken : null;
+    // Get the user's Plaid access token
+    const accessToken = await getPlaidAccessToken(userId);
 
     // Explicit types
     type Account = {

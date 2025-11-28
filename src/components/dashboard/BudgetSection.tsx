@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
@@ -24,23 +23,10 @@ export function BudgetSection({ budgetCategories = [] }: BudgetSectionProps) {
   // No need to destructure from 'overview' anymore
   const topSpendingCategories = [...budgetCategories].sort((a, b) => b.spent - a.spent).slice(0, 5);
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.08, type: 'spring' as const, stiffness: 80 },
-    }),
-  };
-
   return (
     <TooltipProvider>
-      <motion.div
+      <div
         className="bg-card/80 backdrop-blur rounded-xl shadow-lg p-6 border border-border/40 hover:shadow-xl transition-shadow duration-200"
-        initial="hidden"
-        animate="visible"
-        custom={0}
-        variants={cardVariants}
         tabIndex={0}
       >
         <h2 className="text-lg font-bold mb-4 text-foreground flex items-center gap-2">
@@ -64,21 +50,13 @@ export function BudgetSection({ budgetCategories = [] }: BudgetSectionProps) {
           {topSpendingCategories.length === 0 ? (
             <div className="text-muted-foreground text-sm">No budget categories found.</div>
           ) : (
-            topSpendingCategories.map((category, i) => {
+            topSpendingCategories.map(category => {
               const utilization = (category.spent / category.amount) * 100;
               let barColor = 'bg-green-500';
               if (utilization >= 100) barColor = 'bg-rose-500';
               else if (utilization >= 75) barColor = 'bg-amber-500';
               return (
-                <motion.div
-                  key={category.id}
-                  className="space-y-2 group"
-                  initial="hidden"
-                  animate="visible"
-                  custom={i}
-                  variants={cardVariants}
-                  tabIndex={0}
-                >
+                <div key={category.id} className="space-y-2 group" tabIndex={0}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground flex items-center">
                       {category.name}
@@ -115,12 +93,12 @@ export function BudgetSection({ budgetCategories = [] }: BudgetSectionProps) {
                       )}
                     </span>
                   </div>
-                </motion.div>
+                </div>
               );
             })
           )}
         </div>
-      </motion.div>
+      </div>
     </TooltipProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { auth, db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 

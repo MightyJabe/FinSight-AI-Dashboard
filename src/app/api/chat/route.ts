@@ -1502,14 +1502,35 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
       if (!openai) {
         throw new Error('OpenAI client not initialized');
       }
-      completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        tools,
-        tool_choice: 'auto',
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
+      // Try GPT-5 first, with fallback to GPT-4o
+      try {
+        completion = await openai.chat.completions.create({
+          model: 'gpt-5',
+          messages,
+          tools,
+          tool_choice: 'auto',
+          temperature: 0.7,
+          max_tokens: 2000,
+          // GPT-5 parameters (conditionally added)
+          ...(true && { verbosity: 'medium' as any }), // May not be available in current SDK
+          ...(true && { reasoning_effort: 'standard' as any }),
+        });
+      } catch (modelError: any) {
+        // Fallback to GPT-4o if GPT-5 is not available
+        if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
+          logger.warn('GPT-5 not available, falling back to GPT-4o for chat', { userId });
+          completion = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages,
+            tools,
+            tool_choice: 'auto',
+            temperature: 0.7,
+            max_tokens: 2000,
+          });
+        } else {
+          throw modelError;
+        }
+      }
     } catch (openaiError) {
       logger.error('OpenAI API error', {
         userId,
@@ -1644,12 +1665,33 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
 
       // Get final response with tool results
       try {
-        const finalCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [...messages, responseMessage, ...toolResults],
-          temperature: 0.7,
-          max_tokens: 2000,
-        });
+        // Try GPT-5 first for final response, with fallback to GPT-4o
+        let finalCompletion;
+        try {
+          finalCompletion = await openai.chat.completions.create({
+            model: 'gpt-5',
+            messages: [...messages, responseMessage, ...toolResults],
+            temperature: 0.7,
+            max_tokens: 2000,
+            // GPT-5 parameters (conditionally added)
+            ...(true && { verbosity: 'medium' as any }),
+            ...(true && { reasoning_effort: 'standard' as any }),
+          });
+        } catch (modelError: any) {
+          if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
+            logger.warn('GPT-5 not available for final response, falling back to GPT-4o', {
+              userId,
+            });
+            finalCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: [...messages, responseMessage, ...toolResults],
+              temperature: 0.7,
+              max_tokens: 2000,
+            });
+          } else {
+            throw modelError;
+          }
+        }
 
         finalResponse =
           finalCompletion.choices[0]?.message?.content ||

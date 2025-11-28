@@ -34,7 +34,37 @@ export type OpenAIConfig = {
   topP?: number;
   frequencyPenalty?: number;
   presencePenalty?: number;
+  // GPT-5 specific features
+  verbosity?: 'low' | 'medium' | 'high';
+  reasoningEffort?: 'minimal' | 'standard' | 'extended';
 };
+
+// Model configurations for different use cases
+export const MODEL_CONFIGS = {
+  // High-accuracy tasks like categorization
+  categorization: {
+    model: 'gpt-4o-mini', // Fast and cost-effective for structured tasks
+    temperature: 0.1, // Very low for consistent categorization
+    maxTokens: 150,
+  },
+  // Complex analysis and insights
+  analysis: {
+    model: 'gpt-4o', // Full model for complex reasoning
+    temperature: 0.3,
+    maxTokens: 800,
+  },
+  // Interactive chat and conversations
+  chat: {
+    model: 'gpt-4o', // Full model for conversational AI
+    temperature: 0.7,
+    maxTokens: 1500,
+  },
+  // Fallback for when models are unavailable
+  fallback: {
+    model: 'gpt-4o',
+    temperature: 0.7,
+  },
+} as const;
 
 /**
  * Generate a chat completion using OpenAI's API
@@ -56,7 +86,8 @@ export async function generateChatCompletion(
       };
     }
 
-    const completion = await openai.chat.completions.create({
+    // Prepare completion parameters
+    const completionParams: any = {
       model: config.model || 'gpt-4o',
       messages,
       temperature: config.temperature ?? 0.7,
@@ -64,7 +95,45 @@ export async function generateChatCompletion(
       top_p: config.topP ?? 1,
       frequency_penalty: config.frequencyPenalty ?? 0,
       presence_penalty: config.presencePenalty ?? 0,
-    });
+    };
+
+    // Add GPT-5 specific parameters if available (conditionally)
+    // Note: These parameters may not be available in all OpenAI SDK versions
+    if (config.verbosity && completionParams.model.startsWith('gpt-5')) {
+      try {
+        (completionParams as any).verbosity = config.verbosity;
+      } catch (e) {
+        // Ignore if parameter is not supported
+      }
+    }
+    if (config.reasoningEffort && completionParams.model.startsWith('gpt-5')) {
+      try {
+        (completionParams as any).reasoning_effort = config.reasoningEffort;
+      } catch (e) {
+        // Ignore if parameter is not supported
+      }
+    }
+
+    let completion;
+    try {
+      completion = await openai.chat.completions.create(completionParams);
+    } catch (error: any) {
+      // Fallback to GPT-4o if GPT-5 is not available
+      if (error?.status === 404 || error?.code === 'model_not_found') {
+        console.warn('GPT-5 not available, falling back to GPT-4o');
+        const fallbackParams = {
+          ...completionParams,
+          model: 'gpt-4o',
+        };
+        // Remove GPT-5 specific parameters
+        delete fallbackParams.verbosity;
+        delete fallbackParams.reasoning_effort;
+
+        completion = await openai.chat.completions.create(fallbackParams);
+      } else {
+        throw error;
+      }
+    }
 
     const response = completion.choices[0]?.message;
     if (!response) {
