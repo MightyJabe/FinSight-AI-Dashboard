@@ -10,12 +10,19 @@ import logger from '@/lib/logger';
 interface PlaidLinkButtonProps {
   onSuccess?: () => void;
   className?: string;
+  itemId?: string; // For update mode (re-authentication)
+  mode?: 'create' | 'update';
 }
 
 /**
  *
  */
-export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonProps) {
+export function PlaidLinkButton({
+  onSuccess,
+  className = '',
+  itemId,
+  mode = 'create',
+}: PlaidLinkButtonProps) {
   const [loading, setLoading] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const { open, ready } = usePlaidLink({
@@ -77,8 +84,13 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
       const response = await fetch('/api/plaid/create-link-token', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`,
         },
+        body: JSON.stringify({
+          mode,
+          itemId: mode === 'update' ? itemId : undefined,
+        }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -132,6 +144,8 @@ export function PlaidLinkButton({ onSuccess, className = '' }: PlaidLinkButtonPr
           </svg>
           Connecting...
         </>
+      ) : mode === 'update' ? (
+        'Re-authenticate Account'
       ) : (
         'Connect Bank Account'
       )}

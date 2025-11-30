@@ -2,11 +2,14 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { LinkTokenCreateRequest } from 'plaid';
 
-import { auth } from '@/lib/firebase-admin';
+import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import { PLAID_COUNTRY_CODES, PLAID_PRODUCTS, plaidClient } from '@/lib/plaid';
 
+export const dynamic = 'force-dynamic';
+
 /**
- *
+ * Get user ID from request (Authorization header or session cookie)
  */
 async function getUserIdFromRequest(request: Request): Promise<string | null> {
   // Try to get user ID from Authorization header first
@@ -48,17 +51,49 @@ export async function POST(request: Request) {
       );
     }
 
+    const body = await request.json().catch(() => ({}));
+    const { mode = 'create', itemId } = body;
+
     const linkTokenRequest: LinkTokenCreateRequest = {
       user: {
         client_user_id: userId,
       },
-      client_name: 'FinSight AI Dashboard', // Or your app name from an env variable
+      client_name: 'FinSight AI Dashboard',
       products: PLAID_PRODUCTS,
       country_codes: PLAID_COUNTRY_CODES,
       language: 'en',
-      // redirect_uri: process.env.PLAID_REDIRECT_URI, // Add if you are using hosted Link for OAuth
-      // webhook: process.env.PLAID_WEBHOOK_URL, // Add if you want to receive webhooks from Plaid
     };
+
+    // If update mode, get the access token for the item
+    if (mode === 'update' && itemId) {
+      try {
+        const plaidItemDoc = await db
+          .collection('users')
+          .doc(userId)
+          .collection('plaidItems')
+          .doc(itemId)
+          .get();
+
+        if (plaidItemDoc.exists) {
+          const plaidItemData = plaidItemDoc.data();
+          const storedAccessToken = plaidItemData?.accessToken;
+
+          if (storedAccessToken) {
+            let accessToken: string;
+            if (isEncryptedData(storedAccessToken)) {
+              accessToken = decryptPlaidToken(storedAccessToken);
+            } else {
+              accessToken = storedAccessToken as string;
+            }
+
+            linkTokenRequest.access_token = accessToken;
+          }
+        }
+      } catch (error) {
+        console.error('Error getting access token for update mode:', error);
+        // Continue with create mode if we can't get the access token
+      }
+    }
 
     const tokenResponse = await plaidClient.linkTokenCreate(linkTokenRequest);
 

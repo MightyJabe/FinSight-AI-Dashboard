@@ -35,7 +35,7 @@ export function LoginForm({ onSubmit }: { onSubmit?: (data: LoginFormValues) => 
     if (onSubmit) {
       try {
         await onSubmit(data);
-      } catch (error) {
+      } catch {
         // Error handling is managed by the parent component
       }
     }

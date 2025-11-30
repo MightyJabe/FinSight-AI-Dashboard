@@ -1,13 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 
 // Zod schemas for input validation
 const manualAssetSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   amount: z.preprocess(val => parseFloat(String(val)), z.number().finite()),
   type: z.string().min(1, 'Type is required'),
+  description: z.string().optional(),
+  purchasePrice: z.preprocess(
+    val => (val ? parseFloat(String(val)) : undefined),
+    z.number().finite().optional()
+  ),
+  purchaseDate: z.string().optional(),
+  location: z.string().optional(),
+  insuranceValue: z.preprocess(
+    val => (val ? parseFloat(String(val)) : undefined),
+    z.number().finite().optional()
+  ),
+  metadata: z.record(z.any()).optional(),
+});
+
+const informalDebtSchema = z.object({
+  person: z.string().min(1, 'Person is required'),
+  amount: z.preprocess(val => parseFloat(String(val)), z.number().finite()),
+  type: z.enum(['owed_to_me', 'i_owe']),
+  reason: z.string().min(1, 'Reason is required'),
+  dueDate: z.string().optional(),
+  reminders: z.boolean().default(false),
 });
 
 const manualLiabilitySchema = z.object({
@@ -25,7 +46,7 @@ const transactionSchema = z.object({
 });
 
 const postBodySchema = z.object({
-  type: z.enum(['manualAssets', 'manualLiabilities', 'transactions']),
+  type: z.enum(['manualAssets', 'manualLiabilities', 'transactions', 'informalDebts']),
   data: z.unknown(),
 });
 
@@ -70,6 +91,9 @@ export async function GET(request: NextRequest) {
         break;
       case 'transactions':
         collectionName = `users/${userId}/transactions`;
+        break;
+      case 'informalDebts':
+        collectionName = `users/${userId}/informalDebts`;
         break;
       default:
         return NextResponse.json({ error: 'Invalid data type specified' }, { status: 400 });
@@ -186,7 +210,28 @@ export async function POST(request: NextRequest) {
             );
           }
           validatedData = txnParse.data;
-          validatedData.date = new Date(validatedData.date).toISOString(); // Ensure date is stored as ISO string
+          validatedData.date = new Date(validatedData.date).toISOString();
+        }
+        break;
+      case 'informalDebts':
+        collectionName = `users/${userId}/informalDebts`;
+        {
+          const debtParse = informalDebtSchema.safeParse(data);
+          if (!debtParse.success) {
+            return NextResponse.json(
+              {
+                success: false,
+                errors: debtParse.error.flatten().fieldErrors,
+              },
+              { status: 400 }
+            );
+          }
+          validatedData = {
+            ...debtParse.data,
+            originalAmount: debtParse.data.amount,
+            status: 'pending',
+            date: new Date().toISOString(),
+          };
         }
         break;
       default:

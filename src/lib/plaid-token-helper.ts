@@ -1,5 +1,5 @@
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 /**

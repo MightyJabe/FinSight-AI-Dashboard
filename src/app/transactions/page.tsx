@@ -1,10 +1,11 @@
 'use client';
 
+import { AlertCircle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { TableSkeleton } from '@/components/common/SkeletonLoader';
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
+import { Card, CardContent, EmptyState, TableSkeleton } from '@/components/ui';
 
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
@@ -80,7 +81,7 @@ async function triggerAICategorization(idToken: string, transactions: any[]) {
 }
 
 export default function TransactionsPage() {
-  const { user: _user, firebaseUser, loading: authLoading } = useSession();
+  const { firebaseUser, loading: authLoading } = useSession();
   const [transactions, setTransactions] = useState<EnhancedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -222,39 +223,55 @@ export default function TransactionsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="max-w-full">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
           <p className="mt-2 text-lg text-gray-600">
             Track your spending, analyze patterns, and manage your budget across all accounts.
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6">
-            <TableSkeleton rows={10} columns={4} />
-          </div>
-        </div>
+        <Card variant="elevated">
+          <CardContent className="p-6">
+            <TableSkeleton rows={10} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+        <Card variant="elevated" className="max-w-md mx-auto mt-20">
+          <CardContent className="py-8">
+            <EmptyState
+              icon={<AlertCircle className="w-8 h-8" />}
+              title="Unable to load transactions"
+              description={error}
+              action={{
+                label: 'Retry',
+                onClick: fetchTransactions,
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-full">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
         <p className="mt-2 text-lg text-gray-600">
           Track your spending, analyze patterns, and manage your budget across all accounts.
         </p>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-6">
+      <Card variant="elevated">
+        <CardContent className="p-6">
           <TransactionsContent transactions={transactions} />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import useSWR, { mutate as globalMutate } from 'swr';
 
 import { useSession } from '@/components/providers/SessionProvider';
-import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/lib/finance';
+import { apiGet } from '@/lib/api-client';
+import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/types/finance';
 
 interface DashboardData {
   overview: Overview | null;
@@ -18,202 +20,199 @@ interface UseDashboardDataOptions {
   refetchInterval?: number;
 }
 
+interface ApiResponse {
+  success: boolean;
+  data: {
+    summary: {
+      liquidAssets: number;
+      totalAssets: number;
+      totalLiabilities: number;
+      netWorth: number;
+      monthlyIncome: number;
+      monthlyExpenses: number;
+      monthlyCashFlow: number;
+      budgetCategories?: Array<{ id: string; name: string; amount: number; spent: number }>;
+      spendingByCategory?: Array<{ category: string; amount: number }>;
+    };
+    accounts: {
+      bank?: Array<{
+        id: string;
+        name: string;
+        balance: number;
+        type: string;
+        institution: string;
+      }>;
+      credit?: Array<{
+        id: string;
+        name: string;
+        balance: number;
+        amount: number;
+        type: string;
+        interestRate?: number;
+        minimumPayment?: number;
+        remainingPayments?: number;
+        payoffDate?: string;
+      }>;
+      loan?: Array<{
+        id: string;
+        name: string;
+        balance: number;
+        amount: number;
+        type: string;
+        interestRate?: number;
+        minimumPayment?: number;
+        remainingPayments?: number;
+        payoffDate?: string;
+      }>;
+      investment?: Array<{
+        id: string;
+        name: string;
+        balance: number;
+        type: string;
+        performance?: { daily: number; monthly: number; yearly: number };
+      }>;
+    };
+    manualAssets?: Array<{ id: string; name: string; amount: number; type: string }>;
+    manualLiabilities?: Array<{
+      id: string;
+      name: string;
+      balance: number;
+      amount: number;
+      type: string;
+      interestRate?: number;
+      minimumPayment?: number;
+      remainingPayments?: number;
+      payoffDate?: string;
+    }>;
+  };
+  error?: string;
+}
+
+const fetcher = async (url: string): Promise<ApiResponse['data']> => {
+  const response = await apiGet(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  const result: ApiResponse = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch financial data');
+  }
+  return result.data;
+};
+
 /**
- * Optimized hook for fetching all dashboard data with caching and error handling
+ * Optimized hook for fetching all dashboard data with SWR caching
  */
 export function useDashboardData(options: UseDashboardDataOptions = {}): DashboardData {
   const { refetchOnFocus = false, refetchInterval } = options;
   const { firebaseUser } = useSession();
 
-  const [data, setData] = useState<DashboardData>({
-    overview: null,
-    budget: null,
-    investmentAccounts: null,
-    liabilities: null,
-    loading: true,
-    error: null,
-    refetch: () => {},
+  const swrKey = firebaseUser ? '/api/financial-overview?includePlatforms=false' : null;
+
+  const {
+    data: rawData,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(swrKey, fetcher, {
+    revalidateOnFocus: refetchOnFocus,
+    ...(refetchInterval && { refreshInterval: refetchInterval }),
+    dedupingInterval: 60000, // 1 minute deduplication
+    errorRetryCount: 2,
+    errorRetryInterval: 10000,
+    revalidateOnMount: true,
+    revalidateIfStale: false,
+    // Performance optimizations
+    revalidateOnReconnect: true,
+    shouldRetryOnError: error => {
+      // Don't retry on 4xx errors
+      return error.status >= 500;
+    },
+    // Use stale data while revalidating for better UX
+    keepPreviousData: true,
   });
 
-  const [lastFetch, setLastFetch] = useState<number>(0);
-  const [cacheKey, setCacheKey] = useState<string>('');
+  const transformedData = useMemo(() => {
+    if (!rawData) return null;
 
-  // Generate cache key based on user session
-  useEffect(() => {
-    const generateCacheKey = async () => {
-      try {
-        const response = await fetch('/api/auth/session');
-        if (response.ok) {
-          const session = await response.json();
-          setCacheKey(session.user?.uid || 'anonymous');
-        }
-      } catch (error) {
-        console.warn('Failed to get session for cache key:', error);
-        setCacheKey('anonymous');
-      }
+    const { summary, accounts, manualAssets, manualLiabilities } = rawData;
+
+    return {
+      overview: {
+        totalBalance: summary.liquidAssets,
+        totalAssets: summary.totalAssets,
+        totalLiabilities: summary.totalLiabilities,
+        netWorth: summary.netWorth,
+        monthlyIncome: summary.monthlyIncome,
+        monthlyExpenses: summary.monthlyExpenses,
+        monthlySavings: summary.monthlyCashFlow,
+        accounts: accounts.bank || [],
+        manualAssets: manualAssets || [],
+        liabilities: [
+          ...(accounts.credit || []),
+          ...(accounts.loan || []),
+          ...(manualLiabilities || []),
+        ],
+        emergencyFundStatus:
+          summary.monthlyExpenses > 0
+            ? Math.min(summary.liquidAssets / (summary.monthlyExpenses * 3), 1)
+            : 0,
+        savingsRate:
+          summary.monthlyIncome > 0 ? summary.monthlyCashFlow / summary.monthlyIncome : 0,
+      } as Overview,
+      budget: {
+        monthlyExpenses: summary.monthlyExpenses,
+        budgetCategories: summary.budgetCategories || [],
+        spendingByCategory: summary.spendingByCategory || [],
+      } as Budget,
+      investmentAccounts: {
+        accounts: (accounts.investment || []).map(acc => ({
+          id: acc.id,
+          name: acc.name,
+          balance: acc.balance,
+          type: acc.type,
+          performance: acc.performance ?? { daily: 0, monthly: 0, yearly: 0 },
+        })),
+      } as InvestmentAccounts,
+      liabilities: {
+        accounts: [
+          ...(accounts.credit || []),
+          ...(accounts.loan || []),
+          ...(manualLiabilities || []),
+        ].map(acc => ({
+          id: acc.id,
+          name: acc.name,
+          amount: Math.abs(acc.balance || acc.amount || 0),
+          type: acc.type,
+          interestRate: acc.interestRate,
+          minimumPayment: acc.minimumPayment,
+          remainingPayments: acc.remainingPayments,
+          payoffDate: acc.payoffDate,
+        })),
+        totalDebt: summary.totalLiabilities,
+      } as Liabilities,
     };
+  }, [rawData]);
 
-    generateCacheKey();
-  }, []);
-
-  const fetchData = useCallback(async () => {
-    if (!cacheKey || !firebaseUser) return;
-
-    try {
-      setData(prev => ({ ...prev, loading: true, error: null }));
-
-      // Get auth token for authenticated requests
-      const token = await firebaseUser.getIdToken();
-      const headers = { Authorization: `Bearer ${token}` };
-
-      // Fetch all data from single consolidated endpoint
-      const response = await fetch(
-        '/api/financial-overview?includeTransactions=false&includePlatforms=true',
-        {
-          headers,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch financial data');
-      }
-
-      const financialData = result.data;
-      const summary = financialData.summary;
-
-      // Transform the consolidated data into the expected dashboard format
-      const newData: Partial<DashboardData> = {
-        overview: {
-          totalBalance: summary.liquidAssets,
-          totalAssets: summary.totalAssets,
-          totalLiabilities: summary.totalLiabilities,
-          netWorth: summary.netWorth,
-          monthlyIncome: summary.monthlyIncome,
-          monthlyExpenses: summary.monthlyExpenses,
-          accounts: financialData.accounts.bank || [],
-          manualAssets: financialData.manualAssets || [],
-          manualLiabilities: financialData.manualLiabilities?.length || 0,
-          liabilities: [
-            ...(financialData.accounts.credit || []),
-            ...(financialData.accounts.loan || []),
-            ...(financialData.manualLiabilities || []),
-          ],
-          emergencyFundStatus: 0, // Will be calculated
-          savingsRate:
-            summary.monthlyIncome > 0 ? summary.monthlyCashFlow / summary.monthlyIncome : 0,
-        },
-        budget: {
-          monthlyExpenses: summary.monthlyExpenses,
-          budgetCategories: [], // Will be calculated from transactions if needed
-          spendingByCategory: [], // Will be calculated from transactions if needed
-          totalCategories: 0,
-        },
-        investmentAccounts: {
-          accounts: [
-            ...(financialData.accounts.investment || []),
-            ...(financialData.platforms || []),
-          ],
-          totalValue: summary.investments,
-          totalInvestmentValue: summary.investments,
-          totalManualInvestments:
-            financialData.platforms?.reduce(
-              (sum: number, p: any) => sum + (p.currentBalance || 0),
-              0
-            ) || 0,
-          accountCount:
-            (financialData.accounts.investment?.length || 0) +
-            (financialData.platforms?.length || 0),
-          performance: {
-            monthlyGain: summary.investments * 0.02, // Mock data
-            yearToDate: summary.investments * 0.08,
-            allTimeGain: summary.investments * 0.15,
-          },
-        },
-        liabilities: {
-          accounts: [
-            ...(financialData.accounts.credit || []),
-            ...(financialData.accounts.loan || []),
-            ...(financialData.manualLiabilities || []),
-          ],
-          totalDebt: summary.totalLiabilities,
-          creditAccounts: financialData.accounts.credit?.length || 0,
-          manualLiabilities: financialData.manualLiabilities?.length || 0,
-          totalCreditDebt:
-            financialData.accounts.credit?.reduce(
-              (sum: number, acc: any) => sum + Math.abs(acc.balance || 0),
-              0
-            ) || 0,
-          totalManualDebt:
-            financialData.manualLiabilities?.reduce(
-              (sum: number, l: any) => sum + (l.amount || 0),
-              0
-            ) || 0,
-        },
-      };
-
-      setData(prev => ({
-        ...prev,
-        ...newData,
-        loading: false,
-        error: null,
-      }));
-
-      setLastFetch(Date.now());
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setData(prev => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load dashboard data',
-      }));
-    }
-  }, [cacheKey, firebaseUser]);
-
-  // Initial data fetch
-  useEffect(() => {
-    if (cacheKey && firebaseUser) {
-      fetchData();
-    }
-  }, [fetchData, cacheKey, firebaseUser]);
-
-  // Refetch on focus (if enabled)
-  useEffect(() => {
-    if (!refetchOnFocus) return;
-
-    const handleFocus = () => {
-      const now = Date.now();
-      const timeSinceLastFetch = now - lastFetch;
-      // Only refetch if it's been more than 5 minutes since last fetch
-      if (timeSinceLastFetch > 5 * 60 * 1000) {
-        fetchData();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [fetchData, lastFetch, refetchOnFocus]);
-
-  // Refetch interval (if enabled)
-  useEffect(() => {
-    if (!refetchInterval) return;
-
-    const interval = setInterval(fetchData, refetchInterval);
-    return () => clearInterval(interval);
-  }, [fetchData, refetchInterval]);
-
-  // Manual refetch function
   const refetch = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    // Force refresh by adding timestamp to bypass cache
+    mutate();
+    // Also trigger global revalidation for related data
+    globalMutate(key => typeof key === 'string' && key.includes('/api/financial'));
+    globalMutate(key => typeof key === 'string' && key.includes('/api/overview'));
+    globalMutate(key => typeof key === 'string' && key.includes('/api/accounts'));
+  }, [mutate]);
 
-  return {
-    ...data,
-    refetch,
-  };
+  return useMemo(
+    () => ({
+      overview: transformedData?.overview || null,
+      budget: transformedData?.budget || null,
+      investmentAccounts: transformedData?.investmentAccounts || null,
+      liabilities: transformedData?.liabilities || null,
+      loading: isLoading,
+      error: error?.message || null,
+      refetch,
+    }),
+    [transformedData, isLoading, error, refetch]
+  );
 }

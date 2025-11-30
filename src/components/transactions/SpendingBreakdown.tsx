@@ -44,8 +44,8 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
 
       const idToken = await firebaseUser.getIdToken();
 
-      // Fetch categorized transactions
-      const response = await fetch('/api/transactions/categorize', {
+      // Fetch spending analysis directly (includes categorization)
+      const response = await fetch('/api/transactions/spending-analysis', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -53,6 +53,9 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
         throw new Error(`Failed to fetch spending data: ${response.status}`);
       }
 
@@ -62,20 +65,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
         throw new Error(data.error || 'Failed to fetch data');
       }
 
-      // Fetch the actual categorized transactions to build spending breakdown
-      const categorizedResponse = await fetch('/api/transactions/spending-analysis', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-
-      if (categorizedResponse.ok) {
-        const analysisData = await categorizedResponse.json();
-        if (analysisData.success) {
-          setSpendingData(analysisData.data);
-        }
-      }
+      setSpendingData(data.data);
     } catch (err) {
       handleError(err, 'SpendingBreakdown.fetchSpendingData');
     } finally {

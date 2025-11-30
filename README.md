@@ -5,16 +5,25 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14.1.0-black)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)](https://www.typescriptlang.org)
 
-An intelligent financial management platform that aggregates all your financial accounts into one unified dashboard. Powered by GPT-4 for personalized insights, budget recommendations, and investment optimizations.
+An intelligent financial management platform that aggregates all your financial accounts into one unified dashboard. Powered by GPT-5.1 for personalized insights, budget recommendations, and investment optimizations.
 
 ## Features
 
+### Core Features
+
 - **Multi-Account Dashboard** - Connect and view all financial accounts in one place
-- **AI-Powered Insights** - GPT-4 analyzes your finances for personalized recommendations
+- **AI-Powered Insights** - GPT-5.1 analyzes your finances for personalized recommendations
 - **Smart Budgeting** - Real-time tracking with intelligent spending analysis
 - **Investment Optimization** - Portfolio analysis and opportunity identification
 - **Cash Flow Forecasting** - Predict future financial states and plan ahead
 - **Secure & Private** - Bank-level encryption with multi-factor authentication
+
+### New Features (98% Financial Coverage)
+
+- **[Tax Intelligence](/tax)** - AI-powered deduction analysis, quarterly tax estimates, and personalized tax strategies
+- **[Subscription Management](/subscriptions)** - Automatic recurring charge detection with monthly/yearly cost tracking
+- **[Manual Entry](/manual-data)** - Track all assets (real estate, vehicles, jewelry, etc.) and informal debts
+- **[Document Management](/documents)** - Upload and analyze financial documents with GPT-5.1 vision
 
 ## Quick Start
 
@@ -59,10 +68,21 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 
 ## Documentation
 
+### Essential Docs (Root Level)
+
 - **[project.md](project.md)** - Technical architecture and design details
-- **[CLAUDE.md](CLAUDE.md)** - AI assistant guidelines for development
-- **[.cursor/rules/](/.cursor/rules/)** - Detailed development rules and patterns
-- **[API Documentation](docs/API.md)** - API endpoints and usage
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+
+### Organized Documentation (`/docs/`)
+
+- **[docs/README.md](docs/README.md)** - Complete documentation index
+- **[docs/completed-phases/](docs/completed-phases/)** - Implementation history (Phases 1-4, 98% coverage)
+- **[docs/technical/](docs/technical/)** - Technical guides and fixes
+- **[docs/planning/](docs/planning/)** - Roadmaps and production checklist
+
+### Development Standards
+
+- **[.amazonq/rules/](/.amazonq/rules/)** - Coding standards, testing guidelines, and best practices
 
 ## Environment Variables
 
@@ -111,7 +131,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Testing
 
-See [TESTING-STRATEGY.md](TESTING-STRATEGY.md) for comprehensive testing guidelines including:
+See [.amazonq/rules/testing-standards.md](.amazonq/rules/testing-standards.md) for comprehensive testing guidelines including:
+
 - Unit testing with Jest
 - E2E testing with Playwright
 - When to use each test type
@@ -120,6 +141,7 @@ See [TESTING-STRATEGY.md](TESTING-STRATEGY.md) for comprehensive testing guideli
 ## Support
 
 - **Documentation**: [project.md](project.md)
-- **Testing Guide**: [TESTING-STRATEGY.md](TESTING-STRATEGY.md)
+- **Roadmap**: [ROADMAP.md](ROADMAP.md)
+- **Testing Guide**: [.amazonq/rules/testing-standards.md](.amazonq/rules/testing-standards.md)
 - **Issues**: [GitHub Issues](https://github.com/MightyJade/finsight-ai-dashboard/issues)
 - **Security**: Report to security@finsight.ai

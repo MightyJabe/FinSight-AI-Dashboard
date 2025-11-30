@@ -8,9 +8,9 @@ if (typeof window === 'undefined') {
   // In test environment, use static imports to work with Jest mocks
   if (process.env.NODE_ENV === 'test') {
     try {
-      const openaiModule = require('@/lib/openai');
-      const loggerModule = require('@/lib/logger');
-      const modelConfigModule = require('@/lib/ai-model-config');
+      const openaiModule = await import('@/lib/openai');
+      const loggerModule = await import('@/lib/logger');
+      const modelConfigModule = await import('@/lib/ai-model-config');
       generateChatCompletion = openaiModule.generateChatCompletion;
       logger = loggerModule.default;
       getModelConfig = modelConfigModule.getModelConfig;
@@ -23,19 +23,22 @@ if (typeof window === 'undefined') {
       if (!logger) {
         throw new Error('logger not found');
       }
-    } catch (error) {
+    } catch {
       // Fallback for tests - use mock functions
       const mockFn = () => {};
       generateChatCompletion = mockFn;
       logger = { error: mockFn, warn: mockFn, info: mockFn };
-      getModelConfig = () => ({ model: 'gpt-4o', temperature: 0.7 });
+      getModelConfig = () => ({ model: 'gpt-5.1' });
       getEnhancedPrompt = () => '';
     }
   } else {
-    generateChatCompletion = require('./openai').generateChatCompletion;
-    logger = require('./logger').default;
-    getModelConfig = require('./ai-model-config').getModelConfig;
-    getEnhancedPrompt = require('./ai-model-config').getEnhancedPrompt;
+    const openaiModule = await import('./openai');
+    const loggerModule = await import('./logger');
+    const modelConfigModule = await import('./ai-model-config');
+    generateChatCompletion = openaiModule.generateChatCompletion;
+    logger = loggerModule.default;
+    getModelConfig = modelConfigModule.getModelConfig;
+    getEnhancedPrompt = modelConfigModule.getEnhancedPrompt;
   }
 }
 
@@ -178,8 +181,7 @@ ${transaction.originalCategory?.length ? `- Bank Category: ${transaction.origina
     const modelConfig = getModelConfig
       ? getModelConfig('categorization')
       : {
-          model: 'gpt-4o-mini',
-          temperature: 0.2,
+          model: 'gpt-5.1',
           maxTokens: 300,
         };
 
@@ -400,8 +402,7 @@ Provide 3-5 specific, actionable insights.`;
     const modelConfig = getModelConfig
       ? getModelConfig('analysis')
       : {
-          model: 'gpt-4o',
-          temperature: 0.3,
+          model: 'gpt-5.1',
           maxTokens: 500,
         };
 

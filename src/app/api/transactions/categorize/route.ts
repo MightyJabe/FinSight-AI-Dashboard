@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { categorizeTransactionsBatch } from '@/lib/ai-categorization';
 import { validateAuthToken } from '@/lib/auth-server';
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getTransactions } from '@/lib/plaid';
 import { getPlaidAccessToken } from '@/lib/plaid-token-helper';

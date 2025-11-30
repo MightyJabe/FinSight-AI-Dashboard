@@ -1,250 +1,137 @@
-import { endOfMonth, formatISO, startOfMonth, subDays } from 'date-fns';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { validateAuthToken } from '@/lib/auth-server';
-import { db } from '@/lib/firebase-admin';
+import { getFinancialOverview } from '@/lib/financial-calculator';
 import logger from '@/lib/logger';
-import { getAccountBalances, getTransactions } from '@/lib/plaid';
-import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+// Cache for 30 seconds to prevent excessive API calls
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 30 * 1000; // 30 seconds
 
-/**
- * GET /api/financial-overview
- * Consolidated endpoint for all financial data
- */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // Validate authentication
-    const authResult = await validateAuthToken(request);
-    if (authResult.error) {
-      return authResult.error;
+    const searchParams = request.nextUrl.searchParams;
+    const includePlatforms = searchParams.get('includePlatforms') === 'true';
+    const forceRefresh = searchParams.get('force') === 'true';
+
+    // Get userId from session cookie
+    const sessionCookie = request.cookies.get('session')?.value;
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = authResult.userId!;
 
-    // Parse query parameters
-    const url = new URL(request.url);
-    const params = {
-      includeTransactions: url.searchParams.get('includeTransactions') !== 'false',
-      transactionDays: parseInt(url.searchParams.get('transactionDays') || '30'),
-      includePlatforms: url.searchParams.get('includePlatforms') !== 'false',
-    };
+    const { adminAuth } = await import('@/lib/firebase-admin');
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie);
+    const userId = decodedClaims.uid;
 
-    // Get Plaid access token
-    const accessToken = await getPlaidAccessToken(userId);
+    const cacheKey = `financial-overview-${userId}-${includePlatforms}`;
 
-    // Initialize response data
-    const data = {
-      accounts: {
-        bank: [] as any[],
-        investment: [] as any[],
-        credit: [] as any[],
-        loan: [] as any[],
-      },
-      transactions: [] as any[],
-      platforms: [] as any[],
-      manualAssets: [] as any[],
-      manualLiabilities: [] as any[],
-      summary: {
-        totalAssets: 0,
-        totalLiabilities: 0,
-        netWorth: 0,
-        monthlyIncome: 0,
-        monthlyExpenses: 0,
-        monthlyCashFlow: 0,
-        liquidAssets: 0,
-        investments: 0,
-      },
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        hasPlaidConnection: !!accessToken,
-        hasPlatforms: false,
-      },
-    };
-
-    // Fetch Plaid data if connected
-    if (accessToken) {
-      try {
-        // Get accounts
-        const plaidAccounts = await getAccountBalances(accessToken);
-
-        // Categorize accounts
-        for (const account of plaidAccounts) {
-          const accountData = {
-            id: account.account_id,
-            name: account.name,
-            type: account.type,
-            subtype: account.subtype,
-            institutionName: account.official_name,
-            balance: account.balances.current || 0,
-            availableBalance: account.balances.available,
-            limit: account.balances.limit,
-            source: 'plaid',
-          };
-
-          switch (account.type) {
-            case 'depository':
-              data.accounts.bank.push(accountData);
-              data.summary.liquidAssets += accountData.balance;
-              break;
-            case 'investment':
-              data.accounts.investment.push(accountData);
-              data.summary.investments += accountData.balance;
-              break;
-            case 'credit':
-              data.accounts.credit.push(accountData);
-              data.summary.totalLiabilities += Math.abs(accountData.balance);
-              break;
-            case 'loan':
-              data.accounts.loan.push(accountData);
-              data.summary.totalLiabilities += Math.abs(accountData.balance);
-              break;
-          }
-        }
-
-        // Get transactions if requested
-        if (params.includeTransactions && params.transactionDays > 0) {
-          const endDate = formatISO(new Date(), { representation: 'date' });
-          const startDate = formatISO(subDays(new Date(), params.transactionDays), {
-            representation: 'date',
-          });
-          const transactions = await getTransactions(accessToken, startDate, endDate);
-
-          // Process transactions for monthly summary
-          const currentMonthStart = startOfMonth(new Date());
-          const currentMonthEnd = endOfMonth(new Date());
-
-          for (const txn of transactions) {
-            const txnDate = new Date(txn.date);
-            const amount = txn.amount;
-
-            if (txnDate >= currentMonthStart && txnDate <= currentMonthEnd) {
-              if (amount > 0) {
-                data.summary.monthlyExpenses += amount;
-              } else {
-                data.summary.monthlyIncome += Math.abs(amount);
-              }
-            }
-
-            data.transactions.push({
-              id: txn.transaction_id,
-              name: txn.name,
-              amount: amount,
-              date: txn.date,
-              category: txn.category?.[0] || 'Other',
-              pending: txn.pending,
-              accountId: txn.account_id,
-            });
-          }
-        }
-      } catch (error) {
-        logger.error('Error fetching Plaid data', { userId, error });
-        // Continue without Plaid data
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        logger.info('Returning cached financial overview data');
+        return NextResponse.json(cached.data);
       }
     }
 
-    // Fetch manual assets
-    const assetsSnapshot = await db
-      .collection('users')
-      .doc(userId)
-      .collection('manualAssets')
-      .get();
+    // Fetch data using centralized calculator
+    const { data: rawData, metrics } = await getFinancialOverview(userId);
 
-    data.manualAssets = assetsSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    logger.info('Financial overview raw data:', {
+      manualAssets: rawData.manualAssets.length,
+      manualLiabilities: rawData.manualLiabilities.length,
+      plaidAccounts: rawData.plaidAccounts.length,
+      cryptoAccounts: rawData.cryptoAccounts.length,
+      transactions: rawData.transactions.length,
+      metrics: {
+        totalAssets: metrics.totalAssets,
+        totalLiabilities: metrics.totalLiabilities,
+        netWorth: metrics.netWorth,
+      },
+    });
 
-    const totalManualAssets = data.manualAssets.reduce((sum, a: any) => sum + (a.amount || 0), 0);
+    // Validate metrics before transformation
+    const { enforceFinancialAccuracy } = await import('@/lib/financial-validator');
+    enforceFinancialAccuracy(metrics, 'financial-overview API');
 
-    // Fetch manual liabilities
-    const liabilitiesSnapshot = await db
-      .collection('users')
-      .doc(userId)
-      .collection('manualLiabilities')
-      .get();
-
-    data.manualLiabilities = liabilitiesSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    const totalManualLiabilities = data.manualLiabilities.reduce(
-      (sum, l: any) => sum + (l.amount || 0),
-      0
+    // Transform data to match expected API format
+    const bankAccounts = rawData.plaidAccounts.filter(
+      acc =>
+        acc.accountType === 'depository' &&
+        acc.subtype &&
+        ['checking', 'savings'].includes(acc.subtype)
     );
 
-    // Fetch platforms if requested
-    if (params.includePlatforms) {
-      const platformsSnapshot = await db
-        .collection('users')
-        .doc(userId)
-        .collection('platforms')
-        .get();
+    const creditAccounts = rawData.plaidAccounts.filter(acc => acc.accountType === 'credit');
 
-      const platformTransactionsSnapshot = await db
-        .collection('users')
-        .doc(userId)
-        .collection('platformTransactions')
-        .get();
+    const investmentAccounts = [
+      ...rawData.plaidAccounts.filter(acc => acc.accountType === 'investment'),
+      ...rawData.manualAssets
+        .filter(asset => ['investment', 'crypto'].includes(asset.type))
+        .map(asset => ({
+          id: asset.id,
+          name: asset.name,
+          balance: asset.currentBalance,
+          type: asset.type,
+          source: 'manual',
+        })),
+      ...rawData.cryptoAccounts.map(crypto => ({
+        id: crypto.id,
+        name: crypto.name,
+        balance: crypto.balance,
+        type: 'crypto',
+        source: crypto.type,
+      })),
+    ];
 
-      const platforms = platformsSnapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    const loanAccounts = rawData.plaidAccounts.filter(acc =>
+      ['loan', 'mortgage'].includes(acc.accountType)
+    );
 
-      const platformTransactions = platformTransactionsSnapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    const transformedData = {
+      summary: {
+        liquidAssets: metrics.liquidAssets,
+        totalAssets: metrics.totalAssets,
+        totalLiabilities: metrics.totalLiabilities,
+        netWorth: metrics.netWorth,
+        monthlyIncome: metrics.monthlyIncome,
+        monthlyExpenses: metrics.monthlyExpenses,
+        monthlyCashFlow: metrics.monthlyCashFlow,
+        investments: metrics.investments,
+      },
+      accounts: {
+        bank: bankAccounts,
+        credit: creditAccounts,
+        investment: investmentAccounts,
+        loan: loanAccounts,
+        crypto: rawData.cryptoAccounts,
+      },
+      manualAssets: rawData.manualAssets,
+      manualLiabilities: rawData.manualLiabilities,
+      platforms: includePlatforms ? [] : undefined,
+    };
 
-      // Calculate platform metrics
-      for (const platform of platforms as any[]) {
-        const txns = platformTransactions.filter((t: any) => t.platformId === platform.id);
-        const deposits = txns.filter((t: any) => t.type === 'deposit');
-        const withdrawals = txns.filter((t: any) => t.type === 'withdrawal');
+    const responseData = {
+      success: true,
+      data: transformedData,
+    };
 
-        const totalDeposited = deposits.reduce((sum: number, t: any) => sum + t.amount, 0);
-        const totalWithdrawn = withdrawals.reduce((sum: number, t: any) => sum + t.amount, 0);
-        const netInvestment = totalDeposited - totalWithdrawn;
-        const netProfit = platform.currentBalance - netInvestment;
+    // Cache the response
+    cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
 
-        data.platforms.push({
-          ...platform,
-          totalDeposited,
-          totalWithdrawn,
-          netInvestment,
-          netProfit,
-          netProfitPercent: netInvestment > 0 ? (netProfit / netInvestment) * 100 : 0,
-          transactions: txns.length,
-        });
-
-        data.summary.investments += platform.currentBalance || 0;
+    // Clean up old cache entries
+    for (const [key, value] of cache.entries()) {
+      if (Date.now() - value.timestamp > CACHE_TTL * 2) {
+        cache.delete(key);
       }
-
-      data.metadata.hasPlatforms = platforms.length > 0;
     }
 
-    // Calculate final summary
-    data.summary.totalAssets =
-      data.summary.liquidAssets + data.summary.investments + totalManualAssets;
-    data.summary.totalLiabilities += totalManualLiabilities;
-    data.summary.netWorth = data.summary.totalAssets - data.summary.totalLiabilities;
-    data.summary.monthlyCashFlow = data.summary.monthlyIncome - data.summary.monthlyExpenses;
-
-    return NextResponse.json({
-      success: true,
-      data,
-    });
+    logger.info('Financial overview data retrieved successfully');
+    return NextResponse.json(responseData);
   } catch (error) {
-    logger.error('Error fetching financial overview', { error });
+    logger.error('Error retrieving financial overview:', { error });
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch financial overview',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { success: false, error: 'Failed to retrieve financial data' },
       { status: 500 }
     );
   }

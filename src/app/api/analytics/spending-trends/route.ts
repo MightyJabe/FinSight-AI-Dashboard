@@ -15,12 +15,33 @@ import { z } from 'zod';
 
 import { logFinancialAccess } from '@/lib/audit-logger';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getTransactions } from '@/lib/plaid';
 import { Permission, validateUserAccess } from '@/middleware/rbac';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * GET endpoint for spending trends with default parameters
+ */
+export async function GET(request: Request) {
+  // Use default parameters for GET requests
+  const defaultBody = {
+    timeframe: '6months',
+    analysisType: 'category',
+    includeProjections: false,
+  };
+
+  // Create a new request with the default body
+  const modifiedRequest = new Request(request.url, {
+    method: 'POST',
+    headers: request.headers,
+    body: JSON.stringify(defaultBody),
+  });
+
+  return POST(modifiedRequest);
+}
 
 // Input validation schema
 const trendAnalysisSchema = z.object({
@@ -119,12 +140,12 @@ export async function POST(request: Request) {
     const trends = await analyzeTrends(filteredTransactions, analysisType, startDate, endDate);
 
     // Generate insights
-    const insights = generateInsights(trends, analysisType, filteredTransactions);
+    const insights = generateInsights(trends, analysisType);
 
     // Calculate projections if requested
     let projections: { nextPeriod: number; confidence: number; factors: string[] } | undefined;
     if (includeProjections) {
-      projections = calculateProjections(trends, analysisType);
+      projections = calculateProjections(trends);
     }
 
     const result: SpendingTrends = {
@@ -525,11 +546,7 @@ function analyzeAnomalies(transactions: Transaction[]): TrendData[] {
 /**
  * Generate insights from trend analysis
  */
-function generateInsights(
-  trends: TrendData[],
-  analysisType: string,
-  _transactions: Transaction[]
-): string[] {
+function generateInsights(trends: TrendData[], analysisType: string): string[] {
   const insights: string[] = [];
 
   if (trends.length === 0) {
@@ -606,10 +623,11 @@ function generateInsights(
 /**
  * Calculate spending projections
  */
-function calculateProjections(
-  trends: TrendData[],
-  _analysisType: string
-): { nextPeriod: number; confidence: number; factors: string[] } {
+function calculateProjections(trends: TrendData[]): {
+  nextPeriod: number;
+  confidence: number;
+  factors: string[];
+} {
   if (trends.length < 2) {
     return {
       nextPeriod: 0,

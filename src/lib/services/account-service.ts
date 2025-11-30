@@ -1,5 +1,6 @@
-import { db } from '@/lib/firebase-admin';
-import { getAccountBalances } from '@/lib/plaid';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+
+import { adminDb as db } from '@/lib/firebase-admin';
 
 export interface Account {
   id: string;
@@ -22,35 +23,28 @@ export function getAccountService(userId: string): AccountService {
   return {
     async getAccounts(): Promise<Account[]> {
       try {
-        // Get the user's Plaid access token from Firestore
-        const accessTokenDoc = await db
-          .collection('users')
-          .doc(userId)
-          .collection('plaid')
-          .doc('access_token')
+        // Get accounts from Firestore (cached data)
+        const accountsSnapshot = await db
+          .collection('accounts')
+          .where('userId', '==', userId)
           .get();
-        
-        const accessToken = accessTokenDoc.exists ? accessTokenDoc.data()?.accessToken : null;
-        
-        if (!accessToken) {
-          return [];
-        }
 
-        // Fetch accounts and balances from Plaid
-        const plaidAccounts = await getAccountBalances(accessToken);
-        
-        // Convert to our Account type
-        const accounts: Account[] = plaidAccounts.map(acc => ({
-          id: acc.account_id,
-          name: acc.name,
-          type: acc.type,
-          subtype: acc.subtype,
-          balance: acc.balances.current || 0,
-          availableBalance: acc.balances.available,
-          limit: acc.balances.limit,
-          officialName: acc.official_name
-        }));
-        
+        const accounts: Account[] = accountsSnapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || 'Unknown Account',
+              type: data.type || 'depository',
+              subtype: data.subtype || null,
+              balance: data.balance || 0,
+              availableBalance: data.availableBalance || null,
+              limit: data.limit || null,
+              officialName: data.officialName || null,
+            };
+          }
+        );
+
         return accounts;
       } catch (error) {
         console.error('Error fetching accounts:', error);
@@ -66,6 +60,6 @@ export function getAccountService(userId: string): AccountService {
     async getTotalBalance(): Promise<number> {
       const accounts = await this.getAccounts();
       return accounts.reduce((sum, acc) => sum + acc.balance, 0);
-    }
+    },
   };
 }

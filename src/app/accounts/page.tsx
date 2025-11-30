@@ -5,7 +5,7 @@ import { ComprehensiveAccountsView } from '@/components/accounts/ComprehensiveAc
  */
 export default function AccountsPage() {
   return (
-    <div className="max-w-full">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Financial Overview</h1>
         <p className="mt-2 text-lg text-gray-600">

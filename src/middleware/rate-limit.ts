@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 
 // Simple logger compatible with Edge Runtime
 const logger = {
-  warn: (message: string, context?: any) => {
+  warn: (message: string, context?: Record<string, unknown>) => {
     console.warn(`[RATE_LIMIT] ${message}`, context ? JSON.stringify(context) : '');
   },
-  error: (message: string, context?: any) => {
+  error: (message: string, context?: Record<string, unknown>) => {
     console.error(`[RATE_LIMIT] ${message}`, context ? JSON.stringify(context) : '');
   },
-  info: (message: string, context?: any) => {
+  info: (message: string, context?: Record<string, unknown>) => {
     console.log(`[RATE_LIMIT] ${message}`, context ? JSON.stringify(context) : '');
   },
 };
@@ -23,7 +23,7 @@ const MAX_REQUESTS = 60; // 60 requests per minute
 
 // Stricter limits for financial operations (adjust for development)
 const FINANCIAL_RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_FINANCIAL_REQUESTS = process.env.NODE_ENV === 'development' ? 30 : 10; // More lenient in dev
+const MAX_FINANCIAL_REQUESTS = process.env.NODE_ENV === 'development' ? 100 : 10; // Much more lenient in dev
 
 // Financial endpoints that require stricter rate limiting
 const FINANCIAL_ENDPOINTS = [

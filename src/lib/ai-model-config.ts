@@ -27,7 +27,7 @@ export interface ModelMetrics {
 export const AI_MODEL_CONFIGS = {
   // Transaction categorization - fast, accurate, cost-effective
   categorization: {
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.1',
     temperature: 0.1,
     maxTokens: 300,
     fallbackModel: 'gpt-4o',
@@ -35,7 +35,7 @@ export const AI_MODEL_CONFIGS = {
 
   // Financial insights and analysis - comprehensive reasoning
   analysis: {
-    model: 'gpt-4o',
+    model: 'gpt-5.1',
     temperature: 0.3,
     maxTokens: 1000,
     fallbackModel: 'gpt-4o',
@@ -43,7 +43,7 @@ export const AI_MODEL_CONFIGS = {
 
   // Interactive chat and conversations - balanced performance
   chat: {
-    model: 'gpt-4o',
+    model: 'gpt-5.1',
     temperature: 0.7,
     maxTokens: 1500,
     fallbackModel: 'gpt-4o',
@@ -51,7 +51,7 @@ export const AI_MODEL_CONFIGS = {
 
   // Complex financial planning - maximum reasoning
   planning: {
-    model: 'gpt-4o',
+    model: 'gpt-5.1',
     temperature: 0.4,
     maxTokens: 2000,
     fallbackModel: 'gpt-4o',
@@ -59,7 +59,7 @@ export const AI_MODEL_CONFIGS = {
 
   // Quick responses and simple queries - fast and efficient
   quick: {
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.1',
     temperature: 0.5,
     maxTokens: 500,
     fallbackModel: 'gpt-4o',
@@ -67,7 +67,7 @@ export const AI_MODEL_CONFIGS = {
 
   // Legacy fallback configuration
   fallback: {
-    model: 'gpt-4o',
+    model: 'gpt-5.1',
     temperature: 0.7,
     maxTokens: 1000,
   } as ModelConfig,
@@ -77,6 +77,12 @@ export const AI_MODEL_CONFIGS = {
  * Performance metrics for different models (based on OpenAI specs)
  */
 export const MODEL_METRICS: Record<string, ModelMetrics> = {
+  'gpt-5.1': {
+    tokensPerMinute: 40000,
+    costPer1kTokens: 0.008,
+    averageLatency: 1800,
+    accuracyScore: 0.98,
+  },
   'gpt-4o': {
     tokensPerMinute: 30000,
     costPer1kTokens: 0.005,
@@ -222,8 +228,8 @@ export function getModelPerformance(model: string): ModelMetrics {
  * Model availability checker
  */
 export async function checkModelAvailability(model: string): Promise<boolean> {
-  // GPT-4o and GPT-4o-mini are available
-  if (model === 'gpt-4o' || model === 'gpt-4o-mini') {
+  // GPT-5.1, GPT-4o and GPT-4o-mini are available
+  if (model === 'gpt-5.1' || model === 'gpt-4o' || model === 'gpt-4o-mini') {
     return true;
   }
   return false;

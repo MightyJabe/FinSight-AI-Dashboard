@@ -76,12 +76,12 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
 
   // Get income categories and their colors
   const incomeCategories = Object.entries(categoryTotals)
-    .filter(([_, amount]) => amount > 0)
+    .filter(([, amount]) => amount > 0)
     .map(([category]) => category);
 
   // Get expense categories and their colors
   const expenseCategories = Object.entries(categoryTotals)
-    .filter(([_, amount]) => amount < 0)
+    .filter(([, amount]) => amount < 0)
     .map(([category]) => category);
 
   // Prepare data for income pie chart
@@ -90,8 +90,8 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
     datasets: [
       {
         data: Object.entries(categoryTotals)
-          .filter(([_, amount]) => amount > 0)
-          .map(([_, amount]) => amount),
+          .filter(([, amount]) => amount > 0)
+          .map(([, amount]) => amount),
         backgroundColor: incomeCategories.map(category => {
           const color = getCategoryColor(category);
           return `rgb(var(--${color}))`;
@@ -106,8 +106,8 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
     datasets: [
       {
         data: Object.entries(categoryTotals)
-          .filter(([_, amount]) => amount < 0)
-          .map(([_, amount]) => Math.abs(amount)),
+          .filter(([, amount]) => amount < 0)
+          .map(([, amount]) => Math.abs(amount)),
         backgroundColor: expenseCategories.map(category => {
           const color = getCategoryColor(category);
           return `rgb(var(--${color}))`;
@@ -161,7 +161,7 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
         <h3 className="text-lg font-semibold mb-4">Category Details</h3>
         <div className="space-y-4">
           {Object.entries(categoryTotals)
-            .sort(([_, a], [__, b]) => Math.abs(b) - Math.abs(a))
+            .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
             .map(([category, amount]) => {
               const isIncome = amount > 0;
               const percentage = isIncome

@@ -31,6 +31,7 @@ if (!getApps().length) {
         clientEmail,
         privateKey: privateKey.replace(/\\n/g, '\n'),
       }),
+      storageBucket: `${projectId}.appspot.com`,
     });
     auth = getAuth();
     db = getFirestore();
@@ -40,4 +41,4 @@ if (!getApps().length) {
   db = getFirestore();
 }
 
-export { auth, db };
+export { auth as adminAuth, db as adminDb };

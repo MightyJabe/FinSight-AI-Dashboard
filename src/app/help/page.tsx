@@ -102,16 +102,17 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className="max-w-full">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Help & Support</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Get help with using FinSight AI and find answers to common questions.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Help & Support</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Get help with using FinSight AI and find answers to common questions.
+          </p>
+        </div>
 
         {/* Getting Started */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6 hover:shadow-xl transition-shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Getting Started</h2>
           </div>
@@ -133,7 +134,7 @@ export default function HelpPage() {
         </div>
 
         {/* FAQ */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6 hover:shadow-xl transition-shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
           </div>
@@ -164,7 +165,7 @@ export default function HelpPage() {
         </div>
 
         {/* Support Options */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Get Support</h2>
           </div>
@@ -192,6 +193,7 @@ export default function HelpPage() {
               ))}
             </div>
           </div>
+        </div>
       </div>
     </div>
   );

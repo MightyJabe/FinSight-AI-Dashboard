@@ -1,128 +1,243 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ArrowRight, CreditCard, Target, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { memo } from 'react';
 
-import { AuthGuard } from '@/components/auth/AuthGuard';
-import { ErrorMessage } from '@/components/common/ErrorMessage';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { DashboardContent } from '@/components/dashboard/DashboardContent';
-import type { Budget, InvestmentAccounts, Liabilities, Overview } from '@/types/finance';
+import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
+import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DashboardSkeleton,
+  EmptyState,
+} from '@/components/ui';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { formatCurrency } from '@/lib/utils';
 
-interface DashboardData {
-  overview: Overview | null;
-  budget: Budget | null;
-  investmentAccounts: InvestmentAccounts | null;
-  liabilities: Liabilities | null;
-}
-
-/**
- * Dashboard page with client-side data fetching and authentication guard
- */
-export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData>({
-    overview: null,
-    budget: null,
-    investmentAccounts: null,
-    liabilities: null,
+function DashboardPage() {
+  const { overview, loading, error } = useDashboardData({
+    refetchOnFocus: false,
+    refetchInterval: 300000,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch data from API endpoints instead of server-side functions
-      const [overviewRes, budgetRes, investmentRes, liabilitiesRes] = await Promise.all([
-        fetch('/api/overview').then(res => res.json()),
-        fetch('/api/budget').then(res => res.json()),
-        fetch('/api/investment-accounts').then(res => res.json()),
-        fetch('/api/liabilities').then(res => res.json()),
-      ]);
-
-      // Handle successful responses
-      const overview = overviewRes.success ? overviewRes.data : null;
-      const budget = budgetRes.success ? budgetRes.data : null;
-      const investmentAccounts = investmentRes.success ? investmentRes.data : null;
-      const liabilities = liabilitiesRes.success ? liabilitiesRes.data : null;
-
-      setData({
-        overview,
-        budget,
-        investmentAccounts,
-        liabilities,
-      });
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
-      <AuthGuard>
-        <div className="flex items-center justify-center min-h-screen">
-          <LoadingSpinner />
-        </div>
-      </AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+        <DashboardSkeleton />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AuthGuard>
-        <div className="max-w-full">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Dashboard
-            </h1>
-            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-              Get a complete overview of your financial health and insights.
-            </p>
-          </div>
-          <ErrorMessage message={error} />
-        </div>
-      </AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+        <Card variant="elevated" className="max-w-md mx-auto mt-20">
+          <CardContent className="py-8">
+            <EmptyState
+              icon={<CreditCard className="w-8 h-8" />}
+              title="Unable to load dashboard"
+              description={error}
+              action={{
+                label: 'Retry',
+                onClick: () => window.location.reload(),
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <AuthGuard>
-      <div className="max-w-full">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            Get a complete overview of your financial health and insights.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-          <div className="p-6">
-            {data.overview && data.budget && data.investmentAccounts && data.liabilities ? (
-              <DashboardContent
-                overview={data.overview}
-                budget={data.budget}
-                liabilities={data.liabilities}
-              />
-            ) : (
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <LoadingSpinner />
-                  <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard data...</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-2 text-gray-600">Your financial overview at a glance</p>
+      </div>
+
+      <div className="space-y-6">
+        {/* Net Worth Hero Card */}
+        {overview && (
+          <NetWorthCard
+            netWorth={overview.netWorth}
+            change={overview.netWorth * 0.052}
+            changePercent={5.2}
+          />
+        )}
+
+        {/* Quick Actions */}
+        <QuickActions />
+
+        {/* 3-Column Grid: Cash Flow, Investments, Goals */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Cash Flow Card */}
+          <Card variant="elevated" hover>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                Cash Flow
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500">Monthly Income</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(overview?.monthlyIncome || 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Monthly Expenses</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {formatCurrency(overview?.monthlyExpenses || 0)}
+                  </p>
+                </div>
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-gray-500">Net Savings</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {formatCurrency(
+                      (overview?.monthlyIncome || 0) - (overview?.monthlyExpenses || 0)
+                    )}
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
+              <Link href="/trends" className="mt-4 block">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                >
+                  View Trends
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Investments Card */}
+          <Card variant="elevated" hover>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                Investments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500">Total Value</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(0)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Performance</p>
+                  <p className="text-lg font-semibold text-green-600">+8.2%</p>
+                </div>
+                <div className="pt-4 border-t">
+                  <p className="text-xs text-gray-500">Last 30 days</p>
+                </div>
+              </div>
+              <Link href="/investments" className="mt-4 block">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                >
+                  View Portfolio
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Goals Card */}
+          <Card variant="elevated" hover>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-purple-600" />
+                Goals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500">Active Goals</p>
+                  <p className="text-2xl font-bold text-gray-900">3</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Total Target</p>
+                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(50000)}</p>
+                </div>
+                <div className="pt-4 border-t">
+                  <p className="text-xs text-gray-500">On track to complete</p>
+                </div>
+              </div>
+              <Link href="/goals" className="mt-4 block">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                >
+                  View Goals
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* AI Insights */}
+        <ProactiveInsightsCard />
+
+        {/* Recent Activity */}
+        <Card variant="elevated">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Activity</CardTitle>
+              <Link href="/transactions">
+                <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {overview?.accounts && overview.accounts.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  Connect to Plaid or add manual transactions to see your recent activity here.
+                </p>
+                <Link href="/transactions">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    rightIcon={<ArrowRight className="h-4 w-4" />}
+                  >
+                    Go to Transactions
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<CreditCard className="w-8 h-8" />}
+                title="No accounts connected yet"
+                description="Connect your first account to start tracking your finances"
+                action={{
+                  label: 'Connect Account',
+                  onClick: () => (window.location.href = '/accounts'),
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </AuthGuard>
+    </div>
   );
 }
+
+export default memo(DashboardPage);

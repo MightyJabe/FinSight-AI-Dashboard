@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
+import { ConversationMemory, ConversationMessage } from '@/lib/ai-conversation-memory';
 import { getConfig } from '@/lib/config';
 import { executeFinancialTool, financialTools } from '@/lib/financial-tools';
-import { db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getAccountService } from '@/lib/services/account-service';
 import { getUserBudgets } from '@/lib/services/budget-service';
@@ -49,172 +49,69 @@ export interface ContextInfo {
   pageDescription: string;
 }
 
-export interface ConversationMessage {
-  id: string;
-  type: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
-  context?: ContextInfo;
-}
-
 /**
  * Unified AI Brain Service - The smartest financial AI assistant
  * Uses OpenAI GPT-4 with advanced financial tools and context awareness
  */
 export class AIBrainService {
   private userId: string;
+  private conversationMemory: ConversationMemory;
 
   constructor(userId: string) {
     this.userId = userId;
+    this.conversationMemory = new ConversationMemory(userId);
   }
 
   /**
    * Main entry point for all AI interactions
-   * Intelligently routes between different AI capabilities
    */
   async processQuery(
     query: string,
     context: ContextInfo,
-    conversationHistory: ConversationMessage[] = [],
-    includeVisualization = true
+    conversationHistory: ConversationMessage[] = []
   ): Promise<AIResponse> {
     try {
-      logger.info('AI Brain processing query', {
-        userId: this.userId,
-        query: query.substring(0, 100),
-        context: context.pageName,
-        hasHistory: conversationHistory.length > 0,
-      });
-
-      // Smart query classification
-      const queryType = this.classifyQuery(query);
-      logger.info('Query classified', { queryType, query: query.substring(0, 50) });
+      // Get conversation history from Firestore
+      const storedHistory = await this.conversationMemory.getRecentMessages();
+      const fullHistory = [...storedHistory, ...conversationHistory];
 
       // Get user's financial context
       const financialContext = await this.getFinancialContext();
 
-      // Build enhanced system prompt with context
-      const systemPrompt = this.buildSystemPrompt(context, financialContext);
+      // Build enhanced system prompt
+      const systemPrompt = this.buildEnhancedSystemPrompt(context, financialContext, fullHistory);
 
-      // Process based on query type
-      let response: AIResponse;
+      // Process with OpenAI
+      const response = await this.useOpenAIWithTools(query, systemPrompt, fullHistory);
 
-      if (queryType === 'financial_query' || queryType === 'financial_analysis') {
-        response = await this.processFinancialQuery(
-          query,
-          context,
-          systemPrompt,
-          conversationHistory,
-          includeVisualization
-        );
-      } else {
-        response = await this.processGeneralChat(
-          query,
-          context,
-          systemPrompt,
-          conversationHistory,
-          financialContext
-        );
-      }
+      // Save conversation to memory
+      await this.conversationMemory.saveMessage({
+        role: 'user',
+        content: query,
+        context: { page: context.page, pageName: context.pageName },
+      });
+      await this.conversationMemory.saveMessage({
+        role: 'assistant',
+        content: response.answer,
+      });
 
-      // Add contextual suggestions
+      // Add suggestions
       response.suggestions = this.generateContextualSuggestions(query, context, response);
-
-      // Save conversation
-      const conversationId = await this.saveConversation(query, response, context);
-      response.conversationId = conversationId;
 
       return response;
     } catch (error) {
-      logger.error('AI Brain error', {
-        error,
-        userId: this.userId,
-        query: query.substring(0, 100),
-      });
+      logger.error('AI Brain error', { error, userId: this.userId });
       return {
-        answer:
-          'I apologize, but I encountered an error processing your request. Please try rephrasing your question.',
+        answer: 'I apologize, but I encountered an error. Please try rephrasing your question.',
         confidence: 0.1,
         type: 'error',
         suggestions: [
-          'Try asking about your spending this month',
-          'Ask for your account balances',
-          'Request a financial health overview',
-          'Ask about your budget status',
+          'Try asking about your spending',
+          'Ask for account balances',
+          'Request financial overview',
         ],
       };
     }
-  }
-
-  /**
-   * Intelligent query classification using keyword analysis and patterns
-   */
-  private classifyQuery(query: string): 'financial_query' | 'financial_analysis' | 'general_chat' {
-    const queryLower = query.toLowerCase();
-
-    // Financial analysis patterns (complex financial concepts)
-    const analysisPatterns = [
-      'analyze',
-      'analysis',
-      'patterns',
-      'trends',
-      'forecast',
-      'predict',
-      'projection',
-      'health score',
-      'financial health',
-      'debt to income',
-      'cash flow',
-      'emergency fund',
-      'portfolio',
-      'investment',
-      'optimize',
-      'strategy',
-      'recommend',
-      'advice',
-      'net worth',
-      'savings rate',
-      'budget adherence',
-      'risk',
-      'volatility',
-    ];
-
-    // Financial query patterns (data retrieval)
-    const queryPatterns = [
-      'how much',
-      'what is',
-      'show me',
-      'total',
-      'balance',
-      'spend',
-      'spent',
-      'income',
-      'transaction',
-      'account',
-      'category',
-      'budget',
-      'this month',
-      'last month',
-      'recent',
-      'current',
-      'average',
-      'sum',
-      'count',
-      'list',
-    ];
-
-    // Check for financial analysis
-    if (analysisPatterns.some(pattern => queryLower.includes(pattern))) {
-      return 'financial_analysis';
-    }
-
-    // Check for financial queries
-    if (queryPatterns.some(pattern => queryLower.includes(pattern))) {
-      return 'financial_query';
-    }
-
-    // Default to general chat
-    return 'general_chat';
   }
 
   /**
@@ -287,9 +184,18 @@ export class AIBrainService {
   }
 
   /**
-   * Build comprehensive system prompt with context
+   * Build enhanced system prompt with conversation history
    */
-  private buildSystemPrompt(context: ContextInfo, financialContext: any): string {
+  private buildEnhancedSystemPrompt(
+    context: ContextInfo,
+    financialContext: any,
+    conversationHistory: ConversationMessage[]
+  ): string {
+    const savingsRate =
+      financialContext.monthlyIncome > 0
+        ? ((financialContext.netCashFlow / financialContext.monthlyIncome) * 100).toFixed(1)
+        : '0';
+
     const contextualFinancialInfo = financialContext.hasRecentActivity
       ? `
 Current Financial Snapshot:
@@ -297,6 +203,7 @@ Current Financial Snapshot:
 - Monthly Income: $${financialContext.monthlyIncome.toLocaleString()}
 - Monthly Spending: $${financialContext.monthlySpending.toLocaleString()}
 - Net Cash Flow: $${financialContext.netCashFlow.toLocaleString()}
+- Savings Rate: ${savingsRate}%
 - Number of Accounts: ${financialContext.accountCount}
 - Recent Transactions: ${financialContext.transactionCount}
 - Active Budget Categories: ${financialContext.budgetCategories.join(', ')}
@@ -308,13 +215,24 @@ ${
 `
       : 'User has limited financial data connected. Focus on general financial guidance and encourage connecting accounts for personalized insights.';
 
-    return `You are FinSight AI, an expert financial advisor and AI assistant with deep expertise in personal finance, investment strategy, and financial planning.
+    const conversationContext =
+      conversationHistory.length > 0
+        ? `
+RECENT CONVERSATION HISTORY:
+${conversationHistory
+  .slice(-6)
+  .map(msg => `${msg.role.toUpperCase()}: ${msg.content.substring(0, 150)}...`)
+  .join('\n')}
+`
+        : '';
+
+    return `You are FinSight AI, a certified financial advisor with 20 years of experience in personal finance, investment strategy, and financial planning.
 
 CURRENT CONTEXT:
 - User is viewing: ${context.pageName} (${context.pageDescription})
 - Page Context: ${context.page}
 
-${contextualFinancialInfo}
+${contextualFinancialInfo}${conversationContext}
 
 YOUR CAPABILITIES:
 - Real-time financial data analysis and insights
@@ -326,13 +244,14 @@ YOUR CAPABILITIES:
 - Financial health scoring and risk assessment
 
 INTERACTION GUIDELINES:
-1. **Context Awareness**: Always consider the current page context when responding
+1. **Context Awareness**: Always consider the current page context and conversation history
 2. **Data-Driven Insights**: Use the user's actual financial data to provide specific, actionable advice
-3. **Personalization**: Tailor responses to the user's financial situation and goals
+3. **Personalization**: Tailor responses to the user's financial situation, goals, and previous conversations
 4. **Clarity**: Explain complex financial concepts in simple, understandable terms
-5. **Action-Oriented**: Provide specific next steps and recommendations with dollar amounts and timeframes
+5. **Action-Oriented**: Provide specific next steps with dollar amounts, percentages, and timeframes
 6. **Professional Tone**: Maintain a knowledgeable but approachable tone
 7. **Proactive Suggestions**: Identify opportunities for improvement and optimization
+8. **Continuity**: Reference previous conversations when relevant to show understanding
 
 RESPONSE FORMAT:
 - Be concise but comprehensive
@@ -351,25 +270,6 @@ Remember: You have access to the user's complete financial picture. Use this dat
   }
 
   /**
-   * Process financial queries using OpenAI with financial tools
-   */
-  private async processFinancialQuery(
-    query: string,
-    _context: ContextInfo,
-    systemPrompt: string,
-    conversationHistory: ConversationMessage[],
-    _includeVisualization: boolean
-  ): Promise<AIResponse> {
-    try {
-      // Use OpenAI with advanced financial analysis tools
-      return await this.useOpenAIWithTools(query, systemPrompt, conversationHistory);
-    } catch (error) {
-      logger.error('Error processing financial query', { error, userId: this.userId });
-      return await this.useOpenAIWithTools(query, systemPrompt, conversationHistory);
-    }
-  }
-
-  /**
    * Use OpenAI with advanced financial tools
    */
   private async useOpenAIWithTools(
@@ -382,7 +282,7 @@ Remember: You have access to the user's complete financial picture. Use this dat
       const messages = [
         { role: 'system' as const, content: systemPrompt },
         ...conversationHistory.slice(-6).map(msg => ({
-          role: msg.type === 'user' ? ('user' as const) : ('assistant' as const),
+          role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),
           content: msg.content,
         })),
         { role: 'user' as const, content: query },
@@ -392,23 +292,22 @@ Remember: You have access to the user's complete financial picture. Use this dat
         throw new Error('OpenAI client not initialized');
       }
 
-      // Try GPT-5 first, with fallback to GPT-4o
+      // Try GPT-5.1 first, with fallback to GPT-4o
       let completion;
       try {
         completion = await openai.chat.completions.create({
-          model: 'gpt-5',
+          model: 'gpt-5.1',
           messages,
           tools: financialTools,
           tool_choice: 'auto',
-          temperature: 0.7,
-          max_tokens: 1500,
-          // GPT-5 parameters (conditionally added)
+          max_completion_tokens: 1500,
+          // GPT-5.1 parameters (conditionally added)
           ...(true && { verbosity: 'medium' as any }),
-          ...(true && { reasoning_effort: 'standard' as any }),
+          ...(true && { reasoning_effort: 'medium' as any }),
         });
       } catch (modelError: any) {
         if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
-          logger.warn('GPT-5 not available, falling back to GPT-4o for AI brain service');
+          logger.warn('GPT-5.1 not available, falling back to GPT-4o for AI brain service');
           completion = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages,
@@ -456,17 +355,16 @@ Remember: You have access to the user's complete financial picture. Use this dat
 
         // Get final response with tool results
         try {
-          // Try GPT-5 first for final response
+          // Try GPT-5.1 first for final response
           let finalCompletion;
           try {
             finalCompletion = await openai.chat.completions.create({
-              model: 'gpt-5',
+              model: 'gpt-5.1',
               messages: [...messages, responseMessage, ...toolResults],
-              temperature: 0.7,
-              max_tokens: 1500,
-              // GPT-5 parameters (conditionally added)
+              max_completion_tokens: 1500,
+              // GPT-5.1 parameters (conditionally added)
               ...(true && { verbosity: 'medium' as any }),
-              ...(true && { reasoning_effort: 'standard' as any }),
+              ...(true && { reasoning_effort: 'medium' as any }),
             });
           } catch (modelError: any) {
             if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
@@ -501,85 +399,6 @@ Remember: You have access to the user's complete financial picture. Use this dat
       };
     } catch (error) {
       logger.error('Error using OpenAI with tools', { error, userId: this.userId });
-      throw error;
-    }
-  }
-
-  /**
-   * Process general chat with financial context
-   */
-  private async processGeneralChat(
-    query: string,
-    _context: ContextInfo,
-    systemPrompt: string,
-    conversationHistory: ConversationMessage[],
-    _financialContext: any
-  ): Promise<AIResponse> {
-    try {
-      const chatPrompt = `${systemPrompt}
-
-User Query: "${query}"
-
-Provide a helpful, contextual response that considers:
-1. The user's current page context (${_context.pageName})
-2. Their financial situation and data
-3. Any relevant financial insights or suggestions
-4. A warm, professional tone
-
-If the query is financial in nature, provide specific insights based on their data.
-If it's general, still relate it back to their financial goals when appropriate.`;
-
-      // Build conversation for OpenAI
-      const messages = [
-        { role: 'system' as const, content: chatPrompt },
-        ...conversationHistory.slice(-4).map(msg => ({
-          role: msg.type === 'user' ? ('user' as const) : ('assistant' as const),
-          content: msg.content,
-        })),
-        { role: 'user' as const, content: query },
-      ];
-
-      if (!openai) {
-        throw new Error('OpenAI client not initialized');
-      }
-
-      // Try GPT-5 first for chat responses
-      let completion;
-      try {
-        completion = await openai.chat.completions.create({
-          model: 'gpt-5',
-          messages,
-          temperature: 0.7,
-          max_tokens: 800,
-          // GPT-5 parameters (conditionally added)
-          ...(true && { verbosity: 'medium' as any }),
-          ...(true && { reasoning_effort: 'standard' as any }),
-        });
-      } catch (modelError: any) {
-        if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
-          completion = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages,
-            temperature: 0.7,
-            max_tokens: 800,
-          });
-        } else {
-          throw modelError;
-        }
-      }
-
-      const response =
-        completion.choices[0]?.message?.content ||
-        "I'm here to help with your financial questions. What would you like to know?";
-
-      return {
-        answer: response,
-        confidence: 0.8,
-        type: 'general_chat',
-        context: _context.pageName,
-      };
-    } catch (error) {
-      logger.error('Error processing general chat', { error, userId: this.userId });
       throw error;
     }
   }
@@ -632,39 +451,6 @@ If it's general, still relate it back to their financial goals when appropriate.
     }
 
     return contextSuggestions.slice(0, 4);
-  }
-
-  /**
-   * Save conversation to database
-   */
-  private async saveConversation(
-    query: string,
-    response: AIResponse,
-    context: ContextInfo
-  ): Promise<string> {
-    try {
-      const conversationData = {
-        userId: this.userId,
-        query,
-        response: response.answer,
-        type: response.type,
-        context,
-        confidence: response.confidence,
-        timestamp: new Date(),
-        createdAt: new Date(),
-      };
-
-      const docRef = await db
-        .collection('users')
-        .doc(this.userId)
-        .collection('ai_conversations')
-        .add(conversationData);
-
-      return docRef.id;
-    } catch (error) {
-      logger.error('Error saving AI conversation', { error, userId: this.userId });
-      return '';
-    }
   }
 }
 

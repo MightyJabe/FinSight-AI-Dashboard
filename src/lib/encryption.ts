@@ -179,7 +179,7 @@ export function secureClear(sensitiveString: string): void {
       for (let i = 0; i < sensitiveString.length; i++) {
         sensitiveString = sensitiveString.substring(0, i) + '0' + sensitiveString.substring(i + 1);
       }
-    } catch (error) {
+    } catch {
       // Strings are immutable in JS, so this will fail
       // But it's still good practice to attempt it
     }

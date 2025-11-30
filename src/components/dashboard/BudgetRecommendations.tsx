@@ -191,7 +191,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
     return (
       <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
-          <LoadingSpinner message="Analyzing your budget..." />
+          <LoadingSpinner />
         </div>
       </div>
     );
@@ -424,7 +424,9 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
               {analysis.actionItems.map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-blue-800">
                   <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                  <span>{item}</span>
+                  <span>
+                    {item.title}: {item.description}
+                  </span>
                 </li>
               ))}
             </ul>

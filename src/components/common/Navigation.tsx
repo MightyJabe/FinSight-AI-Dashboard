@@ -2,246 +2,244 @@
 
 import {
   BarChart3,
-  Bitcoin,
+  Bot,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  DollarSign,
+  FileText,
   HelpCircle,
-  LayoutDashboard,
-  ListChecks,
-  LogOut,
-  MessageCircle,
-  Moon,
+  Home,
   PlusCircle,
+  Receipt,
+  RefreshCw,
   Settings,
-  Sun,
+  Target,
   TrendingUp,
-  Users,
-  Wallet,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { NavigationSkeleton } from '@/components/common/SkeletonLoader';
-import { useTheme } from '@/hooks/useTheme';
-import { useAuth } from '@/lib/auth';
-import { auth as firebaseAuth } from '@/lib/firebase';
-
-const primaryNavigationItems = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'AI Chat', href: '/chat', icon: MessageCircle },
-  { name: 'Investments', href: '/investments', icon: Wallet },
-  { name: 'Crypto Portfolio', href: '/crypto', icon: Bitcoin },
-  { name: 'Accounts & Balances', href: '/accounts', icon: Users },
-  { name: 'Spending & Budget', href: '/transactions', icon: ListChecks },
-  { name: 'AI Insights', href: '/insights', icon: BarChart3 },
-  { name: 'Spending Trends', href: '/trends', icon: TrendingUp },
-  { name: 'Add Data', href: '/manual-data', icon: PlusCircle },
+const navigationSections = [
+  {
+    title: 'Overview',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: Home, description: 'Financial overview' },
+    ],
+  },
+  {
+    title: 'Manage',
+    items: [
+      {
+        href: '/accounts',
+        label: 'Accounts',
+        icon: CreditCard,
+        description: 'Bank & manual accounts',
+      },
+      {
+        href: '/transactions',
+        label: 'Transactions',
+        icon: DollarSign,
+        description: 'Transaction history',
+      },
+      { href: '/documents', label: 'Documents', icon: FileText, description: 'Upload & view docs' },
+      {
+        href: '/manual-data',
+        label: 'Manual Entry',
+        icon: PlusCircle,
+        description: 'Add assets & debts',
+      },
+    ],
+  },
+  {
+    title: 'Analyze',
+    items: [
+      {
+        href: '/insights',
+        label: 'AI Insights',
+        icon: Zap,
+        description: 'Smart financial analysis',
+      },
+      { href: '/trends', label: 'Trends', icon: BarChart3, description: 'Spending patterns' },
+      {
+        href: '/investments',
+        label: 'Investments',
+        icon: TrendingUp,
+        description: 'Portfolio performance',
+      },
+    ],
+  },
+  {
+    title: 'Optimize',
+    items: [
+      {
+        href: '/tax',
+        label: 'Tax Intelligence',
+        icon: Receipt,
+        description: 'Deductions & strategies',
+      },
+      {
+        href: '/subscriptions',
+        label: 'Subscriptions',
+        icon: RefreshCw,
+        description: 'Recurring charges',
+      },
+      { href: '/goals', label: 'Goals', icon: Target, description: 'Financial milestones' },
+    ],
+  },
+  {
+    title: 'AI Assistant',
+    items: [{ href: '/chat', label: 'AI Chat', icon: Bot, description: 'Financial advisor chat' }],
+  },
 ];
 
-const secondaryNavigationItems = [
-  { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Help', href: '/help', icon: HelpCircle },
-];
+const settingsItem = {
+  href: '/settings',
+  label: 'Settings',
+  icon: Settings,
+  description: 'Account preferences',
+};
+const helpItem = {
+  href: '/help',
+  label: 'Help',
+  icon: HelpCircle,
+  description: 'Documentation & support',
+};
 
-/**
- *
- */
 export function Navigation() {
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, loading } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-
-  const handleLogout = async () => {
-    try {
-      await firebaseAuth.signOut();
-      router.push('/');
-      if (isOpen) setIsOpen(false);
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  if (loading) {
-    return <NavigationSkeleton />;
-  }
-
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
-  const displayEmail = user?.email || 'No email available';
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <>
-      {/* Mobile menu overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Mobile menu button */}
-      <button
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-background border shadow-sm"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle navigation"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {isOpen ? (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          ) : (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          )}
-        </svg>
-      </button>
-
-      <nav
-        className={`fixed left-0 top-0 h-full w-72 border-r bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 flex flex-col transition-transform duration-300 z-50 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } lg:relative lg:z-auto`}
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <div className="p-6 border-b">
-          <Link
-            href={user ? '/dashboard' : '/'}
-            className="text-2xl font-bold text-gray-800 hover:text-primary transition-colors"
-          >
-            FinSight AI
-          </Link>
-        </div>
-
-        <div className="flex-grow overflow-y-auto p-4 space-y-1">
-          <ul>
-            {primaryNavigationItems.map(item => {
-              const isActive =
-                pathname === item.href ||
-                (item.href === '/dashboard' && pathname.startsWith('/dashboard'));
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      isActive
-                        ? 'bg-primary/10 text-primary shadow-sm'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                    }`}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <item.icon
-                      className={`h-5 w-5 transition-transform duration-200 ${
-                        isActive
-                          ? 'text-primary'
-                          : 'text-muted-foreground group-hover:text-accent-foreground'
-                      }`}
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div className="mt-auto p-4 border-t space-y-1">
-          <ul>
-            {secondaryNavigationItems.map(item => {
-              const isActive = pathname.startsWith(item.href);
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      isActive
-                        ? 'bg-accent/80 text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                    }`}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <item.icon
-                      className={`h-5 w-5 transition-transform duration-200 ${
-                        isActive
-                          ? 'text-accent-foreground'
-                          : 'text-muted-foreground group-hover:text-accent-foreground'
-                      }`}
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-            <li>
-              <button
-                aria-label="Logout"
-                onClick={handleLogout}
-                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              >
-                <LogOut
-                  className="h-5 w-5 text-muted-foreground group-hover:text-red-600"
-                  aria-hidden="true"
-                />
-                <span className="truncate">Logout</span>
-              </button>
-            </li>
-            <li>
-              <button
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                onClick={toggleTheme}
-                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                {theme === 'dark' ? (
-                  <Sun
-                    className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Moon
-                    className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="truncate">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-              </button>
-            </li>
-          </ul>
-        </div>
-
-        <div className="p-4 border-t">
-          {!loading && user ? (
-            <div className="flex items-center gap-3">
-              <div
-                className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold"
-                aria-hidden="true"
-              >
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-medium truncate" title={displayName}>
-                  {displayName}
-                </span>
-                <span className="text-xs text-muted-foreground truncate" title={displayEmail}>
-                  {displayEmail}
-                </span>
-              </div>
+    <nav
+      className={`bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ${collapsed ? 'w-20' : 'w-72'}`}
+    >
+      <div className="p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
             </div>
-          ) : loading ? (
-            <div className="text-sm text-muted-foreground">Loading user...</div>
-          ) : (
-            <div className="text-sm text-muted-foreground">Not signed in</div>
-          )}
+            {!collapsed && (
+              <div>
+                <h1 className="font-bold text-gray-900">FinSight AI</h1>
+                <p className="text-xs text-gray-500">Smart Finance</p>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="rounded-lg p-1.5 hover:bg-gray-100 transition-colors"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
         </div>
-      </nav>
-    </>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {navigationSections.map(section => (
+          <div key={section.title}>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              {section.title}
+            </h3>
+            <div className="space-y-1">
+              {section.items.map(item => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch={true}
+                    className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 mr-3 transition-colors ${
+                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                      }`}
+                    />
+                    {!collapsed && (
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium truncate ${
+                            isActive ? 'text-blue-900' : 'text-gray-900'
+                          }`}
+                        >
+                          {item.label}
+                        </p>
+                        <p
+                          className={`text-xs truncate ${
+                            isActive ? 'text-blue-600' : 'text-gray-500'
+                          }`}
+                        >
+                          {item.description}
+                        </p>
+                      </div>
+                    )}
+                    {isActive && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4 border-t border-gray-100 space-y-1">
+        <Link
+          href={helpItem.href}
+          prefetch={true}
+          className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
+            pathname === helpItem.href
+              ? 'bg-gray-100 text-gray-900'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          }`}
+        >
+          <HelpCircle
+            className={`w-5 h-5 mr-3 transition-colors ${
+              pathname === helpItem.href
+                ? 'text-gray-700'
+                : 'text-gray-400 group-hover:text-gray-600'
+            }`}
+          />
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{helpItem.label}</p>
+              <p className="text-xs text-gray-500 truncate">{helpItem.description}</p>
+            </div>
+          )}
+        </Link>
+        <Link
+          href={settingsItem.href}
+          prefetch={true}
+          className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
+            pathname === settingsItem.href
+              ? 'bg-gray-100 text-gray-900'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          }`}
+        >
+          <Settings
+            className={`w-5 h-5 mr-3 transition-colors ${
+              pathname === settingsItem.href
+                ? 'text-gray-700'
+                : 'text-gray-400 group-hover:text-gray-600'
+            }`}
+          />
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{settingsItem.label}</p>
+              <p className="text-xs text-gray-500 truncate">{settingsItem.description}</p>
+            </div>
+          )}
+        </Link>
+      </div>
+    </nav>
   );
 }

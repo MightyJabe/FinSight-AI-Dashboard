@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import { getAccountBalances } from '@/lib/plaid';
 import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 

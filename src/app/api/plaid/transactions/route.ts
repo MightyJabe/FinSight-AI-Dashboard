@@ -9,7 +9,7 @@ import {
   logSecurityEvent,
 } from '@/lib/audit-logger';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getTransactions } from '@/lib/plaid';
 import { Permission, validateUserAccess } from '@/middleware/rbac';
@@ -137,8 +137,34 @@ export async function GET(request: Request) {
         }));
 
         allTransactions.push(...transformedTransactions);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching transactions for Plaid item:', error);
+
+        // Check if it's an ITEM_LOGIN_REQUIRED error
+        if (error?.response?.data?.error_code === 'ITEM_LOGIN_REQUIRED') {
+          logger.warn('Plaid item requires re-authentication', {
+            itemId: plaidItemDoc.id,
+            institutionName: plaidItemData.institutionName,
+            userId,
+            errorCode: error.response.data.error_code,
+          });
+
+          // Mark this item as needing re-authentication
+          await db
+            .collection('users')
+            .doc(userId)
+            .collection('plaidItems')
+            .doc(plaidItemDoc.id)
+            .update({
+              status: 'ITEM_LOGIN_REQUIRED',
+              lastError: {
+                code: error.response.data.error_code,
+                message: error.response.data.error_message,
+                timestamp: new Date(),
+              },
+            });
+        }
+
         // Continue with other accounts even if one fails
       }
     }

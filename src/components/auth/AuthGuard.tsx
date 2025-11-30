@@ -31,7 +31,7 @@ export function AuthGuard({ children, requireEmailVerification = false }: AuthGu
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner message="Loading..." />
+        <LoadingSpinner />
       </div>
     );
   }

@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
+/* eslint-disable @typescript-eslint/no-require-imports */
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -60,17 +65,34 @@ const nextConfig = {
     ];
   },
 
-  // Bundle analyzer (disabled webpack optimization causing vendor.js issues)
-  webpack: (config, { isServer }) => {
-    if (process.env.ANALYZE) {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'static',
-          reportFilename: isServer ? '../analyze/server.html' : './analyze/client.html',
-          openAnalyzer: false,
-        })
-      );
+  // Performance optimizations
+  webpack: (config, { isServer, dev }) => {
+    if (!dev && !isServer) {
+      // Split chunks for better caching
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          charts: {
+            name: 'charts',
+            test: /[\\/]node_modules[\\/](chart\.js|recharts|react-chartjs-2)[\\/]/,
+            chunks: 'all',
+            priority: 30,
+          },
+          firebase: {
+            name: 'firebase',
+            test: /[\\/]node_modules[\\/](firebase)[\\/]/,
+            chunks: 'all',
+            priority: 25,
+          },
+          vendor: {
+            name: 'vendor',
+            test: /[\\/]node_modules[\\/]/,
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      };
     }
 
     return config;
@@ -80,6 +102,7 @@ const nextConfig = {
   experimental: {
     optimizeCss: false, // Disabled to fix vendor.js exports error
     scrollRestoration: true,
+    optimizePackageImports: ['lucide-react', 'date-fns'],
   },
 
   // Skip TypeScript errors in CI build (already checked in separate step)
@@ -106,4 +129,4 @@ const nextConfig = {
   trailingSlash: false,
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);

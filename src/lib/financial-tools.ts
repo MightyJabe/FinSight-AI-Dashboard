@@ -1,6 +1,6 @@
 // Date utilities are available if needed in the future
 
-import { db } from '@/lib/firebase-admin';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { getAccountBalances, getTransactions } from '@/lib/plaid';
 
@@ -549,7 +549,10 @@ export async function analyzeDebtToIncomeRatio(
 }
 
 // Add more simplified tool functions...
-export async function analyzeCashFlow(userId: string, _months = 6, _projectionMonths = 3) {
+export async function analyzeCashFlow(userId: string, months = 6, projectionMonths = 3) {
+  // Parameters available for future implementation
+  void months;
+  void projectionMonths;
   // Simplified cash flow analysis
   const summary = await getMonthlySummary(userId);
   return {
@@ -562,7 +565,9 @@ export async function analyzeCashFlow(userId: string, _months = 6, _projectionMo
   };
 }
 
-export async function analyzeSpendingPatterns(userId: string, _analysisPeriod = '3_months') {
+export async function analyzeSpendingPatterns(userId: string, analysisPeriod = '3_months') {
+  // Parameter available for future implementation
+  void analysisPeriod;
   // Simplified spending pattern analysis
   const spending = await getSpendingByCategory(userId, 'month');
   return {

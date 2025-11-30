@@ -11,7 +11,7 @@ import { auth as firebaseAuth } from '@/lib/firebase';
  *
  */
 export default function SettingsPage() {
-  const { user, firebaseUser: _firebaseUser } = useSession();
+  const { user } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -76,19 +76,20 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="max-w-full">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Settings</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Manage your account preferences and app configuration.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Settings</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Manage your account preferences and app configuration.
+          </p>
+        </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {settingsSections.map(section => (
             <div
               key={section.title}
-              className="bg-white rounded-xl shadow-sm border border-gray-200"
+              className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
             >
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center">
@@ -123,7 +124,7 @@ export default function SettingsPage() {
           ))}
 
           {/* Sign Out Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Sign Out</h2>
             </div>
@@ -140,6 +141,7 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
+        </div>
       </div>
     </div>
   );

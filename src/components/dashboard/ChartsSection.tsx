@@ -7,7 +7,6 @@ import {
   LinearScale,
   LineElement,
   PointElement,
-  Tick,
   Title,
   Tooltip,
   TooltipItem,
@@ -258,7 +257,7 @@ export const ChartsSection = memo(function ChartsSection({
                   scales: {
                     y: {
                       ticks: {
-                        callback: (tickValue: string | number, _index: number, _ticks: Tick[]) => {
+                        callback: (tickValue: string | number) => {
                           if (typeof tickValue === 'number') {
                             return formatCurrency(tickValue);
                           }

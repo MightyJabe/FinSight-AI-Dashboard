@@ -2,6 +2,8 @@ import '@/app/globals.css';
 
 import { Inter } from 'next/font/google';
 
+import PerformanceMonitor from '@/components/common/PerformanceMonitor';
+import { WebVitals } from '@/components/common/WebVitals';
 import { ClientWrapper } from '@/components/layout/ClientWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -15,8 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="description" content="Your AI-powered financial dashboard" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#ffffff" />
-        <script dangerouslySetInnerHTML={{
-          __html: `
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
             (function() {
               const theme = localStorage.getItem('theme');
               const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -30,11 +33,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#1f2937' : '#ffffff');
               }
             })();
-          `
-        }} />
+          `,
+          }}
+        />
       </head>
       <body className={`${inter.className} overflow-x-hidden`}>
         <ClientWrapper>{children}</ClientWrapper>
+        <PerformanceMonitor />
+        <WebVitals />
       </body>
     </html>
   );

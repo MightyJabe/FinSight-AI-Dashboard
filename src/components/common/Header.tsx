@@ -1,94 +1,129 @@
 'use client';
+
+import { Bell, ChevronDown, LogOut, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { useEffect, useRef, useState } from 'react';
 
-import { Logo } from '@/components/common/Logo';
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button } from '@/components/ui/Button';
 
-/**
- *
- */
 export function Header() {
   const { user, signOut } = useSession();
   const router = useRouter();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success('Successfully logged out!');
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to log out');
-    }
+    await signOut();
+    router.push('/');
+    setShowUserMenu(false);
   };
 
-  const toggleDarkMode = () => {
-    const root = document.documentElement;
-    root.classList.toggle('dark');
-  };
+  if (!user) {
+    return (
+      <header className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" prefetch={true} className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">F</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">FinSight AI</span>
+          </Link>
+          <div className="flex items-center space-x-3">
+            <Link href="/login" prefetch={true}>
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup" prefetch={true}>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur bg-background/80 border-b shadow-sm">
-      <div className="flex h-20 items-center justify-between px-8">
-        <div className="flex items-center gap-3">
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-3">
-            <Logo width={40} height={40} className="h-10 w-10" />
-            <div className="flex flex-col leading-tight justify-center">
-              <div>
-                <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-logoGradientStart via-accent to-logoGradientEnd text-transparent bg-clip-text drop-shadow">
-                  FinSight
-                </span>
-                <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-logoGradientEnd via-accent to-logoGradientStart text-transparent bg-clip-text ml-1 drop-shadow">
-                  AI
-                </span>
-              </div>
-              <span className="text-sm font-medium text-logoSubtitle">AI Dashboard</span>
-            </div>
-          </Link>
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div className="px-6 py-3 flex items-center justify-between">
+        {/* Search Bar */}
+        <div className="flex-1 max-w-lg">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search transactions, accounts..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-6">
-          <button
-            className="rounded-full p-2 bg-card/70 hover:bg-card transition shadow border border-border"
-            aria-label="Toggle dark mode"
-            onClick={toggleDarkMode}
-          >
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 3v1m0 16v1m8.66-13.66-.71.71M4.05 19.95l-.71.71m16.97 0-.71-.71M4.05 4.05l-.71-.71M21 12h1M3 12H2"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" />
-            </svg>
+
+        {/* Right Side */}
+        <div className="flex items-center space-x-4">
+          {/* Notifications */}
+          <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
-          {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground font-medium hidden md:block">
-                {user.email}
-              </span>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary via-accent to-logoNode flex items-center justify-center text-white font-bold shadow">
-                {user.email?.[0]?.toUpperCase()}
+
+          {/* User Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                </span>
               </div>
-              <Button variant="ghost" onClick={handleSignOut}>
-                Log Out
-              </Button>
-            </div>
-          )}
-          {!user && (
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Log In</Link>
-              </Button>
-              <Button variant="primary" asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </div>
-          )}
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-gray-900">{user.displayName || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate max-w-32">{user.email}</p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user.displayName || 'User'}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                </div>
+                <Link
+                  href="/settings"
+                  prefetch={true}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <User className="w-4 h-4 mr-3" />
+                  Account Settings
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

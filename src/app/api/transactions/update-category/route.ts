@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';

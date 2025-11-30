@@ -1,7 +1,9 @@
 'use client';
 
+import { Filter } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 
 import { CategoryBreakdown } from './CategoryBreakdown';
@@ -56,39 +58,39 @@ export function TransactionsContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          {selectedCategory && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-gray-600">Filtered by:</span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium">
-                {selectedCategory}
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="ml-1 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            </div>
-          )}
+      <Card variant="flat" padding="md">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Transactions</h1>
+            {selectedCategory && (
+              <div className="flex items-center gap-2 mt-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">Filtered by:</span>
+                <Button variant="outline" size="sm" onClick={() => setSelectedCategory(null)}>
+                  {selectedCategory} ×
+                </Button>
+              </div>
+            )}
+          </div>
+          <DateRangeSelector
+            onDateRangeChange={(newFrom, newTo) => {
+              setDateRange({ from: newFrom, to: newTo });
+            }}
+          />
         </div>
-        <DateRangeSelector
-          onDateRangeChange={(newFrom, newTo) => {
-            setDateRange({ from: newFrom, to: newTo });
-            // You might want to trigger fetching transactions here if not already handled by an effect
-          }}
-        />
-      </div>
+      </Card>
 
-      {/* Spending Overview at Top */}
-      <div className="mb-8">
-        <SpendingBreakdown
-          onCategoryFilter={handleCategoryFilter}
-          selectedCategory={selectedCategory}
-        />
-      </div>
+      <Card variant="elevated">
+        <CardHeader>
+          <CardTitle>Spending Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SpendingBreakdown
+            onCategoryFilter={handleCategoryFilter}
+            selectedCategory={selectedCategory}
+          />
+        </CardContent>
+      </Card>
 
       {/* Main Content - Transactions */}
       <Tabs defaultValue="list" className="space-y-4">

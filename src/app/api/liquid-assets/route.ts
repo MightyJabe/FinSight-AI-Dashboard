@@ -2,7 +2,10 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import { LIQUID_ASSET_TYPES } from '@/lib/finance'; // Assuming LIQUID_ASSET_TYPES is exported from finance.ts
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  *
@@ -25,7 +28,7 @@ async function getUserIdFromSession(): Promise<string | null> {
  * Fetches all liquid assets (manual and Plaid) for the authenticated user.
  * Liquid assets are defined by LIQUID_ASSET_TYPES.
  */
-export async function GET(_request: Request) {
+export async function GET() {
   try {
     const userId = await getUserIdFromSession();
     if (!userId) {

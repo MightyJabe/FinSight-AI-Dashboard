@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { plaidClient } from '@/lib/plaid';
 

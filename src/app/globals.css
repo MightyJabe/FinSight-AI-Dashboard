@@ -4,7 +4,24 @@
 
 @layer base {
   :root {
-    color-scheme: light dark;
+    /* Light theme - consistent white background */
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --primary: 15 23 42;
+    --primary-foreground: 255 255 255;
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+    --muted: 248 250 252;
+    --muted-foreground: 100 116 139;
+    --accent: 241 245 249;
+    --accent-foreground: 15 23 42;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 15 23 42;
 
     /* Category colors */
     --amber-500: 245 158 11;
@@ -17,66 +34,38 @@
     --lime-400: 163 230 53;
     --teal-500: 20 184 166;
     --slate-500: 100 116 139;
-
-    /* Theme colors */
-    --primary: 99 102 241; /* Indigo */
-    --primary-dark: 79 70 229;
-    --accent: 168 85 247; /* Purple */
-    --accent-dark: 147 51 234;
-    --logo-gradient-start: 99 102 241;
-    --logo-gradient-end: 168 85 247;
-    --logo-text: 30 41 59;
-    --logo-subtitle: 71 85 105;
-    --logo-node: 168 85 247;
-
-    /* Light theme */
-    --page: 255 255 255;
-    --text: 15 23 42;
-    --link: 99 102 241;
-    --background: 255 255 255;
-    --foreground: 15 23 42;
-    --secondary: 241 245 249;
-    --secondary-foreground: 71 85 105;
-    --muted: 241 245 249;
-    --muted-foreground: 100 116 139;
-    --border: 226 232 240;
-    --card: 255 255 255;
-    --card-foreground: 15 23 42;
-
-    /* Dark theme */
-    --page-dark: 241 245 249;
-    --text-dark: 30 41 59;
-    --link-dark: 79 70 229;
-    --background-dark: 248 250 252;
-    --foreground-dark: 30 41 59;
-    --secondary-dark: 226 232 240;
-    --secondary-foreground-dark: 51 65 85;
-    --muted-dark: 226 232 240;
-    --muted-foreground-dark: 71 85 105;
-    --border-dark: 203 213 225;
-    --card-dark: 248 250 252;
-    --card-foreground-dark: 30 41 59;
   }
 
   .dark {
-    /* Dark theme */
-    --page: 15 23 42;
-    --text: 248 250 252;
-    --link: 129 140 248;
     --background: 15 23 42;
     --foreground: 248 250 252;
-    --secondary: 30 41 59;
-    --secondary-foreground: 203 213 225;
-    --muted: 30 41 59;
-    --muted-foreground: 148 163 184;
-    --border: 51 65 85;
     --card: 30 41 59;
     --card-foreground: 248 250 252;
-    --card-foreground-dark: 241 245 249;
+    --primary: 248 250 252;
+    --primary-foreground: 15 23 42;
+    --secondary: 51 65 85;
+    --secondary-foreground: 248 250 252;
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+    --accent: 51 65 85;
+    --accent-foreground: 248 250 252;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 212 212 216;
+  }
+
+  * {
+    border-color: rgb(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50;
+    color: rgb(var(--foreground));
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
   /* Typography */
@@ -98,7 +87,7 @@
 
   /* Links */
   a {
-    @apply text-link hover:text-link/80 transition-colors;
+    @apply text-blue-600 hover:text-blue-800 transition-colors;
   }
 
   /* Focus styles */

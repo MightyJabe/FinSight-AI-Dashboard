@@ -65,7 +65,7 @@ if (typeof global.Response === 'undefined') {
     json() {
       try {
         return Promise.resolve(JSON.parse(this.body || '{}'));
-      } catch (error) {
+      } catch {
         // If JSON parsing fails, return empty object
         return Promise.resolve({});
       }
@@ -204,6 +204,7 @@ global.TextDecoder = TextDecoder;
 global.setImmediate = global.setImmediate || ((fn, ...args) => global.setTimeout(fn, 0, ...args));
 
 // Setup JSDOM environment properly for component tests
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { JSDOM } = require('jsdom');
 
 // Create a proper JSDOM environment

@@ -9,24 +9,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format currency values consistently
+ * Format currency values
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency,
   }).format(amount);
 }
 
 /**
  * Format percentage values
  */
-export function formatPercentage(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'percent',
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value / 100);
+export function formatPercentage(value: number, decimals = 2): string {
+  return `${(value * 100).toFixed(decimals)}%`;
 }
 
 /**
@@ -38,22 +34,8 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 /**
- * Debounce function for search inputs
+ * Generate a random ID
  */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
-
-/**
- * Sleep utility for delays
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 15);
 }

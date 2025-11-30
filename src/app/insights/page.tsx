@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { CreditCard, PieChart, Receipt, RefreshCw, Target, TrendingUp } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import InsightCard from '@/components/insights/InsightCard';
@@ -30,15 +30,74 @@ interface InsightsPageData {
   plaidDataAvailable?: boolean;
 }
 
+function AnalysisButton({ function: fn, label }: { function: string; label: string }) {
+  const { firebaseUser } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const icons: Record<string, any> = {
+    analyzeBudget: PieChart,
+    optimizeInvestments: TrendingUp,
+    findTaxDeductions: Receipt,
+    createDebtPayoffPlan: CreditCard,
+    planSavingsGoal: Target,
+  };
+  const Icon = icons[fn];
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const token = await firebaseUser?.getIdToken();
+      const res = await fetch('/api/ai/specialized', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ function: fn, params: {} }),
+      });
+      const data = await res.json();
+      setResult(data.result);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        disabled={loading}
+        className="w-full p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all disabled:opacity-50"
+      >
+        <Icon className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+        <p className="text-sm font-medium text-gray-900">{label}</p>
+      </button>
+      {result && (
+        <div className="mt-2 p-3 bg-blue-50 rounded text-xs">
+          <p className="font-semibold mb-1">Insights:</p>
+          {result.insights?.map((i: string, idx: number) => (
+            <p key={idx}>• {i}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  *
  */
 export default function InsightsPage() {
-  const { user: _user, firebaseUser, loading: authLoading } = useSession();
+  const { firebaseUser, loading: authLoading } = useSession();
   const [insightsData, setInsightsData] = useState<InsightsPageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(true);
 
   const fetchInsights = useCallback(
     async (forceRefresh = false) => {
@@ -100,9 +159,29 @@ export default function InsightsPage() {
     [authLoading, firebaseUser, refreshing]
   );
 
+  const fetchAlerts = useCallback(async () => {
+    if (!firebaseUser) return;
+    try {
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch('/api/alerts', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAlerts(data.alerts || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch alerts:', err);
+      setAlerts([]);
+    } finally {
+      setAlertsLoading(false);
+    }
+  }, [firebaseUser]);
+
   useEffect(() => {
     fetchInsights();
-  }, [fetchInsights]);
+    fetchAlerts();
+  }, [fetchInsights, fetchAlerts]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -160,14 +239,15 @@ export default function InsightsPage() {
         : null;
 
   return (
-    <div className="max-w-full">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">AI Insights</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Get personalized financial recommendations and insights powered by AI.
-        </p>
-      </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">AI Insights</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Get personalized financial recommendations and insights powered by AI.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
               <div>
@@ -183,65 +263,131 @@ export default function InsightsPage() {
               </button>
             </div>
 
-        {insightsData.plaidDataAvailable === false && <PlaidDataWarning />}
+            {insightsData.plaidDataAvailable === false && <PlaidDataWarning />}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <MetricDisplay
-            title="Net Worth"
-            value={insightsData.metrics.netWorth}
-            valuePrefix="$"
-            isLoading={loading}
-          />
-          <MetricDisplay
-            title="Total Monthly Spending"
-            value={totalMonthlySpending}
-            valuePrefix="$"
-            isLoading={loading}
-          />
-        </div>
-
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">AI-Generated Insights</h2>
-          {loading && !insightsData.insights.length ? (
-            <div className="space-y-4">
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-lg p-5">
-                  <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-full mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {insightsData.summary && (
-                <p className="mb-6 text-gray-700 bg-blue-50 p-4 rounded-lg shadow">
-                  <strong>Summary:</strong> {insightsData.summary}
-                </p>
-              )}
-              <div className="space-y-4">
-                {insightsData.insights.map((insight, index) => (
-                  <InsightCard key={index} insight={insight} index={index} />
-                ))}
+            {/* Quick Analysis Tools */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">Quick Analysis</h2>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <AnalysisButton function="analyzeBudget" label="Budget" />
+                <AnalysisButton function="optimizeInvestments" label="Investments" />
+                <AnalysisButton function="findTaxDeductions" label="Tax" />
+                <AnalysisButton function="createDebtPayoffPlan" label="Debt" />
+                <AnalysisButton function="planSavingsGoal" label="Savings" />
               </div>
-              {insightsData.nextSteps && insightsData.nextSteps.length > 0 && (
-                <div className="mt-6 bg-green-50 p-4 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-green-700 mb-2">Next Steps:</h3>
-                  <ul className="list-disc pl-5 text-green-700 space-y-1">
-                    {insightsData.nextSteps.map((step, i) => (
-                      <li key={i}>{step}</li>
-                    ))}
-                  </ul>
+            </div>
+
+            {/* Automated Alerts Section */}
+            {!alertsLoading && alerts.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Smart Alerts</h2>
+                <div className="space-y-3">
+                  {alerts.slice(0, 5).map(alert => (
+                    <div
+                      key={alert.id}
+                      className={`p-4 rounded-lg border-l-4 ${
+                        alert.priority === 'high'
+                          ? 'bg-red-50 border-red-500'
+                          : alert.priority === 'medium'
+                            ? 'bg-yellow-50 border-yellow-500'
+                            : 'bg-blue-50 border-blue-500'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 mb-1">{alert.title}</h3>
+                          <p className="text-sm text-gray-700">{alert.message}</p>
+                          {alert.actionUrl && (
+                            <a
+                              href={alert.actionUrl}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
+                            >
+                              View Details →
+                            </a>
+                          )}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const token = await firebaseUser?.getIdToken();
+                              await fetch(`/api/alerts/${alert.id}`, {
+                                method: 'PATCH',
+                                headers: { Authorization: `Bearer ${token}` },
+                              });
+                              setAlerts(alerts.filter(a => a.id !== alert.id));
+                            } catch (err) {
+                              console.error('Failed to dismiss alert:', err);
+                            }
+                          }}
+                          className="text-gray-400 hover:text-gray-600 ml-4"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <MetricDisplay
+                title="Net Worth"
+                value={insightsData.metrics.netWorth}
+                valuePrefix="$"
+                isLoading={loading}
+              />
+              <MetricDisplay
+                title="Total Monthly Spending"
+                value={totalMonthlySpending}
+                valuePrefix="$"
+                isLoading={loading}
+              />
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">AI-Generated Insights</h2>
+              {loading && !insightsData.insights.length ? (
+                <div className="space-y-4">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-xl shadow-lg p-5">
+                      <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4 mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {insightsData.summary && (
+                    <p className="mb-6 text-gray-700 bg-blue-50 p-4 rounded-lg shadow">
+                      <strong>Summary:</strong> {insightsData.summary}
+                    </p>
+                  )}
+                  <div className="space-y-4">
+                    {insightsData.insights.map((insight, index) => (
+                      <InsightCard key={index} insight={insight} index={index} />
+                    ))}
+                  </div>
+                  {insightsData.nextSteps && insightsData.nextSteps.length > 0 && (
+                    <div className="mt-6 bg-green-50 p-4 rounded-lg shadow">
+                      <h3 className="text-lg font-semibold text-green-700 mb-2">Next Steps:</h3>
+                      <ul className="list-disc pl-5 text-green-700 space-y-1">
+                        {insightsData.nextSteps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
 
             <SpendingByCategoryDisplay
               spendingData={insightsData.metrics.spendingByCategory}
               isLoading={loading}
             />
+          </div>
         </div>
       </div>
     </div>

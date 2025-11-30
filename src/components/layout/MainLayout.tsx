@@ -1,71 +1,52 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 
-import { OfflineBanner } from '@/components/common/ConnectionStatus';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { Footer } from '@/components/common/Footer';
+import { CommandPalette } from '@/components/common/CommandPalette';
 import { Header } from '@/components/common/Header';
 import { Navigation } from '@/components/common/Navigation';
 import { useSession } from '@/components/providers/SessionProvider';
-import { SWRProvider } from '@/components/providers/SWRProvider';
+import QuickCashEntry from '@/components/transactions/QuickCashEntry';
 
 interface RootLayoutContentProps {
   children: React.ReactNode;
 }
 
-/** Main layout component that handles authenticated and public routes */
 export function RootLayoutContent({ children }: RootLayoutContentProps) {
   const { user, loading } = useSession();
-  const pathname = usePathname();
-  const isPublicRoute = ['/', '/login', '/signup'].includes(pathname);
 
-  // Show loading state
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Public layout (homepage, login, signup)
-  if (!user || isPublicRoute) {
+  // Landing page layout (no auth required)
+  if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased">
-        <OfflineBanner />
-        <div className="flex min-h-screen">
-          <div className="flex-1">
-            <Header />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8">{children}</main>
-            <Footer />
-            <Toaster position="top-right" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-6 py-8">{children}</main>
+        <Toaster position="top-right" />
       </div>
     );
   }
 
-  // Authenticated layout
+  // Authenticated user layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-accent/10 antialiased overflow-x-hidden">
-      <OfflineBanner />
-      <SWRProvider>
-        <ErrorBoundary>
-          <div className="lg:flex min-h-screen overflow-x-hidden">
-            <Navigation />
-            <div className="flex-1 min-w-0 w-full">
-              <Header />
-              <main className="flex-1 w-full max-w-none px-4 py-8 pt-16 lg:pt-8 lg:px-8 overflow-x-hidden">
-                {children}
-              </main>
-              <Footer />
-              <Toaster position="top-right" />
-            </div>
-          </div>
-        </ErrorBoundary>
-      </SWRProvider>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <CommandPalette />
+      <Header />
+      <div className="flex h-[calc(100vh-64px)]">
+        <Navigation />
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-8 max-w-7xl mx-auto">{children}</div>
+        </main>
+      </div>
+      <QuickCashEntry />
+      <Toaster position="top-right" />
     </div>
   );
 }

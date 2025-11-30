@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useSession } from '@/components/providers/SessionProvider';
+import logger from '@/lib/logger';
 import type { CryptoAllocation, CryptoCurrency, CryptoPortfolioData } from '@/types/crypto';
 
 interface UseCryptoPortfolioOptions {
@@ -22,35 +24,51 @@ export function useCryptoPortfolio(options: UseCryptoPortfolioOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
+  const { firebaseUser } = useSession();
+
   const fetchPortfolioData = useCallback(async () => {
+    if (!firebaseUser) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
-
+      const idToken = await firebaseUser.getIdToken();
       const params = new URLSearchParams({
         includeHistorical: includeHistorical.toString(),
         includePrices: 'true',
         currency,
       });
 
-      const response = await fetch(`/api/crypto-portfolio?${params}`);
+      const response = await fetch(`/api/crypto/portfolio?${params}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
       const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to fetch crypto portfolio data');
       }
 
-      if (result.success) {
-        setData(result.data);
-        setLastRefresh(new Date());
-      } else {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to fetch crypto portfolio data');
       }
+
+      setData(result.data);
+      setLastRefresh(new Date());
+      logger.info('Crypto portfolio data fetched successfully', {
+        holdingsCount: result.data?.holdings?.length || 0,
+        totalValue: result.data?.summary?.totalValue || 0,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch crypto portfolio';
+      setError(errorMessage);
+      logger.error('Error fetching crypto portfolio', { error: err });
     } finally {
       setLoading(false);
     }
-  }, [includeHistorical, currency]);
+  }, [includeHistorical, currency, firebaseUser]);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -182,32 +200,55 @@ export function useCryptoPortfolio(options: UseCryptoPortfolioOptions = {}) {
   const isPositivePerformance = Boolean(data && data.summary.totalGainLoss >= 0);
   const isDayPositive = Boolean(data && data.summary.dayChange >= 0);
 
-  return {
-    // Data
-    data,
-    loading,
-    error,
-    lastRefresh,
-    hasData,
-    isPositivePerformance,
-    isDayPositive,
+  return useMemo(
+    () => ({
+      // Data
+      data,
+      loading,
+      error,
+      lastRefresh,
+      hasData,
+      isPositivePerformance,
+      isDayPositive,
 
-    // Actions
-    refresh,
+      // Actions
+      refresh,
 
-    // Formatters
-    formatCurrency,
-    formatCrypto,
-    formatPercentage,
-    getPerformanceColor,
-    getPerformanceIcon,
-    getDiversificationLevel,
+      // Formatters
+      formatCurrency,
+      formatCrypto,
+      formatPercentage,
+      getPerformanceColor,
+      getPerformanceIcon,
+      getDiversificationLevel,
 
-    // Computed data
-    getTopHoldings,
-    getTopPerformers,
-    getBottomPerformers,
-    getTotalValueTrend,
-    getPortfolioAllocation,
-  };
+      // Computed data
+      getTopHoldings,
+      getTopPerformers,
+      getBottomPerformers,
+      getTotalValueTrend,
+      getPortfolioAllocation,
+    }),
+    [
+      data,
+      loading,
+      error,
+      lastRefresh,
+      hasData,
+      isPositivePerformance,
+      isDayPositive,
+      refresh,
+      formatCurrency,
+      formatCrypto,
+      formatPercentage,
+      getPerformanceColor,
+      getPerformanceIcon,
+      getDiversificationLevel,
+      getTopHoldings,
+      getTopPerformers,
+      getBottomPerformers,
+      getTotalValueTrend,
+      getPortfolioAllocation,
+    ]
+  );
 }

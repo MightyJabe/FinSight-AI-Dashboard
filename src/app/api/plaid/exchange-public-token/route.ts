@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { encryptPlaidToken } from '@/lib/encryption';
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { plaidClient } from '@/lib/plaid';
 
@@ -83,22 +83,26 @@ export async function POST(request: Request) {
     }
 
     // Store the access_token and item_id securely in Firestore
-    // Store in plaid/access_token for simplicity and consistency
-    const plaidDocRef = db.collection('users').doc(userId).collection('plaid').doc('access_token');
+    // Use plaidItems collection for consistency with other APIs
+    const plaidDocRef = db.collection('users').doc(userId).collection('plaidItems').doc(item_id);
 
     // Encrypt the Plaid access token before storing
     const encryptedToken = encryptPlaidToken(access_token);
 
-    await plaidDocRef.set({
-      accessToken: encryptedToken, // ✅ SECURE: Encrypted access token
-      itemId: item_id,
-      userId: userId,
-      institutionId: institution_id || null,
-      institutionName: institution_name || null,
-      linkedAt: new Date(),
-      encryptedAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await plaidDocRef.set(
+      {
+        accessToken: encryptedToken, // ✅ SECURE: Encrypted access token
+        itemId: item_id,
+        userId: userId,
+        institutionId: institution_id || null,
+        institutionName: institution_name || null,
+        status: 'active',
+        linkedAt: new Date(),
+        encryptedAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    ); // Use merge to preserve existing data if updating
 
     logger.info('Plaid access token encrypted and stored securely', {
       userId,

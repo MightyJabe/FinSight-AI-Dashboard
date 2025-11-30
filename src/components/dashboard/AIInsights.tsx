@@ -11,7 +11,7 @@ interface AIInsightsProps {
  */
 export function AIInsights({ insights, insightsLoading }: AIInsightsProps) {
   if (insightsLoading) {
-    return <LoadingSpinner message="Loading insights..." />;
+    return <LoadingSpinner />;
   }
 
   if (!insights?.length) {

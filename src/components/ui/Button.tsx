@@ -1,142 +1,85 @@
-import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
+import React from 'react';
 
-import { cn } from '@/utils/tailwind';
+import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
   {
     variants: {
       variant: {
-        // Primary variants
-        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
         primary:
-          'bg-gradient-to-r from-primary via-accent to-logoNode text-white shadow-lg hover:shadow-xl hover:opacity-90 transition-all duration-200',
-
-        // Secondary variants
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        outline: 'border-2 border-primary bg-transparent text-primary hover:bg-primary/10',
-
-        // Accent variants
-        accent: 'bg-accent text-white shadow hover:bg-accent/90',
-        accentOutline: 'border-2 border-accent bg-transparent text-accent hover:bg-accent/10',
-
-        // Ghost variants
-        ghost: 'hover:bg-accent/10 hover:text-accent',
-        link: 'text-primary underline-offset-4 hover:underline',
-
-        // Destructive variants
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        destructiveOutline:
-          'border-2 border-destructive bg-transparent text-destructive hover:bg-destructive/10',
-
-        // Success variants
-        success: 'bg-green-500 text-white hover:bg-green-600',
-        successOutline:
-          'border-2 border-green-500 bg-transparent text-green-500 hover:bg-green-500/10',
-
-        // Warning variants
-        warning: 'bg-amber-500 text-white hover:bg-amber-600',
-        warningOutline:
-          'border-2 border-amber-500 bg-transparent text-amber-500 hover:bg-amber-500/10',
+          'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg',
+        secondary:
+          'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
+        success:
+          'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg',
+        danger:
+          'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg',
+        outline:
+          'border-2 border-gray-300 bg-transparent hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800',
+        ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800',
+        link: 'text-blue-600 underline-offset-4 hover:underline dark:text-blue-400',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3 text-xs',
-        lg: 'h-11 rounded-md px-8 text-base',
-        xl: 'h-12 rounded-md px-10 text-lg',
-        icon: 'h-10 w-10',
-        'icon-sm': 'h-8 w-8',
-        'icon-lg': 'h-12 w-12',
-      },
-      fullWidth: {
-        true: 'w-full',
-      },
-      isLoading: {
-        true: 'relative text-transparent transition-none hover:text-transparent',
+        sm: 'h-8 px-3 text-sm',
+        md: 'h-10 px-4 text-sm',
+        lg: 'h-11 px-5 text-base',
+        xl: 'h-12 px-6 text-base',
+        icon: 'h-9 w-9 p-0',
       },
     },
     defaultVariants: {
-      variant: 'default',
-      size: 'default',
-      fullWidth: false,
-      isLoading: false,
+      variant: 'primary',
+      size: 'md',
     },
   }
 );
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+  loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    {
-      className,
-      variant,
-      size,
-      fullWidth,
-      isLoading,
-      leftIcon,
-      rightIcon,
-      children,
-      asChild = false,
-      disabled,
-      ...props
-    },
+    { className, variant, size, loading, leftIcon, rightIcon, children, disabled, ...props },
     ref
   ) => {
-    // If icon-only, require aria-label
-    const isIconOnly = !children && (size === 'icon' || size === 'icon-sm' || size === 'icon-lg');
-
-    // When using asChild, we need to pass props to the child element
-    if (asChild) {
-      return (
-        <Slot
-          className={cn(buttonVariants({ variant, size, fullWidth, isLoading, className }))}
-          ref={ref}
-          aria-busy={isLoading || undefined}
-          aria-disabled={disabled || isLoading || undefined}
-          tabIndex={disabled || isLoading ? -1 : undefined}
-          {...(isIconOnly && { 'aria-label': props['aria-label'] })}
-          {...props}
-        >
-          {children}
-        </Slot>
-      );
-    }
-
     return (
       <button
-        className={cn(buttonVariants({ variant, size, fullWidth, isLoading, className }))}
+        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        type={(props.type as 'button' | 'submit' | 'reset') || 'button'}
-        aria-busy={isLoading || undefined}
-        aria-disabled={disabled || isLoading || undefined}
-        disabled={Boolean(disabled || isLoading)}
-        {...(isIconOnly && { 'aria-label': props['aria-label'] })}
+        disabled={disabled || loading}
         {...props}
       >
-        {isLoading && (
-          <span
-            className="absolute inset-0 flex items-center justify-center"
-            aria-live="polite"
-            aria-label="Loading"
-          >
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          </span>
+        {loading && (
+          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
         )}
-        {leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {!loading && leftIcon}
         {children}
-        {rightIcon && <span className="ml-2">{rightIcon}</span>}
+        {!loading && rightIcon}
       </button>
     );
   }
 );
+
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };

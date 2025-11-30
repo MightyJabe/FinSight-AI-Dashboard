@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { retrieveRelevantContext, storeConversationContext } from '@/lib/ai-memory';
 import { getConfig } from '@/lib/config';
-import { auth, db } from '@/lib/firebase-admin';
+import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
-import { getAccountBalances, getTransactions } from '@/lib/plaid';
+import { getTransactions } from '@/lib/plaid';
 
 const { openai: openaiEnvVars } = getConfig();
 
@@ -253,54 +255,47 @@ const tools = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_documents',
+      description:
+        'Search ALL uploaded financial documents. ALWAYS call this first without category parameter to see all available documents.',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            enum: ['tax-returns', 'pay-stubs', 'statements', 'contracts', 'insurance', 'other'],
+            description: 'Optional: Filter by specific category only after seeing all documents',
+          },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 // Function implementations
 /**
- *
+ * Get net worth using centralized calculator with accuracy validation
  */
 async function getNetWorth(
   userId: string
 ): Promise<{ netWorth: number; assets: number; liabilities: number }> {
   try {
-    // Get manual assets
-    const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-    const manualAssets = assetsSnapshot.docs.reduce(
-      (sum: any, doc: any) => sum + (doc.data().amount || 0),
-      0
-    );
+    const { getFinancialOverview } = await import('@/lib/financial-calculator');
+    const { enforceFinancialAccuracy } = await import('@/lib/financial-validator');
+    const { metrics } = await getFinancialOverview(userId);
 
-    // Get manual liabilities
-    const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
-    const manualLiabilities = liabilitiesSnapshot.docs.reduce(
-      (sum: any, doc: any) => sum + (doc.data().amount || 0),
-      0
-    );
+    // Enforce accuracy before returning to AI
+    enforceFinancialAccuracy(metrics, 'chat getNetWorth');
 
-    // Get Plaid accounts
-    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
-    let plaidAssets = 0;
-
-    for (const itemDoc of plaidItemsSnapshot.docs) {
-      const plaidItem = itemDoc.data();
-      const accessToken = plaidItem.accessToken;
-      if (accessToken) {
-        try {
-          const balances = await getAccountBalances(accessToken);
-          plaidAssets += balances.reduce(
-            (sum, account) => sum + (account.balances.current || 0),
-            0
-          );
-        } catch (error) {
-          logger.error('Error fetching Plaid balances for net worth', { userId, error });
-        }
-      }
-    }
-
-    const totalAssets = manualAssets + plaidAssets;
-    const netWorth = totalAssets - manualLiabilities;
-
-    return { netWorth, assets: totalAssets, liabilities: manualLiabilities };
+    return {
+      netWorth: metrics.netWorth,
+      assets: metrics.totalAssets,
+      liabilities: metrics.totalLiabilities,
+    };
   } catch (error) {
     logger.error('Error calculating net worth', { userId, error });
     throw error;
@@ -308,45 +303,34 @@ async function getNetWorth(
 }
 
 /**
- *
+ * Get account balances using centralized calculator
  */
 async function getAccountBalancesData(
   userId: string
 ): Promise<Array<{ name: string; balance: number; type: string }>> {
   try {
+    const { getFinancialOverview } = await import('@/lib/financial-calculator');
+    const { data } = await getFinancialOverview(userId);
+
     const accounts: Array<{ name: string; balance: number; type: string }> = [];
 
-    // Get manual accounts
-    const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-    assetsSnapshot.docs.forEach((doc: any) => {
-      const data = doc.data();
+    // Add manual assets
+    data.manualAssets.forEach(asset => {
       accounts.push({
-        name: data.name,
-        balance: data.amount || 0,
-        type: data.type || 'Manual',
+        name: asset.name,
+        balance: asset.currentBalance,
+        type: asset.type,
       });
     });
 
-    // Get Plaid accounts
-    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
-    for (const itemDoc of plaidItemsSnapshot.docs) {
-      const plaidItem = itemDoc.data();
-      const accessToken = plaidItem.accessToken;
-      if (accessToken) {
-        try {
-          const balances = await getAccountBalances(accessToken);
-          balances.forEach(account => {
-            accounts.push({
-              name: account.name || 'Plaid Account',
-              balance: account.balances.current || 0,
-              type: account.type || 'Bank',
-            });
-          });
-        } catch (error) {
-          logger.error('Error fetching Plaid balances', { userId, error });
-        }
-      }
-    }
+    // Add Plaid accounts
+    data.plaidAccounts.forEach(account => {
+      accounts.push({
+        name: account.name,
+        balance: account.balance,
+        type: account.type,
+      });
+    });
 
     return accounts;
   } catch (error) {
@@ -392,9 +376,12 @@ async function getSpendingByCategory(
 
     for (const itemDoc of plaidItemsSnapshot.docs) {
       const plaidItem = itemDoc.data();
-      const accessToken = plaidItem.accessToken;
-      if (accessToken) {
+      const storedToken = plaidItem.accessToken;
+      if (storedToken) {
         try {
+          const accessToken = isEncryptedData(storedToken)
+            ? decryptPlaidToken(storedToken)
+            : storedToken;
           const transactions = await getTransactions(
             accessToken,
             startDate.toISOString().split('T')[0] as string,
@@ -456,9 +443,12 @@ async function getRecentTransactions(
 
     for (const itemDoc of plaidItemsSnapshot.docs) {
       const plaidItem = itemDoc.data();
-      const accessToken = plaidItem.accessToken;
-      if (accessToken) {
+      const storedToken = plaidItem.accessToken;
+      if (storedToken) {
         try {
+          const accessToken = isEncryptedData(storedToken)
+            ? decryptPlaidToken(storedToken)
+            : storedToken;
           const transactions = await getTransactions(
             accessToken,
             new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as string,
@@ -1106,7 +1096,7 @@ async function analyzeSpendingPatterns(
 }
 
 /**
- * Calculate emergency fund adequacy and recommendations
+ * Calculate emergency fund adequacy using centralized calculator
  */
 async function calculateEmergencyFundStatus(
   userId: string,
@@ -1121,61 +1111,11 @@ async function calculateEmergencyFundStatus(
   riskLevel: 'low' | 'medium' | 'high';
 }> {
   try {
-    // Get current liquid assets (emergency fund)
-    const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
-    let currentEmergencyFund = 0;
+    const { getFinancialOverview } = await import('@/lib/financial-calculator');
+    const { metrics } = await getFinancialOverview(userId);
 
-    assetsSnapshot.docs.forEach((doc: any) => {
-      const asset = doc.data();
-      // Assume savings accounts and cash are emergency fund
-      if (
-        asset.type &&
-        (asset.type.toLowerCase().includes('savings') || asset.type.toLowerCase().includes('cash'))
-      ) {
-        currentEmergencyFund += asset.amount || 0;
-      }
-    });
-
-    // If no specific emergency fund accounts, use 50% of liquid assets
-    if (currentEmergencyFund === 0) {
-      assetsSnapshot.docs.forEach((doc: any) => {
-        const asset = doc.data();
-        currentEmergencyFund += (asset.amount || 0) * 0.5;
-      });
-    }
-
-    // Calculate monthly expenses from recent transactions
-    const plaidItemsSnapshot = await db.collection(`users/${userId}/plaidItems`).get();
-    let monthlyExpenses = 0;
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    for (const itemDoc of plaidItemsSnapshot.docs) {
-      const plaidItem = itemDoc.data();
-      const accessToken = plaidItem.accessToken;
-      if (accessToken) {
-        try {
-          const transactions = await getTransactions(
-            accessToken,
-            thirtyDaysAgo.toISOString().split('T')[0] as string,
-            new Date().toISOString().split('T')[0] as string
-          );
-
-          transactions.forEach(txn => {
-            if (txn.amount < 0) {
-              monthlyExpenses += Math.abs(txn.amount);
-            }
-          });
-        } catch (error) {
-          logger.error('Error fetching transactions for emergency fund analysis', {
-            userId,
-            error,
-          });
-        }
-      }
-    }
-
+    const currentEmergencyFund = metrics.liquidAssets;
+    const monthlyExpenses = metrics.monthlyExpenses;
     const monthsCovered = monthlyExpenses > 0 ? currentEmergencyFund / monthlyExpenses : 0;
     const targetAmount = monthlyExpenses * targetMonths;
     const shortfall = Math.max(0, targetAmount - currentEmergencyFund);
@@ -1206,6 +1146,53 @@ async function calculateEmergencyFundStatus(
   } catch (error) {
     logger.error('Error calculating emergency fund status', { userId, error });
     throw error;
+  }
+}
+
+/**
+ * Search uploaded documents
+ */
+async function searchDocuments(
+  userId: string,
+  category?: string
+): Promise<
+  Array<{ fileName: string; category: string; url: string; fileType: string; uploadedAt: string }>
+> {
+  try {
+    const docsRef = db.collection(`users/${userId}/documents`);
+
+    let snapshot;
+    if (category) {
+      snapshot = await docsRef.where('category', '==', category).get();
+    } else {
+      snapshot = await docsRef.orderBy('uploadedAt', 'desc').limit(10).get();
+    }
+
+    logger.info('Document search results', { userId, category, count: snapshot.docs.length });
+
+    let docs = snapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        fileName: data.fileName,
+        category: data.category,
+        url: data.url,
+        fileType: data.fileType,
+        uploadedAt: data.uploadedAt?.toDate?.()?.toISOString() || '',
+      };
+    });
+
+    if (category) {
+      docs.sort(
+        (a: any, b: any) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+      );
+      docs = docs.slice(0, 10);
+    }
+
+    logger.info('Returning documents', { userId, documentCount: docs.length, documents: docs });
+    return docs;
+  } catch (error) {
+    logger.error('Error searching documents', { userId, error });
+    return [];
   }
 }
 
@@ -1467,6 +1454,18 @@ export async function POST(request: NextRequest) {
 
     const { message, history = [], conversationId } = parsedBody.data;
 
+    // Retrieve relevant context from AI memory
+    let contextStr = '';
+    try {
+      const relevantContext = await retrieveRelevantContext(userId, message, 5);
+      if (relevantContext.length > 0) {
+        contextStr =
+          '\n\nRelevant financial history:\n' + relevantContext.map(ctx => ctx.content).join('\n');
+      }
+    } catch (error) {
+      logger.warn('Failed to retrieve AI memory context', { userId, error });
+    }
+
     // Prepare conversation history
     const messages = [
       {
@@ -1479,18 +1478,24 @@ Your capabilities include:
 - Spending pattern analysis with anomaly detection and trend identification
 - Emergency fund optimization and risk assessment
 - Personalized investment and savings strategies
+- Reading and analyzing uploaded financial documents (PDFs, images) directly via URLs
+- Long-term memory of user's financial history and past conversations${contextStr}
 
 Guidelines for responses:
 1. Always use the available tools to access real financial data when answering questions
-2. Provide specific, actionable advice with dollar amounts and timeframes
-3. Explain complex financial concepts in simple terms
-4. Format all monetary values as currency (e.g., $1,234.56)
-5. When making recommendations, explain the reasoning and potential impact
-6. If you don't have access to specific data, explain what information would help provide better advice
-7. Prioritize high-impact, low-effort improvements first
-8. Consider the user's complete financial picture when giving advice
+2. When users ask about documents:
+   - First call search_documents to get document URLs
+   - Then analyze the document by reading the URL directly (you have vision capabilities)
+   - Provide detailed analysis of what you see in the document
+3. Provide specific, actionable advice with dollar amounts and timeframes
+4. Explain complex financial concepts in simple terms
+5. Format all monetary values as currency (e.g., $1,234.56)
+6. When making recommendations, explain the reasoning and potential impact
+7. If you don't have access to specific data, explain what information would help provide better advice
+8. Prioritize high-impact, low-effort improvements first
+9. Consider the user's complete financial picture when giving advice
 
-Remember: You have access to sophisticated financial analysis tools. Use them to provide insights that go beyond basic budgeting advice.`,
+IMPORTANT: You CAN read PDFs and images directly from URLs. When you get document URLs from search_documents, analyze them immediately in your next response.`,
       },
       ...history,
       { role: 'user' as const, content: message },
@@ -1502,35 +1507,12 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
       if (!openai) {
         throw new Error('OpenAI client not initialized');
       }
-      // Try GPT-5 first, with fallback to GPT-4o
-      try {
-        completion = await openai.chat.completions.create({
-          model: 'gpt-5',
-          messages,
-          tools,
-          tool_choice: 'auto',
-          temperature: 0.7,
-          max_tokens: 2000,
-          // GPT-5 parameters (conditionally added)
-          ...(true && { verbosity: 'medium' as any }), // May not be available in current SDK
-          ...(true && { reasoning_effort: 'standard' as any }),
-        });
-      } catch (modelError: any) {
-        // Fallback to GPT-4o if GPT-5 is not available
-        if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
-          logger.warn('GPT-5 not available, falling back to GPT-4o for chat', { userId });
-          completion = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages,
-            tools,
-            tool_choice: 'auto',
-            temperature: 0.7,
-            max_tokens: 2000,
-          });
-        } else {
-          throw modelError;
-        }
-      }
+      completion = await openai.chat.completions.create({
+        model: 'gpt-5.1',
+        messages,
+        tools,
+        tool_choice: 'auto',
+      });
     } catch (openaiError) {
       logger.error('OpenAI API error', {
         userId,
@@ -1644,6 +1626,27 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
             case 'analyze_financial_health_score':
               result = await analyzeFinancialHealthScore(userId!);
               break;
+            case 'search_documents':
+              logger.info('AI calling search_documents', {
+                userId,
+                category: functionArgs.category,
+              });
+              const docs = await searchDocuments(userId!, functionArgs.category);
+              logger.info('search_documents result', {
+                userId,
+                resultCount: Array.isArray(docs) ? docs.length : 0,
+              });
+
+              if (docs.length > 0) {
+                result = {
+                  documents: docs,
+                  next_step: 'vision_read',
+                  url: docs[0]?.url || '',
+                };
+              } else {
+                result = { documents: [] };
+              }
+              break;
             default:
               result = { error: `Unknown function: ${functionName}` };
           }
@@ -1665,33 +1668,46 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
 
       // Get final response with tool results
       try {
-        // Try GPT-5 first for final response, with fallback to GPT-4o
-        let finalCompletion;
-        try {
-          finalCompletion = await openai.chat.completions.create({
-            model: 'gpt-5',
-            messages: [...messages, responseMessage, ...toolResults],
-            temperature: 0.7,
-            max_tokens: 2000,
-            // GPT-5 parameters (conditionally added)
-            ...(true && { verbosity: 'medium' as any }),
-            ...(true && { reasoning_effort: 'standard' as any }),
-          });
-        } catch (modelError: any) {
-          if (modelError?.status === 404 || modelError?.code === 'model_not_found') {
-            logger.warn('GPT-5 not available for final response, falling back to GPT-4o', {
-              userId,
-            });
-            finalCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [...messages, responseMessage, ...toolResults],
-              temperature: 0.7,
-              max_tokens: 2000,
+        const visionMessages = [...messages, responseMessage, ...toolResults];
+
+        // Check if we need to add vision input for document reading
+        const docTool = toolResults.find(t => {
+          try {
+            const parsed = JSON.parse(t.content);
+            return parsed.next_step === 'vision_read';
+          } catch {
+            return false;
+          }
+        });
+
+        if (docTool) {
+          const { url, documents } = JSON.parse(docTool.content);
+          const fileType = documents[0]?.fileType || '';
+
+          // For images, use image_url. For PDFs, include URL in text
+          if (fileType.startsWith('image/')) {
+            visionMessages.push({
+              role: 'user' as const,
+              content: [
+                { type: 'text', text: 'Analyze this document:' },
+                { type: 'image_url', image_url: { url } },
+              ] as any,
             });
           } else {
-            throw modelError;
+            // For PDFs, GPT-5.1 can read from URL in text
+            visionMessages.push({
+              role: 'user' as const,
+              content: `Please read and analyze this PDF document: ${url}`,
+            });
           }
         }
+
+        const finalCompletion = await openai.chat.completions.create({
+          model: 'gpt-5.1',
+          messages: visionMessages,
+          tools,
+          tool_choice: 'auto',
+        });
 
         finalResponse =
           finalCompletion.choices[0]?.message?.content ||
@@ -1714,6 +1730,13 @@ Remember: You have access to sophisticated financial analysis tools. Use them to
       conversationMessages,
       conversationId
     );
+
+    // Store conversation in AI memory
+    try {
+      await storeConversationContext(userId, message, finalResponse);
+    } catch (error) {
+      logger.warn('Failed to store conversation in AI memory', { userId, error });
+    }
 
     return NextResponse.json({
       response: finalResponse,

@@ -1,5 +1,6 @@
 // Global type declarations to suppress TypeScript warnings for missing @types packages
 // These are development dependencies and don't affect runtime functionality
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 declare module 'aria-query' {
   const content: any;

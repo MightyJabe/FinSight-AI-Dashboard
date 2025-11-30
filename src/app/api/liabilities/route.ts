@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
-import { db } from '@/lib/firebase-admin';
-import { getAccountBalances } from '@/lib/plaid';
-import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
+import { getFinancialOverview } from '@/lib/financial-calculator';
+import { enforceFinancialAccuracy } from '@/lib/financial-validator';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,55 +19,23 @@ export async function GET(request: Request) {
     }
     const userId = authResult.userId!;
 
-    const accessToken = await getPlaidAccessToken(userId);
+    const { data, metrics } = await getFinancialOverview(userId);
+    enforceFinancialAccuracy(metrics, 'liabilities API');
 
-    let creditAccounts: any[] = [];
-    let totalCreditDebt = 0;
+    const creditAccounts = data.plaidAccounts.filter(acc => acc.accountType === 'credit');
 
-    if (accessToken) {
-      const plaidAccounts = await getAccountBalances(accessToken);
-      creditAccounts = plaidAccounts.filter(
-        acc => acc.type === 'credit' || acc.subtype === 'credit card'
-      );
-      totalCreditDebt = creditAccounts.reduce(
-        (sum, acc) => sum + Math.abs(acc.balances.current || 0),
-        0
-      );
-    }
-
-    const manualLiabilitiesSnapshot = await db
-      .collection('users')
-      .doc(userId)
-      .collection('manualLiabilities')
-      .get();
-    const manualLiabilities = manualLiabilitiesSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    const totalManualDebt = manualLiabilities.reduce(
-      (sum: number, l: any) => sum + (l.amount || 0),
-      0
-    );
-
-    const totalDebt = totalCreditDebt + totalManualDebt;
-    const accounts = [...creditAccounts, ...manualLiabilities];
+    const accounts = [...creditAccounts, ...data.manualLiabilities];
 
     return NextResponse.json({
       accounts,
-      totalDebt,
+      totalDebt: metrics.totalLiabilities,
       creditAccounts: creditAccounts.length,
-      manualLiabilities: manualLiabilities.length,
-      totalCreditDebt,
-      totalManualDebt,
+      manualLiabilities: data.manualLiabilities.length,
+      totalCreditDebt: creditAccounts.reduce((sum, acc) => sum + Math.abs(acc.balance), 0),
+      totalManualDebt: data.manualLiabilities.reduce((sum, l) => sum + l.amount, 0),
     });
   } catch (error) {
-    console.error('Error fetching liabilities:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to fetch liabilities',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    logger.error('Error in liabilities API:', { error });
+    return NextResponse.json({ error: 'Failed to fetch liabilities' }, { status: 500 });
   }
 }

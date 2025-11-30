@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 
-import { auth, db } from '@/lib/firebase-admin';
+import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+
+// Simple in-memory cache for spending analysis
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30 * 1000; // 30 seconds
 
 const CATEGORY_COLORS = {
   Housing: '#3B82F6',
@@ -65,6 +69,13 @@ export async function GET(request: Request) {
         { success: false, error: 'Unauthorized - Invalid user ID' },
         { status: 401 }
       );
+    }
+
+    // Check cache first
+    const cacheKey = `spending-analysis-${userId}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return NextResponse.json(cached.data);
     }
 
     // Get categorized transactions
@@ -141,7 +152,7 @@ export async function GET(request: Request) {
 
     const netCashFlow = totalIncome - totalExpenses;
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       data: {
         totalSpent: -totalExpenses, // Negative to show as expense
@@ -150,7 +161,12 @@ export async function GET(request: Request) {
         categories,
         period: 'Last 90 days',
       },
-    });
+    };
+
+    // Cache the result
+    cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData);
   } catch (error) {
     logger.error('Error in spending analysis API', { error });
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });

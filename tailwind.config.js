@@ -18,69 +18,35 @@ module.exports = {
         'slate-500': 'rgb(var(--slate-500) / <alpha-value>)',
 
         // Theme colors
+        background: 'rgb(var(--background) / <alpha-value>)',
+        foreground: 'rgb(var(--foreground) / <alpha-value>)',
+        card: {
+          DEFAULT: 'rgb(var(--card) / <alpha-value>)',
+          foreground: 'rgb(var(--card-foreground) / <alpha-value>)',
+        },
         primary: {
           DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
-          dark: 'rgb(var(--primary-dark) / <alpha-value>)',
-        },
-        accent: {
-          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
-          dark: 'rgb(var(--accent-dark) / <alpha-value>)',
-        },
-        logoGradientStart: 'rgb(var(--logo-gradient-start) / <alpha-value>)',
-        logoGradientEnd: 'rgb(var(--logo-gradient-end) / <alpha-value>)',
-        logoText: 'rgb(var(--logo-text) / <alpha-value>)',
-        logoSubtitle: 'rgb(var(--logo-subtitle) / <alpha-value>)',
-        logoNode: 'rgb(var(--logo-node) / <alpha-value>)',
-
-        // Light theme
-        page: {
-          DEFAULT: 'rgb(var(--page) / <alpha-value>)',
-          dark: 'rgb(var(--page-dark) / <alpha-value>)',
-        },
-        text: {
-          DEFAULT: 'rgb(var(--text) / <alpha-value>)',
-          dark: 'rgb(var(--text-dark) / <alpha-value>)',
-        },
-        link: {
-          DEFAULT: 'rgb(var(--link) / <alpha-value>)',
-          dark: 'rgb(var(--link-dark) / <alpha-value>)',
-        },
-        background: {
-          DEFAULT: 'rgb(var(--background) / <alpha-value>)',
-          dark: 'rgb(var(--background-dark) / <alpha-value>)',
-        },
-        foreground: {
-          DEFAULT: 'rgb(var(--foreground) / <alpha-value>)',
-          dark: 'rgb(var(--foreground-dark) / <alpha-value>)',
+          foreground: 'rgb(var(--primary-foreground) / <alpha-value>)',
         },
         secondary: {
           DEFAULT: 'rgb(var(--secondary) / <alpha-value>)',
-          dark: 'rgb(var(--secondary-dark) / <alpha-value>)',
-        },
-        'secondary-foreground': {
-          DEFAULT: 'rgb(var(--secondary-foreground) / <alpha-value>)',
-          dark: 'rgb(var(--secondary-foreground-dark) / <alpha-value>)',
+          foreground: 'rgb(var(--secondary-foreground) / <alpha-value>)',
         },
         muted: {
           DEFAULT: 'rgb(var(--muted) / <alpha-value>)',
-          dark: 'rgb(var(--muted-dark) / <alpha-value>)',
+          foreground: 'rgb(var(--muted-foreground) / <alpha-value>)',
         },
-        'muted-foreground': {
-          DEFAULT: 'rgb(var(--muted-foreground) / <alpha-value>)',
-          dark: 'rgb(var(--muted-foreground-dark) / <alpha-value>)',
+        accent: {
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          foreground: 'rgb(var(--accent-foreground) / <alpha-value>)',
         },
-        border: {
-          DEFAULT: 'rgb(var(--border) / <alpha-value>)',
-          dark: 'rgb(var(--border-dark) / <alpha-value>)',
+        destructive: {
+          DEFAULT: 'rgb(var(--destructive) / <alpha-value>)',
+          foreground: 'rgb(var(--destructive-foreground) / <alpha-value>)',
         },
-        card: {
-          DEFAULT: 'rgb(var(--card) / <alpha-value>)',
-          dark: 'rgb(var(--card-dark) / <alpha-value>)',
-        },
-        'card-foreground': {
-          DEFAULT: 'rgb(var(--card-foreground) / <alpha-value>)',
-          dark: 'rgb(var(--card-foreground-dark) / <alpha-value>)',
-        },
+        border: 'rgb(var(--border) / <alpha-value>)',
+        input: 'rgb(var(--input) / <alpha-value>)',
+        ring: 'rgb(var(--ring) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont'],
@@ -88,9 +54,9 @@ module.exports = {
       },
       // Semantic spacing
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '128': '32rem',
+        18: '4.5rem',
+        88: '22rem',
+        128: '32rem',
       },
       // Custom animations
       animation: {
@@ -104,8 +70,8 @@ module.exports = {
         'scale-in': 'scaleIn 0.2s ease-out',
         'spin-slow': 'spin 3s linear infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 2s linear infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
+        shimmer: 'shimmer 2s linear infinite',
+        glow: 'glow 2s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -148,26 +114,29 @@ module.exports = {
         },
         glow: {
           '0%': { boxShadow: '0 0 5px rgb(var(--primary) / 0.5)' },
-          '100%': { boxShadow: '0 0 20px rgb(var(--primary) / 0.8), 0 0 30px rgb(var(--primary) / 0.6)' },
+          '100%': {
+            boxShadow: '0 0 20px rgb(var(--primary) / 0.8), 0 0 30px rgb(var(--primary) / 0.6)',
+          },
         },
       },
       // Transition durations
       transitionDuration: {
-        '250': '250ms',
-        '350': '350ms',
-        '400': '400ms',
+        250: '250ms',
+        350: '350ms',
+        400: '400ms',
       },
       // Custom shadows
       boxShadow: {
         'inner-sm': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)',
-        'glow': '0 0 15px rgb(var(--primary) / 0.5)',
+        glow: '0 0 15px rgb(var(--primary) / 0.5)',
         'glow-lg': '0 0 30px rgb(var(--primary) / 0.6)',
       },
       // Background patterns
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'shimmer': 'linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.1) 50%, transparent 100%)',
+        shimmer:
+          'linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.1) 50%, transparent 100%)',
       },
       // Container queries
       containers: {
@@ -191,9 +160,9 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/container-queries'),
-    require('@tailwindcss/aspect-ratio'),
+    import('@tailwindcss/typography'),
+    import('@tailwindcss/forms'),
+    import('@tailwindcss/container-queries'),
+    import('@tailwindcss/aspect-ratio'),
   ],
 };

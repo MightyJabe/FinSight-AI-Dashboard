@@ -1,7 +1,6 @@
-import { formatISO, subDays } from 'date-fns';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
-import { db } from '@/lib/firebase-admin';
-import { getTransactions as getPlaidTransactions } from '@/lib/plaid';
+import { adminDb as db } from '@/lib/firebase-admin';
 import type { Transaction } from '@/types/finance';
 
 export interface TransactionService {
@@ -14,40 +13,35 @@ export function getTransactionService(userId: string): TransactionService {
   return {
     async getTransactions(limit?: number): Promise<Transaction[]> {
       try {
-        // Get the user's Plaid access token from Firestore
-        const accessTokenDoc = await db
-          .collection('users')
-          .doc(userId)
-          .collection('plaid')
-          .doc('access_token')
-          .get();
-        
-        const accessToken = accessTokenDoc.exists ? accessTokenDoc.data()?.accessToken : null;
-        
-        if (!accessToken) {
-          return [];
+        // Get transactions from Firestore (cached data)
+        let query = db
+          .collection('transactions')
+          .where('userId', '==', userId)
+          .orderBy('date', 'desc');
+
+        if (limit) {
+          query = query.limit(limit);
         }
 
-        // Fetch transactions for the last 30 days (or based on limit)
-        const days = limit ? Math.min(limit, 30) : 30;
-        const endDate = formatISO(new Date(), { representation: 'date' });
-        const startDate = formatISO(subDays(new Date(), days), { representation: 'date' });
-        
-        const plaidTransactions = await getPlaidTransactions(accessToken, startDate, endDate);
-        
-        // Convert to our Transaction type
-        const transactions: Transaction[] = plaidTransactions.map(txn => ({
-          id: txn.transaction_id,
-          amount: Math.abs(txn.amount), // Make amount positive for consistency
-          type: txn.amount > 0 ? 'income' : 'expense',
-          category: txn.category?.[0] || 'Other',
-          description: txn.name,
-          date: txn.date,
-          account: 'Unknown Account',
-          accountId: txn.account_id
-        }));
-        
-        return limit ? transactions.slice(0, limit) : transactions;
+        const snapshot = await query.get();
+
+        const transactions: Transaction[] = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              amount: data.amount || 0,
+              type: data.type || 'expense',
+              category: data.category || 'Other',
+              description: data.description || 'Unknown',
+              date: data.date || new Date().toISOString(),
+              account: data.account || 'Unknown Account',
+              accountId: data.accountId || '',
+            };
+          }
+        );
+
+        return transactions;
       } catch (error) {
         console.error('Error fetching transactions:', error);
         return [];
@@ -56,32 +50,30 @@ export function getTransactionService(userId: string): TransactionService {
 
     async getTransactionsByDateRange(startDate: string, endDate: string): Promise<Transaction[]> {
       try {
-        const accessTokenDoc = await db
-          .collection('users')
-          .doc(userId)
-          .collection('plaid')
-          .doc('access_token')
+        const snapshot = await db
+          .collection('transactions')
+          .where('userId', '==', userId)
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .orderBy('date', 'desc')
           .get();
-        
-        const accessToken = accessTokenDoc.exists ? accessTokenDoc.data()?.accessToken : null;
-        
-        if (!accessToken) {
-          return [];
-        }
 
-        const plaidTransactions = await getPlaidTransactions(accessToken, startDate, endDate);
-        
-        const transactions: Transaction[] = plaidTransactions.map(txn => ({
-          id: txn.transaction_id,
-          amount: Math.abs(txn.amount),
-          type: txn.amount > 0 ? 'income' : 'expense',
-          category: txn.category?.[0] || 'Other',
-          description: txn.name,
-          date: txn.date,
-          account: 'Unknown Account',
-          accountId: txn.account_id
-        }));
-        
+        const transactions: Transaction[] = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              amount: data.amount || 0,
+              type: data.type || 'expense',
+              category: data.category || 'Other',
+              description: data.description || 'Unknown',
+              date: data.date || new Date().toISOString(),
+              account: data.account || 'Unknown Account',
+              accountId: data.accountId || '',
+            };
+          }
+        );
+
         return transactions;
       } catch (error) {
         console.error('Error fetching transactions by date range:', error);
@@ -91,9 +83,9 @@ export function getTransactionService(userId: string): TransactionService {
 
     async getTransactionsByCategory(category: string): Promise<Transaction[]> {
       const transactions = await this.getTransactions();
-      return transactions.filter(txn => 
+      return transactions.filter(txn =>
         txn.category.toLowerCase().includes(category.toLowerCase())
       );
-    }
+    },
   };
 }
