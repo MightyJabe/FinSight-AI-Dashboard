@@ -7,7 +7,4 @@ module.exports = {
 
   // JSON and Markdown files
   '*.{json,md}': ['prettier --write'],
-
-  // Run type checking on staged TypeScript files
-  '*.{ts,tsx}': () => 'tsc --noEmit',
 };

@@ -1,12 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 
-import { CommandPalette } from '@/components/common/CommandPalette';
 import { Header } from '@/components/common/Header';
 import { Navigation } from '@/components/common/Navigation';
 import { useSession } from '@/components/providers/SessionProvider';
 import QuickCashEntry from '@/components/transactions/QuickCashEntry';
+
+const CommandPalette = dynamic(
+  () => import('@/components/common/CommandPalette').then(mod => mod.CommandPalette),
+  { ssr: false }
+);
 
 interface RootLayoutContentProps {
   children: React.ReactNode;

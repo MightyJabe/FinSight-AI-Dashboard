@@ -75,7 +75,7 @@ const nextConfig = {
           ...config.optimization.splitChunks.cacheGroups,
           charts: {
             name: 'charts',
-            test: /[\\/]node_modules[\\/](chart\.js|recharts|react-chartjs-2)[\\/]/,
+            test: /[\\/]node_modules[\\/](chart\.js|react-chartjs-2)[\\/]/,
             chunks: 'all',
             priority: 30,
           },

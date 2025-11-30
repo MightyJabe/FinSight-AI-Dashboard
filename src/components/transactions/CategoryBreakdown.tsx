@@ -1,36 +1,14 @@
 'use client';
 
-import {
-  ArcElement,
-  CategoryScale,
-  Chart as ChartJS,
-  ChartType,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  TooltipItem,
-} from 'chart.js';
-import { useEffect, useRef } from 'react';
-import { Pie } from 'react-chartjs-2';
+import type { Chart as ChartJS, ChartType, TooltipItem } from 'chart.js';
+import dynamic from 'next/dynamic';
+import { useEffect, useRef, useState } from 'react';
 
 import type { Transaction } from '@/lib/finance';
 import { getCategoryColor } from '@/utils/category-color';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 
-// Register Chart.js components
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const PieChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Pie), { ssr: false });
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -42,6 +20,22 @@ interface CategoryBreakdownProps {
 export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
   const incomeChartRef = useRef<ChartJS<'pie'>>(null);
   const expensesChartRef = useRef<ChartJS<'pie'>>(null);
+  const [chartsReady, setChartsReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    import('chart.js/auto')
+      .then(() => {
+        if (mounted) setChartsReady(true);
+      })
+      .catch(() => {
+        if (mounted) setChartsReady(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Cleanup Chart.js instances on unmount
   useEffect(() => {
@@ -135,6 +129,15 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
     },
   };
 
+  if (!chartsReady) {
+    return (
+      <div className="space-y-4">
+        <div className="h-6 w-32 bg-gray-100 animate-pulse rounded" />
+        <div className="h-64 bg-gray-100 animate-pulse rounded" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
@@ -143,7 +146,7 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
           <h3 className="text-lg font-semibold mb-4">Income</h3>
           <p className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</p>
           <div className="h-64 mt-4">
-            <Pie data={incomeData} options={chartOptions} ref={incomeChartRef} />
+            <PieChart data={incomeData} options={chartOptions} ref={incomeChartRef} />
           </div>
         </div>
 
@@ -151,7 +154,7 @@ export function CategoryBreakdown({ transactions }: CategoryBreakdownProps) {
           <h3 className="text-lg font-semibold mb-4">Expenses</h3>
           <p className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</p>
           <div className="h-64 mt-4">
-            <Pie data={expensesData} options={chartOptions} ref={expensesChartRef} />
+            <PieChart data={expensesData} options={chartOptions} ref={expensesChartRef} />
           </div>
         </div>
       </div>

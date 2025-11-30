@@ -55,16 +55,3 @@ export async function storeTransactionContext(
     metadata: transaction,
   });
 }
-
-export async function storeConversationContext(
-  userId: string,
-  question: string,
-  answer: string
-): Promise<void> {
-  const content = `Q: ${question}\nA: ${answer}`;
-  await storeFinancialContext(userId, {
-    type: 'conversation',
-    content,
-    metadata: { question, answer },
-  });
-}

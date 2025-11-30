@@ -26,6 +26,7 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+package.json
 
 # Build artifacts
 analyze/

@@ -1,7 +1,5 @@
 'use client';
 
-import '@/lib/chart-setup';
-
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -62,11 +60,20 @@ export default function InvestmentsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [cryptoAccounts, setCryptoAccounts] = useState<any[]>([]);
+  const [chartsReady, setChartsReady] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+    import('chart.js/auto')
+      .then(() => mounted && setChartsReady(true))
+      .catch(() => mounted && setChartsReady(false));
+
     fetchPlatforms();
     fetchCryptoAccounts();
     createLinkToken();
+    return () => {
+      mounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -429,7 +436,7 @@ export default function InvestmentsPage() {
                   Platform Allocation
                 </h2>
                 <div className="h-64">
-                  {getPieChartData() && (
+                  {chartsReady && getPieChartData() ? (
                     <Pie
                       data={getPieChartData()!}
                       options={{
@@ -446,6 +453,8 @@ export default function InvestmentsPage() {
                         },
                       }}
                     />
+                  ) : (
+                    <div className="h-full w-full rounded bg-gray-100 animate-pulse" />
                   )}
                 </div>
               </div>
@@ -455,7 +464,7 @@ export default function InvestmentsPage() {
                   Platform Performance
                 </h2>
                 <div className="h-64">
-                  {getBarChartData() && (
+                  {chartsReady && getBarChartData() ? (
                     <Bar
                       data={getBarChartData()!}
                       options={{
@@ -476,6 +485,8 @@ export default function InvestmentsPage() {
                         },
                       }}
                     />
+                  ) : (
+                    <div className="h-full w-full rounded bg-gray-100 animate-pulse" />
                   )}
                 </div>
               </div>

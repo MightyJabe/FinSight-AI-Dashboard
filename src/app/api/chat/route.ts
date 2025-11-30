@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-import { retrieveRelevantContext, storeConversationContext } from '@/lib/ai-memory';
+import { retrieveRelevantContext } from '@/lib/ai-memory';
 import { getConfig } from '@/lib/config';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
@@ -1374,23 +1374,25 @@ async function getUserConversations(
       .limit(20)
       .get();
 
-    return snapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      const messages = data.messages || [];
-      const firstUserMessage =
-        messages.find((m: { role: string; content: string }) => m.role === 'user')?.content ||
-        'New conversation';
+    return snapshot.docs
+      .filter((doc: any) => doc.id !== 'ai-brain')
+      .map((doc: any) => {
+        const data = doc.data();
+        const messages = data.messages || [];
+        const firstUserMessage =
+          messages.find((m: { role: string; content: string }) => m.role === 'user')?.content ||
+          'New conversation';
 
-      const title =
-        firstUserMessage.length > 50 ? firstUserMessage.substring(0, 50) + '...' : firstUserMessage;
+        const title =
+          firstUserMessage.length > 50 ? firstUserMessage.substring(0, 50) + '...' : firstUserMessage;
 
-      return {
-        id: doc.id,
-        title,
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-        messageCount: messages.length,
-      };
-    });
+        return {
+          id: doc.id,
+          title,
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          messageCount: messages.length,
+        };
+      });
   } catch (error) {
     logger.error('Error getting user conversations', { userId, error });
     return [];
@@ -1730,13 +1732,6 @@ IMPORTANT: You CAN read PDFs and images directly from URLs. When you get documen
       conversationMessages,
       conversationId
     );
-
-    // Store conversation in AI memory
-    try {
-      await storeConversationContext(userId, message, finalResponse);
-    } catch (error) {
-      logger.warn('Failed to store conversation in AI memory', { userId, error });
-    }
 
     return NextResponse.json({
       response: finalResponse,

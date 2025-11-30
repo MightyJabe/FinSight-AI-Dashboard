@@ -1,5 +1,7 @@
 'use client';
 
+import '@/lib/chart-setup';
+
 import {
   AlertTriangle,
   Calendar,
@@ -10,20 +12,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Bar, Line, Pie } from 'react-chartjs-2';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
 import { Badge } from '@/components/ui/Badge';
@@ -81,6 +70,45 @@ export default function SpendingTrends() {
     );
   };
 
+  const buildLineChart = (data: any[]) => ({
+    labels: data.map(d => d.period),
+    datasets: [
+      {
+        label: 'Amount',
+        data: data.map(d => d.amount),
+        borderColor: '#8884d8',
+        backgroundColor: 'rgba(136,132,216,0.2)',
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 5,
+      },
+    ],
+  });
+
+  const buildBarChart = (data: any[], labelKey: string) => ({
+    labels: data.map(d => d[labelKey]),
+    datasets: [
+      {
+        label: 'Amount',
+        data: data.map(d => d.amount),
+        backgroundColor: 'rgba(136,132,216,0.5)',
+        borderColor: '#8884d8',
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  const buildPieChart = (data: any[]) => ({
+    labels: data.map(d => d.category),
+    datasets: [
+      {
+        data: data.map(d => d.amount),
+        backgroundColor: data.map((_: any, index: number) => CHART_COLORS[index % CHART_COLORS.length]),
+        borderWidth: 1,
+      },
+    ],
+  });
+
   const renderChart = () => {
     if (!trends || !trends.trends || trends.trends.length === 0) return null;
 
@@ -89,115 +117,146 @@ export default function SpendingTrends() {
       case 'weekly':
       case 'daily':
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trends.trends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="period"
-                tick={{ fontSize: 12 }}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                tickFormatter={value => `$${(value / 1000).toFixed(1)}k`}
-              />
-              <Tooltip
-                formatter={(value: number) => [formatCurrency(value), 'Amount']}
-                labelFormatter={label => `Period: ${label}`}
-              />
-              <Line
-                type="monotone"
-                dataKey="amount"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={{ fill: '#8884d8', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[320px]">
+            <Line
+              data={buildLineChart(trends.trends)}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: context => `${formatCurrency(context.parsed.y || 0)}`,
+                    },
+                  },
+                  legend: { display: false },
+                },
+                scales: {
+                  x: { ticks: { maxRotation: 45, minRotation: 45 } },
+                  y: {
+                    ticks: {
+                      callback: value => `$${(Number(value) / 1000).toFixed(1)}k`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
         );
 
       case 'category':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={trends.trends.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="category"
-                  tick={{ fontSize: 10 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={value => `$${(value / 1000).toFixed(1)}k`}
-                />
-                <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), 'Amount']}
-                  labelFormatter={label => `Category: ${label}`}
-                />
-                <Bar dataKey="amount" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="w-full h-[320px]">
+              <Bar
+                data={buildBarChart(trends.trends.slice(0, 10), 'category')}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    tooltip: {
+                      callbacks: {
+                        label: context => `${formatCurrency(context.parsed.y || 0)}`,
+                      },
+                    },
+                    legend: { display: false },
+                  },
+                  scales: {
+                    x: {
+                      ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        autoSkip: false,
+                        font: { size: 10 },
+                      },
+                    },
+                    y: {
+                      ticks: {
+                        callback: value => `$${(Number(value) / 1000).toFixed(1)}k`,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={trends.trends.slice(0, 8)}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ category, percent }) => `${category}: ${(percent! * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="amount"
-                >
-                  {trends.trends.slice(0, 8).map((_: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => [formatCurrency(value), 'Amount']} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="w-full h-[320px]">
+              <Pie
+                data={buildPieChart(trends.trends.slice(0, 8))}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    tooltip: {
+                      callbacks: {
+                        label: context =>
+                          `${context.label}: ${formatCurrency(context.parsed || 0)} (${context.formattedValue})`,
+                      },
+                    },
+                    legend: { position: 'bottom' },
+                  },
+                }}
+              />
+            </div>
           </div>
         );
 
       case 'seasonal':
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={trends.trends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="period" />
-              <YAxis tickFormatter={value => `$${(value / 1000).toFixed(1)}k`} />
-              <Tooltip formatter={(value: number) => [formatCurrency(value), 'Amount']} />
-              <Bar dataKey="amount" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[320px]">
+            <Bar
+              data={buildBarChart(trends.trends, 'period')}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: context => `${formatCurrency(context.parsed.y || 0)}`,
+                    },
+                  },
+                  legend: { display: false },
+                },
+                scales: {
+                  y: {
+                    ticks: {
+                      callback: value => `$${(Number(value) / 1000).toFixed(1)}k`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
         );
 
       case 'anomaly':
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={trends.trends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="period"
-                tick={{ fontSize: 10 }}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis tickFormatter={value => `$${value.toFixed(0)}`} />
-              <Tooltip
-                formatter={(value: number) => [formatCurrency(value), 'Anomaly Amount']}
-                labelFormatter={label => `Date: ${label}`}
-              />
-              <Bar dataKey="amount" fill="#ff8042" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[320px]">
+            <Bar
+              data={buildBarChart(trends.trends, 'period')}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: context => `${formatCurrency(context.parsed.y || 0)}`,
+                      title: items => `Date: ${items[0]?.label ?? ''}`,
+                    },
+                  },
+                  legend: { display: false },
+                },
+                scales: {
+                  x: { ticks: { maxRotation: 45, minRotation: 45 } },
+                  y: {
+                    ticks: {
+                      callback: value => `$${Number(value).toFixed(0)}`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
         );
 
       default:

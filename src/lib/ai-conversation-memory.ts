@@ -1,13 +1,9 @@
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 const db = adminDb;
 
 export interface ConversationMessage {
-  id: string;
-  userId: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
@@ -20,20 +16,40 @@ export interface ConversationMessage {
 export class ConversationMemory {
   private userId: string;
   private maxMessages = 50;
+  // Use a single document in the conversations collection as AI-only memory.
+  private docId = 'ai-brain';
+  private collectionName = 'conversations';
 
   constructor(userId: string) {
     this.userId = userId;
   }
 
   async saveMessage(
-    message: Omit<ConversationMessage, 'id' | 'userId' | 'timestamp'>
+    message: Omit<ConversationMessage, 'timestamp'>
   ): Promise<void> {
     try {
-      await db.collection('conversations').add({
-        ...message,
-        userId: this.userId,
-        timestamp: new Date(),
-      });
+      const docRef = db
+        .collection('users')
+        .doc(this.userId)
+        .collection(this.collectionName)
+        .doc(this.docId);
+      const existing = await docRef.get();
+      const messages: ConversationMessage[] = (existing.data()?.messages || []).map((msg: any) => ({
+        ...msg,
+        timestamp: msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp),
+      }));
+
+      const trimmed = messages.slice(-(this.maxMessages - 1));
+      trimmed.push({ ...message, timestamp: new Date() });
+
+      await docRef.set(
+        {
+          messages: trimmed,
+          updatedAt: new Date(),
+          createdAt: existing.exists ? existing.data()?.createdAt || new Date() : new Date(),
+        },
+        { merge: true }
+      );
     } catch (error) {
       logger.error('Error saving conversation message', { error, userId: this.userId });
     }
@@ -41,22 +57,21 @@ export class ConversationMemory {
 
   async getRecentMessages(limit: number = this.maxMessages): Promise<ConversationMessage[]> {
     try {
-      const snapshot = await db
-        .collection('conversations')
-        .where('userId', '==', this.userId)
-        .orderBy('timestamp', 'desc')
-        .limit(limit)
+      const docRef = await db
+        .collection('users')
+        .doc(this.userId)
+        .collection(this.collectionName)
+        .doc(this.docId)
         .get();
 
-      return snapshot.docs
-        .map(
-          (doc: QueryDocumentSnapshot<DocumentData>): ConversationMessage => ({
-            id: doc.id,
-            ...(doc.data() as Omit<ConversationMessage, 'id'>),
-            timestamp: doc.data().timestamp?.toDate(),
-          })
-        )
-        .reverse();
+      if (!docRef.exists) return [];
+
+      const messages: ConversationMessage[] = (docRef.data()?.messages || []).map((msg: any) => ({
+        ...msg,
+        timestamp: msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp),
+      }));
+
+      return messages.slice(-limit);
     } catch (error) {
       logger.error('Error getting conversation history', { error, userId: this.userId });
       return [];
@@ -65,14 +80,7 @@ export class ConversationMemory {
 
   async clearHistory(): Promise<void> {
     try {
-      const snapshot = await db
-        .collection('conversations')
-        .where('userId', '==', this.userId)
-        .get();
-
-      const batch = db.batch();
-      snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => batch.delete(doc.ref));
-      await batch.commit();
+      await db.collection('users').doc(this.userId).collection(this.collectionName).doc(this.docId).delete();
     } catch (error) {
       logger.error('Error clearing conversation history', { error, userId: this.userId });
     }

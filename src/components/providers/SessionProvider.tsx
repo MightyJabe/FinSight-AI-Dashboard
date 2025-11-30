@@ -1,9 +1,7 @@
 'use client';
 
-import { browserLocalPersistence, onAuthStateChanged, setPersistence, User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { auth } from '@/lib/firebase';
 import logger from '@/lib/logger';
 
 interface SerializableUser {
@@ -16,7 +14,7 @@ interface SerializableUser {
 
 interface SessionContextType {
   user: SerializableUser | null;
-  firebaseUser: User | null;
+  firebaseUser: any | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -47,57 +45,68 @@ function serializeUser(user: User | null): SerializableUser | null {
  */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SerializableUser | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) {
-      logger.error('Firebase auth is not initialized');
-      setLoading(false);
-      return;
-    }
+    let unsubscribe: undefined | (() => void);
 
-    // Enable persistence
-    setPersistence(auth, browserLocalPersistence).catch(error => {
-      logger.error('Error setting persistence:', { error });
-    });
+    const init = async () => {
+      try {
+        const [{ browserLocalPersistence, onAuthStateChanged, setPersistence }, { auth }] =
+          await Promise.all([import('firebase/auth'), import('@/lib/firebase')]);
 
-    // Get initial user state
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      setUser(serializeUser(currentUser));
-      setFirebaseUser(currentUser);
-      setLoading(false);
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async user => {
-      setUser(serializeUser(user));
-      setFirebaseUser(user);
-      setLoading(false);
-
-      if (user) {
-        try {
-          // Get the ID token
-          const idToken = await user.getIdToken();
-
-          // Create a session cookie
-          const response = await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to create session');
-          }
-        } catch (error) {
-          logger.error('Error creating session:', { error });
+        if (!auth) {
+          logger.error('Firebase auth is not initialized');
+          setLoading(false);
+          return;
         }
-      }
-    });
 
-    return () => unsubscribe();
+        setPersistence(auth, browserLocalPersistence).catch(error => {
+          logger.error('Error setting persistence:', { error });
+        });
+
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          setUser(serializeUser(currentUser));
+          setFirebaseUser(currentUser);
+          setLoading(false);
+        }
+
+        unsubscribe = onAuthStateChanged(auth, async user => {
+          setUser(serializeUser(user));
+          setFirebaseUser(user);
+          setLoading(false);
+
+          if (user) {
+            try {
+              const idToken = await user.getIdToken();
+              const response = await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${idToken}`,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to create session');
+              }
+            } catch (error) {
+              logger.error('Error creating session:', { error });
+            }
+          }
+        });
+      } catch (error) {
+        logger.error('Error initializing Firebase auth', { error });
+        setLoading(false);
+      }
+    };
+
+    void init();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
@@ -107,7 +116,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         method: 'DELETE',
       });
 
-      // Sign out from Firebase
+      const { auth } = await import('@/lib/firebase');
       await auth.signOut();
     } catch (error) {
       logger.error('Error signing out:', { error });

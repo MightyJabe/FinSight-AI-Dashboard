@@ -78,7 +78,6 @@ export const MemoizedComponents = {
 export const bundleOptimizations = {
   // Split chart libraries into separate chunks
   chartLibraries: () => import('chart.js'),
-  recharts: () => import('recharts'),
 
   // Split AI/ML libraries
   openai: () => import('openai'),

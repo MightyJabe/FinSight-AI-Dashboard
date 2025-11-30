@@ -1,19 +1,7 @@
-import {
-  ArcElement,
-  CategoryScale,
-  Chart as ChartJS,
-  ChartType,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  TooltipItem,
-} from 'chart.js';
+import type { Chart as ChartJS, ChartType, TooltipItem } from 'chart.js';
 import { HelpCircle, Maximize2, PieChart, TrendingUp } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { memo, useEffect, useRef, useState } from 'react';
-import { Line, Pie } from 'react-chartjs-2';
 
 import {
   Tooltip as UITooltip,
@@ -26,17 +14,8 @@ import { formatCurrency, formatPercentage } from '@/utils/format';
 import { getCssVarColor } from '@/utils/get-css-var-color';
 import { toRgba } from '@/utils/to-rgba';
 
-// Register Chart.js components
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const LineChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
+const PieChartJS = dynamic(() => import('react-chartjs-2').then(mod => mod.Pie), { ssr: false });
 
 interface ChartsSectionProps {
   overview: Overview;
@@ -58,6 +37,7 @@ export const ChartsSection = memo(function ChartsSection({
   const assetAllocationChartRef = useRef<ChartJS<'pie'>>(null);
   const liabilityBreakdownChartRef = useRef<ChartJS<'pie'>>(null);
 
+  const [chartsReady, setChartsReady] = useState(false);
   const [chartColors, setChartColors] = useState({
     primary: getCssVarColor('--primary'),
     green: getCssVarColor('--green-500'),
@@ -80,6 +60,16 @@ export const ChartsSection = memo(function ChartsSection({
       amber: getCssVarColor('--amber-500'),
       purple: getCssVarColor('--purple-500'),
     });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    import('chart.js/auto')
+      .then(() => mounted && setChartsReady(true))
+      .catch(() => mounted && setChartsReady(false));
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Cleanup Chart.js instances on unmount
@@ -247,29 +237,30 @@ export const ChartsSection = memo(function ChartsSection({
           <div
             className={`${expandedChart === 'networth' ? 'h-96' : 'h-64'} transition-all duration-300`}
           >
-            {renderChart(
-              <Line
-                data={netWorthData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: {
-                    y: {
-                      ticks: {
-                        callback: (tickValue: string | number) => {
-                          if (typeof tickValue === 'number') {
-                            return formatCurrency(tickValue);
-                          }
-                          return tickValue;
+            {chartsReady &&
+              renderChart(
+                <LineChart
+                  data={netWorthData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                      y: {
+                        ticks: {
+                          callback: (tickValue: string | number) => {
+                            if (typeof tickValue === 'number') {
+                              return formatCurrency(tickValue);
+                            }
+                            return tickValue;
+                          },
                         },
                       },
                     },
-                  },
-                }}
-                ref={netWorthChartRef}
-              />
-            )}
+                  }}
+                  ref={netWorthChartRef}
+                />
+              )}
           </div>
         </div>
 
@@ -290,29 +281,30 @@ export const ChartsSection = memo(function ChartsSection({
             <PieChart className="h-5 w-5 text-green-500" />
           </div>
           <div className="h-64">
-            {renderChart(
-              <Pie
-                data={cashFlowData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                      callbacks: {
-                        label: (context: TooltipItem<ChartType>) => {
-                          const value = context.raw as number;
-                          const total = monthlyIncome + monthlyExpenses + (monthlySavings || 0);
-                          const percentage = total > 0 ? (value / total) * 100 : 0;
-                          return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+            {chartsReady &&
+              renderChart(
+                <PieChartJS
+                  data={cashFlowData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'bottom' },
+                      tooltip: {
+                        callbacks: {
+                          label: (context: TooltipItem<ChartType>) => {
+                            const value = context.raw as number;
+                            const total = monthlyIncome + monthlyExpenses + (monthlySavings || 0);
+                            const percentage = total > 0 ? (value / total) * 100 : 0;
+                            return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                          },
                         },
                       },
                     },
-                  },
-                }}
-                ref={cashFlowChartRef}
-              />
-            )}
+                  }}
+                  ref={cashFlowChartRef}
+                />
+              )}
           </div>
         </div>
 
@@ -334,29 +326,30 @@ export const ChartsSection = memo(function ChartsSection({
               <PieChart className="h-5 w-5 text-blue-500" />
             </div>
             <div className="h-64">
-              {renderChart(
-                <Pie
-                  data={assetAllocationData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { position: 'bottom' },
-                      tooltip: {
-                        callbacks: {
-                          label: (context: TooltipItem<ChartType>) => {
-                            const value = context.raw as number;
-                            const total = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-                            const percentage = total > 0 ? (value / total) * 100 : 0;
-                            return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+              {chartsReady &&
+                renderChart(
+                  <PieChartJS
+                    data={assetAllocationData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                          callbacks: {
+                            label: (context: TooltipItem<ChartType>) => {
+                              const value = context.raw as number;
+                              const total = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+                              const percentage = total > 0 ? (value / total) * 100 : 0;
+                              return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                            },
                           },
                         },
                       },
-                    },
-                  }}
-                  ref={assetAllocationChartRef}
-                />
-              )}
+                    }}
+                    ref={assetAllocationChartRef}
+                  />
+                )}
             </div>
           </div>
         )}
@@ -379,29 +372,30 @@ export const ChartsSection = memo(function ChartsSection({
               <PieChart className="h-5 w-5 text-red-500" />
             </div>
             <div className="h-64">
-              {renderChart(
-                <Pie
-                  data={liabilityBreakdownData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { position: 'bottom' },
-                      tooltip: {
-                        callbacks: {
-                          label: (context: TooltipItem<ChartType>) => {
-                            const value = context.raw as number;
-                            const total = liabilities.reduce((sum, l) => sum + l.amount, 0);
-                            const percentage = total > 0 ? (value / total) * 100 : 0;
-                            return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+              {chartsReady &&
+                renderChart(
+                  <PieChartJS
+                    data={liabilityBreakdownData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                          callbacks: {
+                            label: (context: TooltipItem<ChartType>) => {
+                              const value = context.raw as number;
+                              const total = liabilities.reduce((sum, l) => sum + l.amount, 0);
+                              const percentage = total > 0 ? (value / total) * 100 : 0;
+                              return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                            },
                           },
                         },
                       },
-                    },
-                  }}
-                  ref={liabilityBreakdownChartRef}
-                />
-              )}
+                    }}
+                    ref={liabilityBreakdownChartRef}
+                  />
+                )}
             </div>
           </div>
         )}

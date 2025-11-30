@@ -1,17 +1,6 @@
 'use client';
 
 import {
-  ArcElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-} from 'chart.js';
-import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
@@ -28,24 +17,17 @@ import {
   TrendingUp,
   Zap,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Doughnut, Line } from 'react-chartjs-2';
+import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
 
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { ChartSkeleton } from '@/components/common/SkeletonLoader';
 import { useCryptoPortfolio } from '@/hooks/useCryptoPortfolio';
 
-// Register Chart.js components
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const LineChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
+const DoughnutChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Doughnut), {
+  ssr: false,
+});
 
 interface ComprehensiveCryptoPortfolioProps {
   className?: string;
@@ -58,6 +40,7 @@ export function ComprehensiveCryptoPortfolio({
     'overview' | 'holdings' | 'allocation' | 'performance'
   >('overview');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [chartsReady, setChartsReady] = useState(false);
 
   const {
     data,
@@ -82,6 +65,16 @@ export function ComprehensiveCryptoPortfolio({
     refreshInterval: 30000, // 30 seconds
     includeHistorical: true,
   });
+
+  useEffect(() => {
+    let mounted = true;
+    import('chart.js/auto')
+      .then(() => mounted && setChartsReady(true))
+      .catch(() => mounted && setChartsReady(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -309,25 +302,29 @@ export function ComprehensiveCryptoPortfolio({
             <div className="bg-white rounded-lg border p-6">
               <h3 className="text-lg font-semibold mb-4">Portfolio Performance</h3>
               <div className="h-64">
-                <Line
-                  data={lineChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: false,
-                        ticks: {
-                          callback: value =>
-                            formatCurrency(value as number, { minimumFractionDigits: 0 }),
+                {chartsReady ? (
+                  <LineChart
+                    data={lineChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: false,
+                          ticks: {
+                            callback: value =>
+                              formatCurrency(value as number, { minimumFractionDigits: 0 }),
+                          },
                         },
                       },
-                    },
-                  }}
-                />
+                    }}
+                  />
+                ) : (
+                  <ChartSkeleton />
+                )}
               </div>
             </div>
 
@@ -447,25 +444,29 @@ export function ComprehensiveCryptoPortfolio({
         )}
 
         {activeTab === 'allocation' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Allocation Chart */}
-            <div className="bg-white rounded-lg border p-6">
-              <h3 className="text-lg font-semibold mb-4">Portfolio Allocation</h3>
-              <div className="h-64 flex items-center justify-center">
-                <Doughnut
-                  data={allocationChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                      },
-                    },
-                  }}
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Allocation Chart */}
+              <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-semibold mb-4">Portfolio Allocation</h3>
+                <div className="h-64 flex items-center justify-center">
+                  {chartsReady ? (
+                    <DoughnutChart
+                      data={allocationChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                          },
+                        },
+                      }}
+                    />
+                  ) : (
+                    <ChartSkeleton />
+                  )}
+                </div>
               </div>
-            </div>
 
             {/* Allocation Breakdown */}
             <div className="bg-white rounded-lg border p-6">
