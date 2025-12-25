@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
+import { requirePlan } from '@/lib/plan-guard';
 
 import { OpenAIInsights, openAIInsightsSchema } from './schemas';
 
@@ -278,6 +280,20 @@ export async function GET(request: Request) {
     const userId = decodedToken.uid as string;
     if (!userId) {
       return new NextResponse('Unauthorized - Invalid user ID', { status: 401 });
+    }
+
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/insights',
+        resource: 'ai_insights',
+        errorMessage: 'Pro plan required for AI insights',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required for AI insights' },
+        { status: 402 }
+      );
     }
 
     const url = new URL(request.url);

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { requirePlan } from '@/lib/plan-guard';
 import { analyzeDeductibleExpenses } from '@/lib/tax-optimizer';
 
 const requestSchema = z.object({
@@ -21,6 +23,21 @@ export async function POST(req: NextRequest) {
     const idToken = authHeader.split('Bearer ')[1];
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
+
+    // Require at least Pro for tax analysis
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/tax/analyze-deductions',
+        resource: 'tax_analysis',
+        errorMessage: 'Pro plan required',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required for tax analysis' },
+        { status: 402 }
+      );
+    }
 
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
@@ -97,6 +114,20 @@ export async function GET(req: NextRequest) {
     const idToken = authHeader.split('Bearer ')[1];
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
+
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/tax/analyze-deductions',
+        resource: 'tax_analysis',
+        errorMessage: 'Pro plan required',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required to view tax deductions' },
+        { status: 402 }
+      );
+    }
 
     const snapshot = await adminDb
       .collection('users')

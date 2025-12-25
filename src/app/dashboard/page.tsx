@@ -17,13 +17,24 @@ import {
   EmptyState,
 } from '@/components/ui';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { useUserSettings } from '@/hooks/use-user-settings';
 import { formatCurrency } from '@/lib/utils';
+
+const demoOverview = {
+  netWorth: 45231,
+  monthlyIncome: 8500,
+  monthlyExpenses: 5100,
+  accounts: [{ id: 'demo-checking', balance: 12500, type: 'checking', name: 'Demo Checking' }],
+};
 
 function DashboardPage() {
   const { overview, loading, error } = useDashboardData({
     refetchOnFocus: false,
     refetchInterval: 300000,
   });
+  const { settings } = useUserSettings(true);
+  const useDemo = settings.useDemoData;
+  const isFree = settings.plan === 'free';
 
   if (loading) {
     return (
@@ -59,14 +70,43 @@ function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-gray-600">Your financial overview at a glance</p>
+        {useDemo && (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-700">
+            <span className="font-medium">Demo data enabled</span>
+            <span className="text-xs text-blue-600">
+              Connect real accounts anytime from Accounts.
+            </span>
+            <Link href="/accounts">
+              <Button size="sm" variant="ghost">
+                Connect accounts
+              </Button>
+            </Link>
+          </div>
+        )}
+        {isFree && (
+          <div className="mt-3 flex flex-col md:flex-row md:items-center md:gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            <div className="flex-1">
+              <p className="font-semibold">Upgrade to Pro</p>
+              <p className="text-sm">
+                Unlock AI investment optimization, tax deductions, proactive insights, and document
+                uploads.
+              </p>
+            </div>
+            <Link href="/settings">
+              <Button size="sm" variant="primary">
+                Upgrade
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">
         {/* Net Worth Hero Card */}
-        {overview && (
+        {(overview || useDemo) && (
           <NetWorthCard
-            netWorth={overview.netWorth}
-            change={overview.netWorth * 0.052}
+            netWorth={overview?.netWorth ?? demoOverview.netWorth}
+            change={(overview?.netWorth ?? demoOverview.netWorth) * 0.052}
             changePercent={5.2}
           />
         )}

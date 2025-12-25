@@ -1,10 +1,12 @@
 'use client';
 
-import { Bell, Database, Palette, Shield, User } from 'lucide-react';
+import { Bell, Crown, Database, Palette, Shield, Sparkles, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
+import { Button } from '@/components/ui';
+import { useUserSettings } from '@/hooks/use-user-settings';
 import { auth as firebaseAuth } from '@/lib/firebase';
 
 /**
@@ -14,6 +16,8 @@ export default function SettingsPage() {
   const { user } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { settings } = useUserSettings(Boolean(user));
+  const [billingLoading, setBillingLoading] = useState<'upgrade' | 'portal' | null>(null);
 
   const handleSignOut = async () => {
     try {
@@ -24,6 +28,50 @@ export default function SettingsPage() {
       console.error('Error signing out:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startCheckout = async (plan: 'pro' | 'elite') => {
+    try {
+      setBillingLoading('upgrade');
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Checkout failed', error);
+    } finally {
+      setBillingLoading(null);
+    }
+  };
+
+  const openPortal = async () => {
+    try {
+      setBillingLoading('portal');
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch('/api/billing/portal', {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Portal failed', error);
+    } finally {
+      setBillingLoading(null);
     }
   };
 
@@ -83,6 +131,57 @@ export default function SettingsPage() {
           <p className="mt-2 text-lg text-gray-600">
             Manage your account preferences and app configuration.
           </p>
+        </div>
+
+        {/* Plan / Billing */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow mb-6">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+            <Crown className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Plan & Billing</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <p className="text-sm text-gray-600">Current plan</p>
+                <p className="text-xl font-semibold text-gray-900 capitalize">
+                  {settings.plan}
+                  {settings.proActive ? (
+                    <span className="ml-2 text-xs text-green-600">Active</span>
+                  ) : (
+                    <span className="ml-2 text-xs text-amber-600">Inactive</span>
+                  )}
+                </p>
+                {settings.trialEndsAt && (
+                  <p className="text-xs text-gray-500">
+                    Trial ends: {new Date(settings.trialEndsAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => startCheckout('pro')}
+                  loading={billingLoading === 'upgrade'}
+                  leftIcon={<Sparkles className="h-4 w-4" />}
+                >
+                  Upgrade to Pro
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={openPortal}
+                  loading={billingLoading === 'portal'}
+                >
+                  Manage Billing
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">
+              Pro unlocks investment optimization, tax deductions, subscription detection, and
+              document uploads. Elite is available for heavier users and advisor workflows.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-6">

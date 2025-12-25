@@ -1,12 +1,18 @@
 import useSWR from 'swr';
 
 import { useSession } from '@/components/providers/SessionProvider';
-import { apiGet } from '@/lib/api-client';
+import { ApiError, apiGet } from '@/lib/api-client';
 
 const fetcher = async (url: string) => {
-  const res = await apiGet(url);
-  if (!res.ok) throw new Error('Failed to fetch');
-  return res.json();
+  try {
+    const res = await apiGet(url);
+    return res.json();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 402) {
+      return { insights: [], proRequired: true };
+    }
+    throw err;
+  }
 };
 
 export function useProactiveInsights() {
@@ -18,6 +24,7 @@ export function useProactiveInsights() {
   return {
     insights: data?.insights || [],
     isLoading,
+    proRequired: Boolean(data?.proRequired),
     error,
     refresh: mutate,
   };

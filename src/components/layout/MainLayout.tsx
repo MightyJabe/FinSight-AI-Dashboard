@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 import { Header } from '@/components/common/Header';
@@ -19,8 +21,35 @@ interface RootLayoutContentProps {
 
 export function RootLayoutContent({ children }: RootLayoutContentProps) {
   const { user, loading } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [checkedOnboarding, setCheckedOnboarding] = useState(false);
 
-  if (loading) {
+  // Redirect logged-in users to onboarding if not complete (skip on onboarding route)
+  useEffect(() => {
+    if (!user || pathname.startsWith('/onboarding')) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch('/api/user/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.onboardingComplete && !cancelled) {
+          router.replace('/onboarding');
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setCheckedOnboarding(true);
+      }
+    };
+    void check();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, router, pathname]);
+
+  if (loading || (!user && !checkedOnboarding)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

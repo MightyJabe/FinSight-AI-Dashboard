@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createSpecializedFunctions } from '@/lib/ai-specialized-functions';
+import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { validateAuthToken } from '@/lib/auth-server';
 import logger from '@/lib/logger';
+import { requirePlan } from '@/lib/plan-guard';
 
 export async function POST(req: NextRequest) {
   try {
     const { userId, error } = await validateAuthToken(req);
     if (error) return error;
     const { function: functionName, params } = await req.json();
+
+    // Enforce plan requirement for certain functions
+    const proRequiredFunctions = new Set(['optimizeInvestments', 'findTaxDeductions']);
+    if (proRequiredFunctions.has(functionName)) {
+      const allowed = await requirePlan(userId, 'pro');
+      if (!allowed) {
+        await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+          userId,
+          endpoint: '/api/ai/specialized',
+          resource: 'ai_specialized',
+          errorMessage: 'Pro plan required for this analysis',
+        });
+        return NextResponse.json(
+          { success: false, error: 'Pro plan required for this analysis' },
+          { status: 402 }
+        );
+      }
+    }
 
     const functions = createSpecializedFunctions(userId);
     let result;

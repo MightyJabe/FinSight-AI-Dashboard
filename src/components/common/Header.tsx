@@ -1,18 +1,20 @@
 'use client';
 
-import { Bell, ChevronDown, LogOut, Search, User } from 'lucide-react';
+import { Bell, ChevronDown, Crown, LogOut, Rocket, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button } from '@/components/ui/Button';
+import { useUserSettings } from '@/hooks/use-user-settings';
 
 export function Header() {
   const { user, signOut } = useSession();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { settings } = useUserSettings(Boolean(user));
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,6 +76,13 @@ export function Header() {
 
         {/* Right Side */}
         <div className="flex items-center space-x-4">
+          {user && settings.plan === 'free' && (
+            <Link href="/settings">
+              <Button size="sm" variant="primary" leftIcon={<Crown className="h-4 w-4" />}>
+                Upgrade
+              </Button>
+            </Link>
+          )}
           {/* Notifications */}
           <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
             <Bell className="w-5 h-5" />
@@ -113,6 +122,15 @@ export function Header() {
                 >
                   <User className="w-4 h-4 mr-3" />
                   Account Settings
+                </Link>
+                <Link
+                  href="/onboarding"
+                  prefetch={true}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Rocket className="w-4 h-4 mr-3 text-blue-600" />
+                  Guided Onboarding
                 </Link>
                 <button
                   onClick={handleSignOut}

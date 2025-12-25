@@ -2,6 +2,12 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  AuditEventType,
+  AuditSeverity,
+  logPlaidOperation,
+  logSecurityEvent,
+} from '@/lib/audit-logger';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
@@ -32,8 +38,22 @@ async function getUserIdFromSession(): Promise<string | null> {
  */
 export async function POST(request: Request) {
   try {
+    const ipAddress =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
     const userId = await getUserIdFromSession();
     if (!userId) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        ipAddress,
+        userAgent,
+        endpoint: '/api/plaid/remove-item',
+        method: 'POST',
+        resource: 'plaid_account',
+        success: false,
+        errorMessage: 'Unauthorized access attempt',
+      });
+
       return NextResponse.json(
         { error: 'Unauthorized: User session is invalid or missing.' },
         { status: 401 }
@@ -69,6 +89,15 @@ export async function POST(request: Request) {
         if (isEncryptedData(storedAccessToken)) {
           accessToken = decryptPlaidToken(storedAccessToken);
           logger.info('Successfully decrypted Plaid access token for removal', { itemId });
+
+          await logPlaidOperation(userId, 'decrypt_token', {
+            itemId,
+            ipAddress,
+            userAgent,
+            endpoint: '/api/plaid/remove-item',
+            success: true,
+            details: { operation: 'decrypt_for_unlink' },
+          });
         } else {
           // Handle legacy unencrypted tokens
           accessToken = storedAccessToken as string;
@@ -100,6 +129,14 @@ export async function POST(request: Request) {
     // Step 2: Delete the item from Firestore
     await itemDocRef.delete();
 
+    await logPlaidOperation(userId, 'unlink', {
+      itemId,
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/remove-item',
+      success: true,
+    });
+
     return NextResponse.json({ message: 'Plaid item unlinked successfully.', itemId });
   } catch (error: unknown) {
     console.error('Error unlinking Plaid item:', error);
@@ -107,6 +144,21 @@ export async function POST(request: Request) {
     if (error instanceof Error) {
       errorMessage = error.message;
     }
+
+    const ipAddress =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
+    await logSecurityEvent(AuditEventType.SYSTEM_ERROR, AuditSeverity.HIGH, {
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/remove-item',
+      method: 'POST',
+      resource: 'plaid_account',
+      success: false,
+      errorMessage,
+    });
+
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

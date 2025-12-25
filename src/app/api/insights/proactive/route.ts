@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createProactiveInsightsService } from '@/lib/ai-proactive-insights';
+import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { validateAuthToken } from '@/lib/auth-server';
 import logger from '@/lib/logger';
+import { requirePlan } from '@/lib/plan-guard';
 
 export async function GET(req: NextRequest) {
   try {
     const { userId, error } = await validateAuthToken(req);
     if (error) return error;
+
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/insights/proactive',
+        resource: 'proactive_insights',
+        errorMessage: 'Pro plan required for proactive insights',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required for proactive insights' },
+        { status: 402 }
+      );
+    }
 
     const service = createProactiveInsightsService(userId);
     const insights = await service.getInsights();
@@ -24,6 +40,20 @@ export async function POST(req: NextRequest) {
     const { userId, error } = await validateAuthToken(req);
     if (error) return error;
     const { type } = await req.json();
+
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/insights/proactive',
+        resource: 'proactive_insights',
+        errorMessage: 'Pro plan required for proactive insights',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required for proactive insights' },
+        { status: 402 }
+      );
+    }
 
     const service = createProactiveInsightsService(userId);
     let insight;

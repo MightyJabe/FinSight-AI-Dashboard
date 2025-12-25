@@ -1,6 +1,15 @@
 'use client';
 
-import { CreditCard, PieChart, Receipt, RefreshCw, Target, TrendingUp } from 'lucide-react';
+import {
+  AlertCircle,
+  CreditCard,
+  PieChart,
+  Receipt,
+  RefreshCw,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import InsightCard from '@/components/insights/InsightCard';
@@ -8,6 +17,9 @@ import MetricDisplay from '@/components/insights/MetricDisplay';
 import PlaidDataWarning from '@/components/insights/PlaidDataWarning';
 import SpendingByCategoryDisplay from '@/components/insights/SpendingByCategoryDisplay';
 import { useSession } from '@/components/providers/SessionProvider';
+import { Button, Card, CardContent } from '@/components/ui';
+import { useUserSettings } from '@/hooks/use-user-settings';
+import { ApiError } from '@/lib/api-client';
 
 interface InsightData {
   title: string;
@@ -30,7 +42,19 @@ interface InsightsPageData {
   plaidDataAvailable?: boolean;
 }
 
-function AnalysisButton({ function: fn, label }: { function: string; label: string }) {
+function AnalysisButton({
+  function: fn,
+  label,
+  proRequired = false,
+  proEnabled,
+  onRequirePro,
+}: {
+  function: string;
+  label: string;
+  proRequired?: boolean;
+  proEnabled: boolean;
+  onRequirePro: () => void;
+}) {
   const { firebaseUser } = useSession();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -45,6 +69,10 @@ function AnalysisButton({ function: fn, label }: { function: string; label: stri
   const Icon = icons[fn];
 
   const handleClick = async () => {
+    if (proRequired && !proEnabled) {
+      onRequirePro();
+      return;
+    }
     setLoading(true);
     try {
       const token = await firebaseUser?.getIdToken();
@@ -74,9 +102,12 @@ function AnalysisButton({ function: fn, label }: { function: string; label: stri
       >
         <Icon className="h-6 w-6 mx-auto mb-2 text-blue-600" />
         <p className="text-sm font-medium text-gray-900">{label}</p>
+        {proRequired && !proEnabled && (
+          <p className="text-xs text-amber-600 mt-1 font-medium">Pro</p>
+        )}
       </button>
       {result && (
-        <div className="mt-2 p-3 bg-blue-50 rounded text-xs">
+        <div className="mt-2 p-3 bg-blue-50 rounded text-xs space-y-1">
           <p className="font-semibold mb-1">Insights:</p>
           {result.insights?.map((i: string, idx: number) => (
             <p key={idx}>• {i}</p>
@@ -92,8 +123,10 @@ function AnalysisButton({ function: fn, label }: { function: string; label: stri
  */
 export default function InsightsPage() {
   const { firebaseUser, loading: authLoading } = useSession();
+  const { settings, refresh: refreshSettings } = useUserSettings(Boolean(firebaseUser));
   const [insightsData, setInsightsData] = useState<InsightsPageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [proRequired, setProRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -125,6 +158,11 @@ export default function InsightsPage() {
         });
 
         if (!response.ok) {
+          if (response.status === 402) {
+            setProRequired(true);
+            setLoading(false);
+            return;
+          }
           const errorData = await response
             .json()
             .catch(() => ({ message: 'Failed to fetch insights' }));
@@ -145,18 +183,60 @@ export default function InsightsPage() {
           summary: data.summary || '',
           plaidDataAvailable: Boolean(data.plaidDataAvailable),
         };
+
+        // If demo mode and no plaid data, inject sample insights/metrics
+        if (settings.useDemoData && serializedData.plaidDataAvailable === false) {
+          serializedData.metrics = {
+            ...serializedData.metrics,
+            netWorth: 45231,
+            totalAssets: 55231,
+            totalLiabilities: 10000,
+            spendingByCategory: {
+              Groceries: 520,
+              Rent: 1800,
+              Transport: 240,
+              Subscriptions: 95,
+              Dining: 260,
+            },
+            monthlySpending: 2915,
+          };
+          serializedData.insights = serializedData.insights.length
+            ? serializedData.insights
+            : [
+                {
+                  title: 'You are on track to hit your emergency fund goal in 3 months.',
+                  description: 'Saving $850/mo with $3,000 target; maintain current pace.',
+                  actionItems: ['Keep $850/mo savings rate', 'Avoid new recurring charges'],
+                  priority: 'medium',
+                },
+                {
+                  title: 'Subscriptions look healthy',
+                  description:
+                    'No unusual spikes; consider annual billing for 2 services to save ~$48/yr.',
+                  actionItems: ['Review top 3 subscriptions', 'Switch two to annual billing'],
+                  priority: 'low',
+                },
+              ];
+          serializedData.plaidDataAvailable = false;
+        }
+
         setInsightsData(serializedData);
       } catch (err) {
-        console.error('Error fetching insights:', err);
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred while fetching insights'
-        );
+        if (err instanceof ApiError && err.status === 402) {
+          setProRequired(true);
+          setError(null);
+        } else {
+          console.error('Error fetching insights:', err);
+          setError(
+            err instanceof Error ? err.message : 'An unknown error occurred while fetching insights'
+          );
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [authLoading, firebaseUser, refreshing]
+    [authLoading, firebaseUser, refreshing, settings.useDemoData]
   );
 
   const fetchAlerts = useCallback(async () => {
@@ -188,13 +268,53 @@ export default function InsightsPage() {
     await fetchInsights(true);
   };
 
-  if (authLoading || (loading && !insightsData)) {
+  const startProTrial = async () => {
+    try {
+      await fetch('/api/user/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proTrialRequested: true }),
+      });
+      await refreshSettings();
+    } catch (err) {
+      console.error('Failed to start trial', err);
+    }
+  };
+
+  if (authLoading || (loading && !insightsData && !proRequired)) {
     // Show loading if auth is loading OR initial data load is in progress
     return (
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex justify-center items-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 text-primary animate-spin mx-auto mb-4" />
           <p className="text-lg text-gray-600">Loading insights...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (proRequired || settings.plan === 'free') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8 flex items-center">
+        <div className="max-w-xl w-full bg-white rounded-xl shadow-lg border border-amber-200 p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-6 w-6 text-amber-600" />
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Upgrade to Pro</h2>
+              <p className="text-sm text-gray-700">
+                AI insights, proactive alerts, tax deductions, and subscription detection require
+                the Pro plan.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="primary" onClick={startProTrial}>
+              Start Pro trial
+            </Button>
+            <Link href="/settings">
+              <Button variant="outline">Manage billing</Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -268,12 +388,56 @@ export default function InsightsPage() {
             {/* Quick Analysis Tools */}
             <div className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-700 mb-4">Quick Analysis</h2>
+              {!settings.proTrialRequested && (
+                <Card className="mb-4 border-amber-200 bg-amber-50">
+                  <CardContent className="py-4 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-amber-800">Pro trial available</p>
+                      <p className="text-sm text-amber-700">
+                        Unlock personalized tax tips, subscription alerts, and investment nudges.
+                        Trial is intent-only here—no billing until you wire payments.
+                      </p>
+                    </div>
+                    <Button size="sm" onClick={startProTrial}>
+                      Start trial
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <AnalysisButton function="analyzeBudget" label="Budget" />
-                <AnalysisButton function="optimizeInvestments" label="Investments" />
-                <AnalysisButton function="findTaxDeductions" label="Tax" />
-                <AnalysisButton function="createDebtPayoffPlan" label="Debt" />
-                <AnalysisButton function="planSavingsGoal" label="Savings" />
+                <AnalysisButton
+                  function="analyzeBudget"
+                  label="Budget"
+                  proEnabled={settings.proTrialRequested}
+                  onRequirePro={startProTrial}
+                />
+                <AnalysisButton
+                  function="optimizeInvestments"
+                  label="Investments"
+                  proRequired
+                  proEnabled={settings.proTrialRequested}
+                  onRequirePro={startProTrial}
+                />
+                <AnalysisButton
+                  function="findTaxDeductions"
+                  label="Tax"
+                  proRequired
+                  proEnabled={settings.proTrialRequested}
+                  onRequirePro={startProTrial}
+                />
+                <AnalysisButton
+                  function="createDebtPayoffPlan"
+                  label="Debt"
+                  proEnabled={settings.proTrialRequested}
+                  onRequirePro={startProTrial}
+                />
+                <AnalysisButton
+                  function="planSavingsGoal"
+                  label="Savings"
+                  proEnabled={settings.proTrialRequested}
+                  onRequirePro={startProTrial}
+                />
               </div>
             </div>
 

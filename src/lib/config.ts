@@ -38,7 +38,15 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().trim().min(1).optional(),
 
   // Encryption key for sensitive data protection (server-side)
-  ENCRYPTION_KEY: z.string().trim().min(32, 'ENCRYPTION_KEY must be at least 32 characters long').optional(),
+  ENCRYPTION_KEY: z
+    .string()
+    .trim()
+    .min(32, 'ENCRYPTION_KEY must be at least 32 characters long')
+    .optional(),
+
+  // Redis (optional) for rate limiting
+  REDIS_URL: z.string().trim().optional(),
+  REDIS_TOKEN: z.string().trim().optional(),
 });
 
 let parsedEnv: Partial<z.infer<typeof envSchema>> = {};
@@ -62,6 +70,8 @@ if (typeof process !== 'undefined' && process.env) {
     PLAID_ENV: process.env.PLAID_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    REDIS_URL: process.env.REDIS_URL,
+    REDIS_TOKEN: process.env.REDIS_TOKEN,
   };
 
   const result = envSchema.safeParse(envVarsToValidate);
@@ -100,6 +110,10 @@ export const config = {
   },
   encryption: {
     key: parsedEnv.ENCRYPTION_KEY,
+  },
+  redis: {
+    url: parsedEnv.REDIS_URL,
+    token: parsedEnv.REDIS_TOKEN,
   },
 } as const;
 

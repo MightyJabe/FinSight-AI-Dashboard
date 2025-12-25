@@ -108,6 +108,11 @@ service cloud.firestore {
         request.auth.token.email_verified == true &&
         request.auth.token.email in ['admin@finsight.ai']; // Replace with actual admin emails
     }
+
+    // Audit logs are write-only via backend; no client read/write
+    match /audit_logs/{docId} {
+      allow read, write: if false;
+    }
     
     // Deny all other access
     match /{document=**} {

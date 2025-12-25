@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { storeFinancialContext } from '@/lib/ai-memory';
+import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import { uploadDocumentAdmin } from '@/lib/firebase-storage-admin';
+import { requirePlan } from '@/lib/plan-guard';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +20,20 @@ export async function POST(request: NextRequest) {
 
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
+
+    const allowed = await requirePlan(userId, 'pro');
+    if (!allowed) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/documents/upload',
+        resource: 'documents',
+        errorMessage: 'Pro plan required for document uploads',
+      });
+      return NextResponse.json(
+        { success: false, error: 'Pro plan required for document uploads' },
+        { status: 402 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File;

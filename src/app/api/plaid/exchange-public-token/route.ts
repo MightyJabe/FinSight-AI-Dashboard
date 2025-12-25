@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { logPlaidOperation } from '@/lib/audit-logger';
 import { encryptPlaidToken } from '@/lib/encryption';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
@@ -52,6 +53,10 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: Request) {
   try {
+    const ipAddress =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
     const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
@@ -110,6 +115,27 @@ export async function POST(request: Request) {
       institutionName: institution_name,
     });
 
+    const institutionMeta = institution_name ? { institutionName: institution_name } : {};
+
+    await logPlaidOperation(userId, 'encrypt_token', {
+      itemId: item_id,
+      ...institutionMeta,
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/exchange-public-token',
+      success: true,
+      details: { operation: 'encrypt_on_link' },
+    });
+
+    await logPlaidOperation(userId, 'link', {
+      itemId: item_id,
+      ...institutionMeta,
+      ipAddress,
+      userAgent,
+      endpoint: '/api/plaid/exchange-public-token',
+      success: true,
+    });
+
     // Optionally, trigger an initial sync of accounts and transactions here.
     // For now, we just confirm success.
 
@@ -121,6 +147,15 @@ export async function POST(request: Request) {
       errorMessage = error.message;
     }
     // if (error instanceof PlaidError) { errorMessage = error.response?.data?.error_message || error.message; }
+
+    const userId = await getUserIdFromRequest(request);
+    await logPlaidOperation(userId ?? 'unknown', 'link', {
+      itemId: 'unknown',
+      endpoint: '/api/plaid/exchange-public-token',
+      success: false,
+      errorMessage,
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

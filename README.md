@@ -58,6 +58,8 @@ npm run build        # Build for production
 npm run test         # Run tests
 npm run lint         # Check code quality
 npm run type-check   # TypeScript validation
+npm run analyze      # Build with bundle analyzer (reports in .next/analyze/)
+npm run clean        # Remove .next cache and tsbuildinfo
 ```
 
 ### Quality Checks (run before committing)
@@ -91,6 +93,8 @@ See `.env.example` for required variables. Key integrations:
 - **Firebase** - Authentication and database
 - **Plaid** - Financial account aggregation
 - **OpenAI** - AI-powered insights
+- **Redis (optional)** - Distributed rate limiting; falls back to in-memory if not set
+- **Stripe (optional)** - Subscriptions for paid plans (`pro`, `elite`)
 
 ## Project Structure
 

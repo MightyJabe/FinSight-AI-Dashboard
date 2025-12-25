@@ -7,7 +7,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from '@/
 import { useProactiveInsights } from '@/hooks/useProactiveInsights';
 
 export function ProactiveInsightsCard() {
-  const { insights, isLoading } = useProactiveInsights();
+  const { insights, isLoading, proRequired } = useProactiveInsights();
   const newInsights = insights.filter((i: any) => i.status === 'new').slice(0, 3);
 
   if (isLoading) {
@@ -46,7 +46,17 @@ export function ProactiveInsightsCard() {
         </div>
       </CardHeader>
       <CardContent>
-        {newInsights.length > 0 ? (
+        {proRequired ? (
+          <EmptyState
+            icon={<Lightbulb className="w-6 h-6" />}
+            title="Upgrade to Pro"
+            description="Unlock proactive insights, tax analysis, and subscription detection."
+            action={{
+              label: 'Upgrade',
+              onClick: () => (window.location.href = '/settings'),
+            }}
+          />
+        ) : newInsights.length > 0 ? (
           <div className="space-y-3">
             {newInsights.map((insight: any) => (
               <div

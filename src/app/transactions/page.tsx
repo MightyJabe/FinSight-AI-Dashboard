@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
 import { Card, CardContent, EmptyState, TableSkeleton } from '@/components/ui';
+import { useUserSettings } from '@/hooks/use-user-settings';
 
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
@@ -82,6 +83,7 @@ async function triggerAICategorization(idToken: string, transactions: any[]) {
 
 export default function TransactionsPage() {
   const { firebaseUser, loading: authLoading } = useSession();
+  const { settings } = useUserSettings(Boolean(firebaseUser));
   const [transactions, setTransactions] = useState<EnhancedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,9 +177,51 @@ export default function TransactionsPage() {
       }));
 
       // Combine and sort transactions
-      const allTransactions = [...plaidTransactions, ...manualTransactions].sort(
+      let allTransactions = [...plaidTransactions, ...manualTransactions].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
+
+      if (settings.useDemoData && plaidTransactions.length === 0) {
+        const demoTransactions: EnhancedTransaction[] = [
+          {
+            id: 'demo-tx-1',
+            date: new Date().toISOString().slice(0, 10),
+            description: 'Demo Paycheck',
+            amount: 4200,
+            category: 'Income',
+            account: 'Demo Checking',
+            accountId: 'demo-checking',
+            type: 'income',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: 'demo-tx-2',
+            date: new Date().toISOString().slice(0, 10),
+            description: 'Groceries',
+            amount: -120,
+            category: 'Groceries',
+            account: 'Demo Checking',
+            accountId: 'demo-checking',
+            type: 'expense',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: 'demo-tx-3',
+            date: new Date().toISOString().slice(0, 10),
+            description: 'Rent',
+            amount: -1800,
+            category: 'Rent',
+            account: 'Demo Checking',
+            accountId: 'demo-checking',
+            type: 'expense',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ];
+        allTransactions = [...demoTransactions, ...manualTransactions];
+      }
 
       setTransactions(allTransactions);
 
@@ -199,7 +243,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [firebaseUser, aiCategorizationTriggered]);
+  }, [firebaseUser, aiCategorizationTriggered, settings.useDemoData]);
 
   useEffect(() => {
     fetchTransactions();

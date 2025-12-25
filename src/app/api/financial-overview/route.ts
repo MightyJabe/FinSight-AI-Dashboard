@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getFinancialOverview } from '@/lib/financial-calculator';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 // Cache for 30 seconds to prevent excessive API calls
@@ -36,6 +37,12 @@ export async function GET(request: NextRequest) {
 
     // Fetch data using centralized calculator
     const { data: rawData, metrics } = await getFinancialOverview(userId);
+
+    // If user opted for demo data and has no plaid accounts, inject demo values for UX
+    const userDoc = await db.collection('users').doc(userId).get();
+    const useDemoData = Boolean(userDoc.exists && userDoc.data()?.useDemoData);
+    const hasRealAccounts = rawData.plaidAccounts.length > 0;
+    const applyDemo = useDemoData && !hasRealAccounts;
 
     logger.info('Financial overview raw data:', {
       manualAssets: rawData.manualAssets.length,
@@ -90,23 +97,38 @@ export async function GET(request: NextRequest) {
 
     const transformedData = {
       summary: {
-        liquidAssets: metrics.liquidAssets,
-        totalAssets: metrics.totalAssets,
+        liquidAssets: applyDemo ? 12500 : metrics.liquidAssets,
+        totalAssets: applyDemo ? 45231 : metrics.totalAssets,
         totalLiabilities: metrics.totalLiabilities,
-        netWorth: metrics.netWorth,
-        monthlyIncome: metrics.monthlyIncome,
-        monthlyExpenses: metrics.monthlyExpenses,
-        monthlyCashFlow: metrics.monthlyCashFlow,
+        netWorth: applyDemo ? 45231 : metrics.netWorth,
+        monthlyIncome: applyDemo ? 8500 : metrics.monthlyIncome,
+        monthlyExpenses: applyDemo ? 5100 : metrics.monthlyExpenses,
+        monthlyCashFlow: applyDemo ? 3400 : metrics.monthlyCashFlow,
         investments: metrics.investments,
       },
       accounts: {
-        bank: bankAccounts,
+        bank: applyDemo
+          ? [
+              {
+                id: 'demo-checking',
+                name: 'Demo Checking',
+                balance: 12500,
+                type: 'checking',
+                institution: 'Demo Bank',
+              },
+            ]
+          : bankAccounts,
         credit: creditAccounts,
         investment: investmentAccounts,
         loan: loanAccounts,
         crypto: rawData.cryptoAccounts,
       },
-      manualAssets: rawData.manualAssets,
+      manualAssets: applyDemo
+        ? [
+            { id: 'demo-savings', name: 'Emergency Fund', amount: 3000, type: 'savings' },
+            { id: 'demo-brokerage', name: 'Brokerage', amount: 22000, type: 'investment' },
+          ]
+        : rawData.manualAssets,
       manualLiabilities: rawData.manualLiabilities,
       platforms: includePlatforms ? [] : undefined,
     };
