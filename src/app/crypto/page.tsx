@@ -23,7 +23,7 @@ const ComprehensiveCryptoPortfolio = dynamic(
 export default function CryptoPage() {
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { data, loading, hasData, formatCurrency, formatPercentage } = useCryptoPortfolio({
+  const { data, loading, hasData, formatCurrency } = useCryptoPortfolio({
     autoRefresh: true,
     refreshInterval: 30000,
   });

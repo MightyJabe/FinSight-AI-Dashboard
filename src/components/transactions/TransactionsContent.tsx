@@ -14,8 +14,7 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
-import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils';
+import { cn , formatCurrency } from '@/lib/utils';
 
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { SpendingBreakdown } from './SpendingBreakdown';

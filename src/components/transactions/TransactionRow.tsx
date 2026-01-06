@@ -10,14 +10,14 @@ import {
   Car,
   CreditCard,
   Dumbbell,
-  GraduationCap,
   Gift,
+  GraduationCap,
   Heart,
   Home,
   Lightbulb,
   MoreHorizontal,
-  Plane,
   PiggyBank,
+  Plane,
   Receipt,
   Repeat,
   ShoppingBag,
@@ -28,8 +28,7 @@ import {
 } from 'lucide-react';
 import { memo, useState } from 'react';
 
-import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils';
+import { cn , formatCurrency } from '@/lib/utils';
 
 import { CategoryEditor } from './CategoryEditor';
 

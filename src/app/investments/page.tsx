@@ -20,6 +20,7 @@ import TransactionForm from '@/components/platforms/TransactionForm';
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button } from '@/components/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { cn } from '@/lib/utils';
 import type {
   CreatePlatformInput,
   CreateTransactionInput,
@@ -27,7 +28,6 @@ import type {
   PlatformSummary,
   PlatformWithTransactions,
 } from '@/types/platform';
-import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
 
 const PieChart2 = dynamic(() => import('react-chartjs-2').then(mod => mod.Pie), {
