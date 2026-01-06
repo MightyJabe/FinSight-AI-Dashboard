@@ -1,12 +1,14 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CreditCard, Plus, Receipt, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
 import { TransactionsContent } from '@/components/transactions/TransactionsContent';
-import { Card, CardContent, EmptyState, TableSkeleton } from '@/components/ui';
+import { Button, DashboardSkeleton } from '@/components/ui';
 import { useUserSettings } from '@/hooks/use-user-settings';
+import { cn } from '@/lib/utils';
 
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
@@ -49,7 +51,7 @@ interface ManualTransaction {
 /**
  * Trigger AI categorization for uncategorized transactions
  */
-async function triggerAICategorization(idToken: string, transactions: any[]) {
+async function triggerAICategorization(idToken: string, transactions: EnhancedTransaction[]) {
   try {
     // Format transactions for categorization API
     const transactionsToProcess = transactions.map(t => ({
@@ -81,6 +83,10 @@ async function triggerAICategorization(idToken: string, transactions: any[]) {
   }
 }
 
+/**
+ * Premium transactions page with dashboard-quality styling.
+ * Features AI-powered categorization, search, filtering, and analytics.
+ */
 export default function TransactionsPage() {
   const { firebaseUser, loading: authLoading } = useSession();
   const { settings } = useUserSettings(Boolean(firebaseUser));
@@ -132,7 +138,7 @@ export default function TransactionsPage() {
       ]);
 
       // Get categorized data
-      let categorizedData: any = { categorizedTransactions: {} };
+      let categorizedData: { categorizedTransactions: Record<string, { aiCategory?: string; aiConfidence?: number; type?: 'income' | 'expense' }> } = { categorizedTransactions: {} };
       if (categorizedResponse.ok) {
         const catData = await categorizedResponse.json();
         if (catData.success) {
@@ -182,42 +188,127 @@ export default function TransactionsPage() {
       );
 
       if (settings.useDemoData && plaidTransactions.length === 0) {
+        const now = new Date();
         const demoTransactions: EnhancedTransaction[] = [
           {
             id: 'demo-tx-1',
-            date: new Date().toISOString().slice(0, 10),
-            description: 'Demo Paycheck',
+            date: now.toISOString().slice(0, 10),
+            description: 'Paycheck - Company Inc.',
             amount: 4200,
-            category: 'Income',
-            account: 'Demo Checking',
+            category: 'Salary',
+            account: 'Main Checking',
             accountId: 'demo-checking',
             type: 'income',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
           },
           {
             id: 'demo-tx-2',
-            date: new Date().toISOString().slice(0, 10),
-            description: 'Groceries',
-            amount: -120,
+            date: new Date(now.getTime() - 86400000).toISOString().slice(0, 10),
+            description: 'Whole Foods Market',
+            amount: -127.45,
             category: 'Groceries',
-            account: 'Demo Checking',
+            account: 'Main Checking',
             accountId: 'demo-checking',
             type: 'expense',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
           },
           {
             id: 'demo-tx-3',
-            date: new Date().toISOString().slice(0, 10),
-            description: 'Rent',
-            amount: -1800,
-            category: 'Rent',
-            account: 'Demo Checking',
+            date: new Date(now.getTime() - 86400000 * 2).toISOString().slice(0, 10),
+            description: 'Monthly Rent Payment',
+            amount: -1850,
+            category: 'Housing',
+            account: 'Main Checking',
             accountId: 'demo-checking',
             type: 'expense',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-4',
+            date: new Date(now.getTime() - 86400000 * 3).toISOString().slice(0, 10),
+            description: 'Netflix Subscription',
+            amount: -15.99,
+            category: 'Entertainment',
+            account: 'Credit Card',
+            accountId: 'demo-credit',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-5',
+            date: new Date(now.getTime() - 86400000 * 4).toISOString().slice(0, 10),
+            description: 'Gas Station',
+            amount: -52.30,
+            category: 'Transportation',
+            account: 'Credit Card',
+            accountId: 'demo-credit',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-6',
+            date: new Date(now.getTime() - 86400000 * 5).toISOString().slice(0, 10),
+            description: 'Dividend Payment',
+            amount: 125.50,
+            category: 'Investment Returns',
+            account: 'Investment Account',
+            accountId: 'demo-investment',
+            type: 'income',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-7',
+            date: new Date(now.getTime() - 86400000 * 6).toISOString().slice(0, 10),
+            description: 'Starbucks Coffee',
+            amount: -6.45,
+            category: 'Dining Out',
+            account: 'Credit Card',
+            accountId: 'demo-credit',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-8',
+            date: new Date(now.getTime() - 86400000 * 7).toISOString().slice(0, 10),
+            description: 'Electric Bill',
+            amount: -95.20,
+            category: 'Utilities',
+            account: 'Main Checking',
+            accountId: 'demo-checking',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-9',
+            date: new Date(now.getTime() - 86400000 * 10).toISOString().slice(0, 10),
+            description: 'Gym Membership',
+            amount: -49.99,
+            category: 'Fitness & Health',
+            account: 'Credit Card',
+            accountId: 'demo-credit',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: 'demo-tx-10',
+            date: new Date(now.getTime() - 86400000 * 12).toISOString().slice(0, 10),
+            description: 'Amazon Purchase',
+            amount: -89.99,
+            category: 'Shopping',
+            account: 'Credit Card',
+            accountId: 'demo-credit',
+            type: 'expense',
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
           },
         ];
         allTransactions = [...demoTransactions, ...manualTransactions];
@@ -265,57 +356,164 @@ export default function TransactionsPage() {
     };
   }, [fetchTransactions]);
 
+  // Loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Track your spending, analyze patterns, and manage your budget across all accounts.
-          </p>
+      <div className="min-h-screen">
+        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
+          {/* Header Skeleton */}
+          <header className="mb-10 animate-in">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="h-4 w-20 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-10 w-64 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="h-10 w-32 bg-muted rounded-full animate-pulse" />
+            </div>
+          </header>
+
+          <DashboardSkeleton />
         </div>
-        <Card variant="elevated">
-          <CardContent className="p-6">
-            <TableSkeleton rows={10} />
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-        <Card variant="elevated" className="max-w-md mx-auto mt-20">
-          <CardContent className="py-8">
-            <EmptyState
-              icon={<AlertCircle className="w-8 h-8" />}
-              title="Unable to load transactions"
-              description={error}
-              action={{
-                label: 'Retry',
-                onClick: fetchTransactions,
-              }}
-            />
-          </CardContent>
-        </Card>
+      <div className="min-h-screen">
+        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
+          <div className="max-w-md mx-auto mt-20 p-8 rounded-2xl bg-card border border-border animate-in">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-6 h-6 text-destructive" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Unable to load transactions</h2>
+              <p className="text-muted-foreground text-sm mb-6">{error}</p>
+              <Button onClick={fetchTransactions} className="rounded-full">
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Spending & Budget</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Track your spending, analyze patterns, and manage your budget across all accounts.
-        </p>
+    <div className="min-h-screen">
+      <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
+        {/* Header */}
+        <header className="mb-10 animate-in">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm font-medium mb-1">Financial Activity</p>
+              <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight">
+                Transactions
+              </h1>
+            </div>
+            <Link
+              href="/manual-data"
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-full',
+                'bg-foreground text-background text-sm font-medium',
+                'hover:opacity-90 transition-opacity'
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Transaction</span>
+            </Link>
+          </div>
+
+          {/* Demo Mode Banner */}
+          {settings.useDemoData && (
+            <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 animate-in delay-75">
+              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                Viewing demo transactions.{' '}
+                <Link href="/accounts" className="underline underline-offset-2 font-medium">
+                  Connect your accounts
+                </Link>{' '}
+                to see real data.
+              </p>
+            </div>
+          )}
+        </header>
+
+        {/* Quick Stats Banner */}
+        <section className="mb-8 animate-in delay-75">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-6 lg:p-8">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-1/2 -right-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl" />
+              <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+            </div>
+
+            <div className="relative z-10 flex flex-wrap items-center gap-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Receipt className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-neutral-400 text-sm uppercase tracking-wider">Total Transactions</p>
+                  <p className="text-2xl font-semibold text-white tabular-nums">{transactions.length}</p>
+                </div>
+              </div>
+
+              <div className="hidden sm:block w-px h-12 bg-white/10" />
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-neutral-400 text-sm uppercase tracking-wider">Income Sources</p>
+                  <p className="text-2xl font-semibold text-emerald-400 tabular-nums">
+                    {transactions.filter(t => t.type === 'income').length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden sm:block w-px h-12 bg-white/10" />
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-rose-500/20 flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-rose-400" />
+                </div>
+                <div>
+                  <p className="text-neutral-400 text-sm uppercase tracking-wider">Expenses</p>
+                  <p className="text-2xl font-semibold text-rose-400 tabular-nums">
+                    {transactions.filter(t => t.type === 'expense').length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden lg:block w-px h-12 bg-white/10" />
+
+              <div className="hidden lg:flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-neutral-400 text-sm uppercase tracking-wider">Accounts</p>
+                  <p className="text-2xl font-semibold text-violet-400 tabular-nums">
+                    {new Set(transactions.map(t => t.accountId)).size}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Main Content */}
+        <section className="animate-in delay-150">
+          <TransactionsContent
+            transactions={transactions}
+            isLoading={loading}
+          />
+        </section>
       </div>
-      <Card variant="elevated">
-        <CardContent className="p-6">
-          <TransactionsContent transactions={transactions} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

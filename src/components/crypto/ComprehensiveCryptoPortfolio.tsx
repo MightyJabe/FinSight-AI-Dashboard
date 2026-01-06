@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { ChartSkeleton } from '@/components/common/SkeletonLoader';
-import { useCryptoPortfolio } from '@/hooks/useCryptoPortfolio';
+import { useCryptoPortfolio } from '@/hooks/use-crypto-portfolio';
 
 const LineChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
 const DoughnutChart = dynamic(() => import('react-chartjs-2').then(mod => mod.Doughnut), {

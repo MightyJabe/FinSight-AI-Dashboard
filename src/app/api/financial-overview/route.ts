@@ -151,7 +151,26 @@ export async function GET(request: NextRequest) {
     logger.info('Financial overview data retrieved successfully');
     return NextResponse.json(responseData);
   } catch (error) {
-    logger.error('Error retrieving financial overview:', { error });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    logger.error('Error retrieving financial overview:', {
+      error: errorMessage,
+      stack: errorStack,
+    });
+
+    // In development, return detailed error for debugging
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: errorMessage,
+          details: errorStack,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: 'Failed to retrieve financial data' },
       { status: 500 }

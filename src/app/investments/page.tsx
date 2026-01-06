@@ -1,16 +1,16 @@
 'use client';
 
+import {
+  Activity,
+  DollarSign,
+  PieChart,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import {
-  FiActivity,
-  FiDollarSign,
-  FiPieChart,
-  FiPlus,
-  FiTrendingDown,
-  FiTrendingUp,
-} from 'react-icons/fi';
 import { usePlaidLink } from 'react-plaid-link';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
@@ -18,7 +18,7 @@ import PlatformCard from '@/components/platforms/PlatformCard';
 import PlatformForm from '@/components/platforms/PlatformForm';
 import TransactionForm from '@/components/platforms/TransactionForm';
 import { useSession } from '@/components/providers/SessionProvider';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import type {
   CreatePlatformInput,
@@ -27,15 +27,16 @@ import type {
   PlatformSummary,
   PlatformWithTransactions,
 } from '@/types/platform';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
 
-const Pie = dynamic(() => import('react-chartjs-2').then(mod => mod.Pie), {
-  loading: () => <div className="h-64 animate-pulse bg-gray-200 rounded" />,
+const PieChart2 = dynamic(() => import('react-chartjs-2').then(mod => mod.Pie), {
+  loading: () => <div className="h-64 animate-pulse bg-secondary rounded-xl" />,
   ssr: false,
 });
 
 const Bar = dynamic(() => import('react-chartjs-2').then(mod => mod.Bar), {
-  loading: () => <div className="h-64 animate-pulse bg-gray-200 rounded" />,
+  loading: () => <div className="h-64 animate-pulse bg-secondary rounded-xl" />,
   ssr: false,
 });
 
@@ -318,9 +319,11 @@ export default function InvestmentsPage() {
   if (loading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="min-h-screen">
+          <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
+            </div>
           </div>
         </div>
       </AuthGuard>
@@ -331,113 +334,125 @@ export default function InvestmentsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-        <div className="container mx-auto max-w-7xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Investment Platforms</h1>
-            <p className="text-gray-600">
-              Track your deposits, withdrawals, and profits across all investment platforms
-            </p>
-          </div>
+      <div className="min-h-screen">
+        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
+          {/* Header */}
+          <header className="mb-10 animate-in">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm font-medium mb-1">Wealth Management</p>
+                <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight">
+                  Investment Platforms
+                </h1>
+                <p className="mt-2 text-muted-foreground">
+                  Track your deposits, withdrawals, and profits across all investment platforms
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingPlatform(undefined);
+                  setShowPlatformForm(true);
+                }}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full',
+                  'bg-foreground text-background text-sm font-medium',
+                  'hover:opacity-90 transition-opacity'
+                )}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Platform</span>
+              </button>
+            </div>
+          </header>
 
           {error && (
-            <Card variant="elevated" className="mb-6 border-red-200 bg-red-50">
-              <CardContent>
-                <p className="text-red-800">{error}</p>
-              </CardContent>
-            </Card>
+            <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-in">
+              <p className="text-destructive">{error}</p>
+            </div>
           )}
 
-          {/* Portfolio Summary */}
+          {/* Portfolio Summary Hero */}
           {summary && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card variant="elevated" hover>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-500">Total Balance</span>
-                    <FiDollarSign className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(summary.totalBalance)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Net Investment:{' '}
-                    {formatCurrency(summary.totalDeposited - summary.totalWithdrawn)}
-                  </p>
-                </CardContent>
-              </Card>
+            <section className="mb-8 animate-in delay-75">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-6 lg:p-8">
+                {/* Background decoration */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-1/2 -right-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                </div>
 
-              <Card variant="elevated" hover>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-500">Total Profit/Loss</span>
-                    {isPositive ? (
-                      <FiTrendingUp className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <FiTrendingDown className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                  <p
-                    className={`text-2xl font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
-                  >
-                    {isPositive ? '+' : ''}
-                    {formatCurrency(summary.totalProfit)}
-                  </p>
-                  <p className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                    {isPositive ? '+' : ''}
-                    {summary.totalProfitPercent.toFixed(2)}%
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card variant="elevated" hover>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-500">Platforms</span>
-                    <FiPieChart className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">{summary.platformCount}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {Object.keys(summary.byType).length} types
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card variant="elevated" hover>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-500">Activity</span>
-                    <FiActivity className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Deposited:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(summary.totalDeposited)}
-                      </span>
+                <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-white" />
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Withdrawn:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(summary.totalWithdrawn)}
-                      </span>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Total Balance</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">
+                        {formatCurrency(summary.totalBalance)}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center',
+                      isPositive ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                    )}>
+                      {isPositive ? (
+                        <TrendingUp className="w-6 h-6 text-emerald-400" />
+                      ) : (
+                        <TrendingDown className="w-6 h-6 text-rose-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Profit/Loss</p>
+                      <p className={cn(
+                        'text-2xl font-semibold tabular-nums',
+                        isPositive ? 'text-emerald-400' : 'text-rose-400'
+                      )}>
+                        {isPositive ? '+' : ''}{formatCurrency(summary.totalProfit)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                      <PieChart className="w-6 h-6 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Platforms</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">{summary.platformCount}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                      <Activity className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Net Invested</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">
+                        {formatCurrency(summary.totalDeposited - summary.totalWithdrawn)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           )}
 
           {/* Charts */}
           {summary && summary.platforms.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-in delay-150">
+              <div className="rounded-2xl bg-card border border-border p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                   Platform Allocation
                 </h2>
                 <div className="h-64">
                   {chartsReady && getPieChartData() ? (
-                    <Pie
+                    <PieChart2
                       data={getPieChartData()!}
                       options={{
                         responsive: true,
@@ -454,13 +469,13 @@ export default function InvestmentsPage() {
                       }}
                     />
                   ) : (
-                    <div className="h-full w-full rounded bg-gray-100 animate-pulse" />
+                    <div className="h-full w-full rounded-xl bg-secondary animate-pulse" />
                   )}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <div className="rounded-2xl bg-card border border-border p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                   Platform Performance
                 </h2>
                 <div className="h-64">
@@ -486,53 +501,49 @@ export default function InvestmentsPage() {
                       }}
                     />
                   ) : (
-                    <div className="h-full w-full rounded bg-gray-100 animate-pulse" />
+                    <div className="h-full w-full rounded-xl bg-secondary animate-pulse" />
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          <Card variant="elevated" className="bg-gradient-to-r from-blue-50 to-purple-50 mb-8">
-            <CardHeader>
-              <CardTitle>Connect Your Accounts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => plaidReady && openPlaid()}
-                  disabled={!plaidReady}
-                  leftIcon={<FiDollarSign className="w-5 h-5" />}
-                  className="w-full"
-                >
-                  Connect Broker
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setShowCryptoConnect(true)}
-                  leftIcon={<FiTrendingUp className="w-5 h-5" />}
-                  className="w-full"
-                >
-                  Connect Crypto
-                </Button>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={() => {
-                    setEditingPlatform(undefined);
-                    setShowPlatformForm(true);
-                  }}
-                  leftIcon={<FiPlus className="w-5 h-5" />}
-                  className="w-full"
-                >
-                  Add Manually
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl bg-card border border-border p-6 mb-8 animate-in delay-200">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Connect Your Accounts</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => plaidReady && openPlaid()}
+                disabled={!plaidReady}
+                leftIcon={<DollarSign className="w-5 h-5" />}
+                className="w-full rounded-xl"
+              >
+                Connect Broker
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowCryptoConnect(true)}
+                leftIcon={<TrendingUp className="w-5 h-5" />}
+                className="w-full rounded-xl"
+              >
+                Connect Crypto
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => {
+                  setEditingPlatform(undefined);
+                  setShowPlatformForm(true);
+                }}
+                leftIcon={<Plus className="w-5 h-5" />}
+                className="w-full rounded-xl"
+              >
+                Add Manually
+              </Button>
+            </div>
+          </div>
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -549,9 +560,9 @@ export default function InvestmentsPage() {
 
             {/* Platform Form Modal */}
             {showPlatformForm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl animate-in">
+                  <h2 className="text-xl font-semibold text-foreground mb-4">
                     {editingPlatform ? 'Edit Platform' : 'Add New Platform'}
                   </h2>
                   <PlatformForm
@@ -568,8 +579,8 @@ export default function InvestmentsPage() {
 
             {/* Transaction Form Modal */}
             {showTransactionForm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
                   <TransactionForm
                     platformId={selectedPlatformId}
                     platformName={selectedPlatformName}
@@ -588,54 +599,54 @@ export default function InvestmentsPage() {
 
             {/* Crypto Connect Modal */}
             {showCryptoConnect && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
                   {!selectedExchange ? (
                     <>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      <h3 className="text-lg font-semibold text-foreground mb-4">
                         Connect Crypto Exchange
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      <p className="text-muted-foreground mb-4">
                         Choose your crypto exchange to connect:
                       </p>
                       <div className="space-y-3 mb-6">
                         <button
                           onClick={() => setSelectedExchange('coinbase')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <span className="font-medium text-foreground">
                             Coinbase
                           </span>
-                          <span className="text-sm text-gray-500">API Key Required</span>
+                          <span className="text-sm text-muted-foreground">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('binance')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
-                          <span className="font-medium text-gray-900 dark:text-white">Binance</span>
-                          <span className="text-sm text-gray-500">API Key Required</span>
+                          <span className="font-medium text-foreground">Binance</span>
+                          <span className="text-sm text-muted-foreground">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('kraken')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
-                          <span className="font-medium text-gray-900 dark:text-white">Kraken</span>
-                          <span className="text-sm text-gray-500">API Key Required</span>
+                          <span className="font-medium text-foreground">Kraken</span>
+                          <span className="text-sm text-muted-foreground">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('wallet')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <span className="font-medium text-foreground">
                             Manual Wallet
                           </span>
-                          <span className="text-sm text-gray-500">Address-based</span>
+                          <span className="text-sm text-muted-foreground">Address-based</span>
                         </button>
                       </div>
                       <div className="flex justify-end">
                         <button
                           onClick={() => setShowCryptoConnect(false)}
-                          className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                          className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
                           Cancel
                         </button>
@@ -643,12 +654,12 @@ export default function InvestmentsPage() {
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      <h3 className="text-lg font-semibold text-foreground mb-4">
                         {selectedExchange === 'wallet'
                           ? 'Add Wallet Address'
                           : `Connect ${selectedExchange.charAt(0).toUpperCase() + selectedExchange.slice(1)}`}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      <p className="text-sm text-muted-foreground mb-4">
                         {selectedExchange === 'wallet'
                           ? 'Enter your wallet address to track your crypto holdings.'
                           : `Enter your API credentials from ${selectedExchange}. Make sure to enable read-only permissions.`}
@@ -657,7 +668,7 @@ export default function InvestmentsPage() {
                         {selectedExchange === 'wallet' ? (
                           <>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              <label className="block text-sm font-medium text-foreground mb-2">
                                 Wallet Address
                               </label>
                               <input
@@ -665,17 +676,17 @@ export default function InvestmentsPage() {
                                 value={apiKey}
                                 onChange={e => setApiKey(e.target.value)}
                                 placeholder="0x... or bc1..."
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              <label className="block text-sm font-medium text-foreground mb-2">
                                 Blockchain
                               </label>
                               <select
                                 value={apiSecret}
                                 onChange={e => setApiSecret(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                               >
                                 <option value="">Select blockchain</option>
                                 <option value="ethereum">Ethereum</option>
@@ -688,7 +699,7 @@ export default function InvestmentsPage() {
                         ) : (
                           <>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              <label className="block text-sm font-medium text-foreground mb-2">
                                 API Key
                               </label>
                               <input
@@ -696,11 +707,11 @@ export default function InvestmentsPage() {
                                 value={apiKey}
                                 onChange={e => setApiKey(e.target.value)}
                                 placeholder="Enter your API key"
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              <label className="block text-sm font-medium text-foreground mb-2">
                                 API Secret
                               </label>
                               <input
@@ -708,7 +719,7 @@ export default function InvestmentsPage() {
                                 value={apiSecret}
                                 onChange={e => setApiSecret(e.target.value)}
                                 placeholder="Enter your API secret"
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                               />
                             </div>
                           </>
@@ -721,7 +732,7 @@ export default function InvestmentsPage() {
                             setApiKey('');
                             setApiSecret('');
                           }}
-                          className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                          className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                         >
                           Back
                         </button>
@@ -769,7 +780,7 @@ export default function InvestmentsPage() {
                             }
                           }}
                           disabled={!apiKey || !apiSecret}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Connect
                         </button>
@@ -782,25 +793,25 @@ export default function InvestmentsPage() {
 
             {/* Delete Confirmation Modal */}
             {deleteConfirm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Confirm Delete
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Are you sure you want to delete this platform and all its transactions? This
                     action cannot be undone.
                   </p>
                   <div className="flex justify-end space-x-3">
                     <button
                       onClick={() => setDeleteConfirm(null)}
-                      className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                      className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => handleDeletePlatform(deleteConfirm)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      className="px-4 py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors"
                     >
                       Delete
                     </button>
@@ -812,19 +823,19 @@ export default function InvestmentsPage() {
             {/* Platforms List */}
             <TabsContent value="all">
               {summary && summary.platforms.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-                  <FiPieChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <div className="rounded-2xl bg-card border border-border p-12 text-center">
+                  <PieChart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     No platforms yet
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Start tracking your investments by adding your first platform.
                   </p>
                   <button
                     onClick={() => setShowPlatformForm(true)}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
                   >
-                    <FiPlus className="w-5 h-5" />
+                    <Plus className="w-5 h-5" />
                     <span>Add Your First Platform</span>
                   </button>
                 </div>
@@ -848,25 +859,25 @@ export default function InvestmentsPage() {
               <TabsContent key={type} value={type}>
                 {type === 'crypto_exchange' && cryptoAccounts.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">
                       Connected Wallets & Exchanges
                     </h3>
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                       {cryptoAccounts.map(account => (
                         <div
                           key={account.id}
-                          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
+                          className="rounded-2xl bg-card border border-border p-6 hover:border-border/80 transition-colors"
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
-                              <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                              <h4 className="text-base font-semibold text-foreground mb-1">
                                 {account.name ||
                                   (account.type === 'wallet'
                                     ? `${account.blockchain?.charAt(0).toUpperCase() + account.blockchain?.slice(1)} Wallet`
                                     : account.exchange?.charAt(0).toUpperCase() +
                                       account.exchange?.slice(1))}
                               </h4>
-                              <span className="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              <span className="inline-block px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 {account.status || 'active'}
                               </span>
                             </div>
@@ -893,7 +904,7 @@ export default function InvestmentsPage() {
                                   }
                                 }
                               }}
-                              className="text-red-500 hover:text-red-700 p-1"
+                              className="text-rose-500 hover:text-rose-600 p-1 transition-colors"
                             >
                               <svg
                                 className="w-5 h-5"
@@ -912,9 +923,9 @@ export default function InvestmentsPage() {
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">Address:</span>
+                              <span className="text-muted-foreground">Address:</span>
                               <span
-                                className="text-gray-900 dark:text-white font-mono text-xs truncate ml-2 max-w-[180px]"
+                                className="text-foreground font-mono text-xs truncate ml-2 max-w-[180px]"
                                 title={account.address}
                               >
                                 {account.address
@@ -924,16 +935,16 @@ export default function InvestmentsPage() {
                             </div>
                             {account.blockchain && (
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-500 dark:text-gray-400">
+                                <span className="text-muted-foreground">
                                   Blockchain:
                                 </span>
-                                <span className="text-gray-900 dark:text-white capitalize">
+                                <span className="text-foreground capitalize">
                                   {account.blockchain}
                                 </span>
                               </div>
                             )}
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">Balance:</span>
+                              <span className="text-muted-foreground">Balance:</span>
                               <button
                                 onClick={async () => {
                                   toast.loading('Fetching balance...');
@@ -957,7 +968,7 @@ export default function InvestmentsPage() {
                                     toast.error('Error fetching balance');
                                   }
                                 }}
-                                className="text-blue-600 hover:text-blue-700 font-medium"
+                                className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-medium transition-colors"
                               >
                                 Check Balance →
                               </button>
@@ -970,16 +981,16 @@ export default function InvestmentsPage() {
                 )}
                 {summary?.platforms.filter(p => p.type === type).length === 0 &&
                 cryptoAccounts.length === 0 ? (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-                    <FiPieChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <div className="rounded-2xl bg-card border border-border p-12 text-center">
+                    <PieChart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       No {type.replace('_', ' ')} platforms yet
                     </h3>
                     <button
                       onClick={() => setShowPlatformForm(true)}
-                      className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
                     >
-                      <FiPlus className="w-5 h-5" />
+                      <Plus className="w-5 h-5" />
                       <span>Add Platform</span>
                     </button>
                   </div>

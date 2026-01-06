@@ -190,7 +190,7 @@ export function ComprehensiveAccountsView() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton variant="rectangular" height="200px" className="rounded-2xl" />
+        <Skeleton className="h-[200px] rounded-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <CardSkeleton />
           <CardSkeleton />

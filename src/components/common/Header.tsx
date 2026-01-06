@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, ChevronDown, Crown, LogOut, Rocket, Search, User } from 'lucide-react';
+import { Bell, ChevronDown, Crown, LogOut, Moon, Rocket, Search, Sun, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -13,8 +13,25 @@ export function Header() {
   const { user, signOut } = useSession();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { settings } = useUserSettings(Boolean(user));
+
+  // Initialize theme from localStorage or system preference
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = stored === 'dark' || (!stored && prefersDark);
+    setIsDark(dark);
+    document.documentElement.classList.toggle('dark', dark);
+  }, []);
+
+  const toggleTheme = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    document.documentElement.classList.toggle('dark', newDark);
+    localStorage.setItem('theme', newDark ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -32,24 +49,34 @@ export function Header() {
     setShowUserMenu(false);
   };
 
+  // Unauthenticated header (landing page)
   if (!user) {
     return (
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-card/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" prefetch={true} className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+          <Link href="/" prefetch={true} className="flex items-center gap-3 group">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-shadow">
               <span className="text-white font-bold text-sm">F</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">FinSight AI</span>
+            <span className="text-lg font-semibold text-foreground tracking-tight">
+              FinSight AI
+            </span>
           </Link>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+            </button>
             <Link href="/login" prefetch={true}>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                 Sign In
               </Button>
             </Link>
             <Link href="/signup" prefetch={true}>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-5">
                 Get Started
               </Button>
             </Link>
@@ -59,86 +86,118 @@ export function Header() {
     );
   }
 
+  // Authenticated header (app)
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="px-6 py-3 flex items-center justify-between">
+    <header className="bg-card/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
+      <div className="px-6 py-3 flex items-center justify-between gap-4">
         {/* Search Bar */}
-        <div className="flex-1 max-w-lg">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="flex-1 max-w-xl">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-foreground transition-colors" />
             <input
               type="text"
               placeholder="Search transactions, accounts..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-secondary border border-transparent rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
+            <kbd className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs text-muted-foreground bg-muted rounded-md font-mono">
+              ⌘K
+            </kbd>
           </div>
         </div>
 
-        {/* Right Side */}
-        <div className="flex items-center space-x-4">
-          {user && settings.plan === 'free' && (
-            <Link href="/settings">
-              <Button size="sm" variant="primary" leftIcon={<Crown className="h-4 w-4" />}>
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-2">
+          {/* Upgrade Button (Free users) */}
+          {settings.plan === 'free' && (
+            <Link href="/settings" className="hidden sm:block">
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 rounded-full px-4 shadow-lg shadow-amber-500/20"
+              >
+                <Crown className="w-4 h-4 mr-2" />
                 Upgrade
               </Button>
             </Link>
           )}
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+          </button>
+
           {/* Notifications */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          <button
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="w-[18px] h-[18px]" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-card" />
           </button>
 
           {/* User Menu */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+              className="flex items-center gap-3 p-1.5 pr-3 hover:bg-secondary rounded-xl transition-colors"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20">
                 <span className="text-white text-sm font-medium">
                   {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
                 </span>
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-gray-900">{user.displayName || 'User'}</p>
-                <p className="text-xs text-gray-500 truncate max-w-32">{user.email}</p>
+              <div className="hidden md:block text-left">
+                <p className="text-sm font-medium text-foreground leading-tight">
+                  {user.displayName || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate max-w-28">
+                  {user.email}
+                </p>
               </div>
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user.displayName || 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              <div className="absolute right-0 mt-2 w-60 bg-card rounded-xl shadow-xl border border-border py-2 z-50 animate-in">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-sm font-medium text-foreground">
+                    {user.displayName || 'User'}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
-                <Link
-                  href="/settings"
-                  prefetch={true}
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <User className="w-4 h-4 mr-3" />
-                  Account Settings
-                </Link>
-                <Link
-                  href="/onboarding"
-                  prefetch={true}
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <Rocket className="w-4 h-4 mr-3 text-blue-600" />
-                  Guided Onboarding
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="w-4 h-4 mr-3" />
-                  Sign Out
-                </button>
+                <div className="py-1">
+                  <Link
+                    href="/settings"
+                    prefetch={true}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    Account Settings
+                  </Link>
+                  <Link
+                    href="/onboarding"
+                    prefetch={true}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <Rocket className="w-4 h-4 text-blue-500" />
+                    Guided Onboarding
+                  </Link>
+                </div>
+                <div className="border-t border-border pt-1">
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             )}
           </div>

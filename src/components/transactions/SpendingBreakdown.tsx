@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { ChartSkeleton } from '@/components/common/SkeletonLoader';
 import { useSession } from '@/components/providers/SessionProvider';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 interface CategorySpending {
   category: string;

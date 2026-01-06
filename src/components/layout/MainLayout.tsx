@@ -27,7 +27,16 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
 
   // Redirect logged-in users to onboarding if not complete (skip on onboarding route)
   useEffect(() => {
-    if (!user || pathname.startsWith('/onboarding')) return;
+    // No user - no need to check onboarding
+    if (!user) {
+      setCheckedOnboarding(true);
+      return;
+    }
+    // Skip check on onboarding route
+    if (pathname.startsWith('/onboarding')) {
+      setCheckedOnboarding(true);
+      return;
+    }
     let cancelled = false;
     const check = async () => {
       try {
@@ -70,7 +79,7 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
 
   // Authenticated user layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       <CommandPalette />
       <Header />
       <div className="flex h-[calc(100vh-64px)]">
