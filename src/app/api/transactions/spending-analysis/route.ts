@@ -71,12 +71,14 @@ export async function GET(request: Request) {
       );
     }
 
-    // Check cache first
+    // Temporarily disable cache to debug
+    // const cacheKey = `spending-analysis-${userId}`;
+    // const cached = cache.get(cacheKey);
+    // if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    //   return NextResponse.json(cached.data);
+    // }
     const cacheKey = `spending-analysis-${userId}`;
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return NextResponse.json(cached.data);
-    }
+    logger.info('Spending analysis request', { userId });
 
     // Get categorized transactions
     const categorizedSnapshot = await db
@@ -85,18 +87,12 @@ export async function GET(request: Request) {
       .collection('categorizedTransactions')
       .get();
 
-    if (categorizedSnapshot.empty) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          totalSpent: 0,
-          totalIncome: 0,
-          netCashFlow: 0,
-          categories: [],
-          period: 'Last 90 days',
-        },
-      });
-    }
+    // Also get Israeli bank transactions
+    const israeliTxSnapshot = await db
+      .collection('users')
+      .doc(userId)
+      .collection('transactions')
+      .get();
 
     // Process transactions
     const categoryData = new Map<
@@ -111,10 +107,20 @@ export async function GET(request: Request) {
     let totalIncome = 0;
     let totalExpenses = 0;
 
-    categorizedSnapshot.docs.forEach((doc: any) => {
+    // Track processed transaction IDs to prevent double counting
+    const processedIds = new Set<string>();
+
+    // Process categorized transactions (these are already AI-enhanced)
+    categorizedSnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
-      const category = data.aiCategory;
-      const amount = Math.abs(data.amount);
+      const txId = data.originalTransactionId || doc.id;
+
+      // Skip if already processed
+      if (processedIds.has(txId)) return;
+      processedIds.add(txId);
+
+      const category = data.aiCategory || 'Uncategorized';
+      const amount = Math.abs(data.amount || 0);
       const type = data.type as 'income' | 'expense';
 
       if (type === 'income') {
@@ -136,6 +142,48 @@ export async function GET(request: Request) {
       }
     });
 
+    // Process Israeli bank transactions (not yet categorized by AI)
+    israeliTxSnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      const txId = doc.id;
+
+      // Skip if already processed from categorized transactions
+      if (processedIds.has(txId)) return;
+      processedIds.add(txId);
+
+      // Israeli transactions are stored with 'amount' field by IsraelClient
+      // Fallback to chargedAmount/originalAmount for older data
+      const rawAmount = data.amount || data.chargedAmount || data.originalAmount || 0;
+      const amount = Math.abs(rawAmount);
+      const type = rawAmount > 0 ? 'income' : 'expense';
+      const category = data.category || 'Uncategorized';
+
+      if (type === 'income') {
+        totalIncome += amount;
+      } else {
+        totalExpenses += amount;
+      }
+
+      if (categoryData.has(category)) {
+        const existing = categoryData.get(category)!;
+        existing.amount += amount;
+        existing.count += 1;
+      } else {
+        categoryData.set(category, {
+          amount,
+          count: 1,
+          type,
+        });
+      }
+    });
+
+    logger.info('Spending analysis totals', {
+      categorizedCount: categorizedSnapshot.docs.length,
+      israeliCount: israeliTxSnapshot.docs.length,
+      totalIncome,
+      totalExpenses,
+    });
+
     // Convert to array and sort by amount
     const categories = Array.from(categoryData.entries())
       .map(([category, data]) => ({
@@ -143,14 +191,17 @@ export async function GET(request: Request) {
         amount: data.type === 'expense' ? -data.amount : data.amount, // Negative for expenses
         percentage:
           data.type === 'expense'
-            ? (data.amount / totalExpenses) * 100
-            : (data.amount / totalIncome) * 100,
+            ? totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0
+            : totalIncome > 0 ? (data.amount / totalIncome) * 100 : 0,
         transactionCount: data.count,
         color: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || '#9CA3AF',
       }))
       .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
 
     const netCashFlow = totalIncome - totalExpenses;
+
+    // Determine dominant currency (ILS if Israeli transactions, USD otherwise)
+    const dominantCurrency = israeliTxSnapshot.docs.length > categorizedSnapshot.docs.length ? 'ILS' : 'USD';
 
     const responseData = {
       success: true,
@@ -160,6 +211,7 @@ export async function GET(request: Request) {
         netCashFlow,
         categories,
         period: 'Last 90 days',
+        currency: dominantCurrency,
       },
     };
 

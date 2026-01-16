@@ -1,11 +1,13 @@
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { TransactionSkeleton } from '@/components/common/SkeletonLoader';
 import { useTransactions } from '@/hooks/use-transactions';
+import { formatCurrency } from '@/lib/utils';
 import type { Transaction } from '@/types/finance';
 
 interface RecentTransactionsProps {
   onEditTransaction: (transaction: Transaction) => void;
   onDeleteTransaction: (transaction: Transaction) => void;
+  currency?: string;
 }
 
 /**
@@ -14,6 +16,7 @@ interface RecentTransactionsProps {
 export function RecentTransactions({
   onEditTransaction,
   onDeleteTransaction,
+  currency = 'USD',
 }: RecentTransactionsProps) {
   const { transactions, loading, error } = useTransactions();
 
@@ -72,7 +75,7 @@ export function RecentTransactions({
                   transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString()}
+                {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount), currency).replace(/^-/, '')}
               </span>
               <div className="flex gap-2">
                 <button

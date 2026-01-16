@@ -61,13 +61,43 @@ export async function GET(request: NextRequest) {
     const { enforceFinancialAccuracy } = await import('@/lib/financial-validator');
     enforceFinancialAccuracy(metrics, 'financial-overview API');
 
+    // Fetch cached Israeli bank accounts from Firestore
+    const israeliAccountsSnapshot = await db
+      .collection('users')
+      .doc(userId)
+      .collection('accounts')
+      .get();
+
+    const israeliAccounts = israeliAccountsSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || `Account ${data.mask || doc.id}`,
+        balance: data.balance?.current || 0,
+        availableBalance: data.balance?.available || null,
+        type: data.type || 'depository',
+        subtype: data.subtype || 'checking',
+        accountType: data.type || 'depository',
+        institutionName: data.institutionName || 'Israeli Bank',
+        mask: data.mask || null,
+        currency: data.currency || 'ILS',
+        source: 'israel',
+        providerId: data.providerId || 'israel',
+      };
+    });
+
+    logger.info(`Found ${israeliAccounts.length} cached Israeli accounts`);
+
     // Transform data to match expected API format
-    const bankAccounts = rawData.plaidAccounts.filter(
+    // Combine Plaid bank accounts with Israeli accounts
+    const plaidBankAccounts = rawData.plaidAccounts.filter(
       acc =>
         acc.accountType === 'depository' &&
         acc.subtype &&
         ['checking', 'savings'].includes(acc.subtype)
     );
+
+    const bankAccounts = [...plaidBankAccounts, ...israeliAccounts];
 
     const creditAccounts = rawData.plaidAccounts.filter(acc => acc.accountType === 'credit');
 
@@ -95,28 +125,32 @@ export async function GET(request: NextRequest) {
       ['loan', 'mortgage'].includes(acc.accountType)
     );
 
+    // Calculate Israeli accounts totals
+    const israeliAccountsTotal = israeliAccounts.reduce((sum: number, acc) => sum + (acc.balance || 0), 0);
+
     const transformedData = {
       summary: {
-        liquidAssets: applyDemo ? 12500 : metrics.liquidAssets,
-        totalAssets: applyDemo ? 45231 : metrics.totalAssets,
+        liquidAssets: applyDemo ? 12500 : metrics.liquidAssets + israeliAccountsTotal,
+        totalAssets: applyDemo ? 45231 : metrics.totalAssets + israeliAccountsTotal,
         totalLiabilities: metrics.totalLiabilities,
-        netWorth: applyDemo ? 45231 : metrics.netWorth,
+        netWorth: applyDemo ? 45231 : metrics.netWorth + israeliAccountsTotal,
         monthlyIncome: applyDemo ? 8500 : metrics.monthlyIncome,
         monthlyExpenses: applyDemo ? 5100 : metrics.monthlyExpenses,
         monthlyCashFlow: applyDemo ? 3400 : metrics.monthlyCashFlow,
         investments: metrics.investments,
+        hasIsraeliAccounts: israeliAccounts.length > 0,
       },
       accounts: {
         bank: applyDemo
           ? [
-              {
-                id: 'demo-checking',
-                name: 'Demo Checking',
-                balance: 12500,
-                type: 'checking',
-                institution: 'Demo Bank',
-              },
-            ]
+            {
+              id: 'demo-checking',
+              name: 'Demo Checking',
+              balance: 12500,
+              type: 'checking',
+              institution: 'Demo Bank',
+            },
+          ]
           : bankAccounts,
         credit: creditAccounts,
         investment: investmentAccounts,
@@ -125,9 +159,9 @@ export async function GET(request: NextRequest) {
       },
       manualAssets: applyDemo
         ? [
-            { id: 'demo-savings', name: 'Emergency Fund', amount: 3000, type: 'savings' },
-            { id: 'demo-brokerage', name: 'Brokerage', amount: 22000, type: 'investment' },
-          ]
+          { id: 'demo-savings', name: 'Emergency Fund', amount: 3000, type: 'savings' },
+          { id: 'demo-brokerage', name: 'Brokerage', amount: 22000, type: 'investment' },
+        ]
         : rawData.manualAssets,
       manualLiabilities: rawData.manualLiabilities,
       platforms: includePlatforms ? [] : undefined,

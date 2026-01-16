@@ -1,8 +1,11 @@
 'use client';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface SpendingByCategoryDisplayProps {
   spendingData: Record<string, number>;
   isLoading?: boolean;
+  currency?: string;
 }
 
 /**
@@ -11,6 +14,7 @@ interface SpendingByCategoryDisplayProps {
 export default function SpendingByCategoryDisplay({
   spendingData,
   isLoading = false,
+  currency = 'USD',
 }: SpendingByCategoryDisplayProps) {
   if (isLoading) {
     return (
@@ -39,7 +43,7 @@ export default function SpendingByCategoryDisplay({
         {Object.entries(spendingData).map(([category, amount]) => (
           <div key={category} className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <p className="font-medium text-gray-700 truncate">{category}</p>
-            <p className="text-2xl font-semibold text-gray-800">${amount.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-gray-800">{formatCurrency(amount, currency)}</p>
           </div>
         ))}
       </div>

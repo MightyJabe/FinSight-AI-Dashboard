@@ -24,6 +24,8 @@ interface EnhancedTransaction {
   accountId: string;
   createdAt: string;
   updatedAt: string;
+  currency?: string;
+  source?: string;
 }
 
 interface PlaidTransaction {
@@ -105,14 +107,19 @@ export default function TransactionsPage() {
       // Get the ID token
       const idToken = await firebaseUser.getIdToken();
 
-      // Fetch Plaid, manual transactions, and AI categorized data
-      const [plaidResponse, manualResponse, categorizedResponse] = await Promise.all([
+      // Fetch Plaid, manual transactions, Israeli transactions, and AI categorized data
+      const [plaidResponse, manualResponse, israeliResponse, categorizedResponse] = await Promise.all([
         fetch('/api/plaid/transactions', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
         }),
         fetch('/api/manual-data?type=transactions', {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }),
+        fetch('/api/banking/transactions', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
@@ -132,9 +139,10 @@ export default function TransactionsPage() {
         throw new Error(`Failed to fetch manual transactions: ${manualResponse.statusText}`);
       }
 
-      const [plaidData, manualData] = await Promise.all([
+      const [plaidData, manualData, israeliData] = await Promise.all([
         plaidResponse.json(),
         manualResponse.json(),
+        israeliResponse.ok ? israeliResponse.json() : { transactions: [] },
       ]);
 
       // Get categorized data
@@ -182,8 +190,46 @@ export default function TransactionsPage() {
         updatedAt: t.updatedAt,
       }));
 
-      // Combine and sort transactions
-      let allTransactions = [...plaidTransactions, ...manualTransactions].sort(
+      // Map Israeli bank transactions to our internal format
+      const israeliTransactions = (israeliData.transactions || []).map((t: { id: string; date: string; description: string; name: string; amount: number; originalAmount: number; category: string; account_name: string; account_id: string; originalCurrency: string }) => ({
+        id: t.id,
+        date: t.date,
+        description: t.description || t.name,
+        amount: t.amount || t.originalAmount,
+        category: t.category || 'Uncategorized',
+        account: t.account_name,
+        accountId: t.account_id,
+        type: (t.amount || t.originalAmount) > 0 ? 'income' as const : 'expense' as const,
+        createdAt: t.date,
+        updatedAt: t.date,
+        currency: t.originalCurrency || 'ILS',
+        source: 'israel',
+      }));
+
+      // Combine and deduplicate transactions from all sources
+      // Priority: Israeli transactions > Manual > Plaid (for duplicates)
+      const transactionMap = new Map<string, EnhancedTransaction>();
+
+      // Helper to create a deduplication key
+      const getDedupeKey = (tx: EnhancedTransaction) =>
+        `${tx.description}|${tx.date}|${Math.abs(tx.amount).toFixed(2)}`;
+
+      // Add Plaid transactions first (lowest priority for dupes)
+      for (const tx of plaidTransactions) {
+        transactionMap.set(getDedupeKey(tx), tx);
+      }
+
+      // Add manual transactions (medium priority)
+      for (const tx of manualTransactions) {
+        transactionMap.set(getDedupeKey(tx), tx);
+      }
+
+      // Add Israeli transactions last (highest priority - has correct currency)
+      for (const tx of israeliTransactions) {
+        transactionMap.set(getDedupeKey(tx), tx);
+      }
+
+      let allTransactions = Array.from(transactionMap.values()).sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 

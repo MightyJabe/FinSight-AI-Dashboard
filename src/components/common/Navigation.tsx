@@ -15,6 +15,7 @@ import {
   PiggyBank,
   Receipt,
   Settings,
+  Sparkles,
   Target,
   TrendingUp,
   Zap,
@@ -60,6 +61,7 @@ const navigationGroups = [
 
 const bottomItems = [
   { href: '/help', label: 'Help', icon: HelpCircle, description: 'Support & FAQ' },
+  { href: '/onboarding', label: 'Onboarding', icon: Sparkles, description: 'Get started' },
   { href: '/settings', label: 'Settings', icon: Settings, description: 'Preferences' },
 ];
 
@@ -69,26 +71,26 @@ export function Navigation() {
 
   return (
     <nav
-      className={`bg-card border-r border-border flex flex-col h-full transition-all duration-300 ${
+      className={`bg-card/80 backdrop-blur-xl border-r border-border flex flex-col h-full transition-all duration-500 ease-out ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Logo Section */}
-      <div className="p-4 border-b border-border">
+      <div className="p-5 border-b border-border">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-shadow">
-              <Zap className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300 group-hover:scale-105">
+              <Zap className="w-5 h-5 text-white" />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <h1 className="font-semibold text-foreground tracking-tight text-sm">FinSight AI</h1>
+                <h1 className="font-display text-base text-foreground tracking-tight">FinSight</h1>
               </div>
             )}
           </Link>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-200 active:scale-95"
             aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
           >
             {collapsed ? (
@@ -101,16 +103,16 @@ export function Navigation() {
       </div>
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto py-4 px-3">
-        {navigationGroups.map((group) => (
-          <div key={group.label} className="mb-6">
+      <div className="flex-1 overflow-y-auto py-6 px-3">
+        {navigationGroups.map((group, groupIndex) => (
+          <div key={group.label} className="mb-8">
             {!collapsed && (
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-3 mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground px-3 mb-3">
                 {group.label}
               </p>
             )}
             <div className="space-y-1">
-              {group.items.map((item) => {
+              {group.items.map((item, itemIndex) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
 
@@ -120,28 +122,32 @@ export function Navigation() {
                     href={item.href}
                     prefetch={true}
                     title={collapsed ? item.label : undefined}
-                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out relative overflow-hidden ${
                       isActive
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                        ? 'bg-foreground text-background shadow-lg'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/80 hover:translate-x-0.5'
                     }`}
+                    style={{
+                      animationDelay: `${(groupIndex * 2 + itemIndex) * 50}ms`,
+                    }}
                   >
+                    {/* Active indicator bar */}
+                    {isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400 rounded-r-full" />
+                    )}
                     <Icon
-                      className={`w-4 h-4 flex-shrink-0 ${
-                        isActive ? 'text-background' : 'text-muted-foreground group-hover:text-foreground'
+                      className={`w-[18px] h-[18px] flex-shrink-0 transition-transform duration-300 ${
+                        isActive ? 'text-background' : 'text-muted-foreground group-hover:text-foreground group-hover:scale-110'
                       }`}
                     />
                     {!collapsed && (
                       <span
-                        className={`text-sm font-medium truncate ${
+                        className={`text-sm font-medium truncate transition-all duration-300 ${
                           isActive ? 'text-background' : 'text-foreground'
                         }`}
                       >
                         {item.label}
                       </span>
-                    )}
-                    {isActive && !collapsed && (
-                      <div className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />
                     )}
                   </Link>
                 );
@@ -152,7 +158,7 @@ export function Navigation() {
       </div>
 
       {/* Bottom Items */}
-      <div className="p-3 border-t border-border space-y-1">
+      <div className="p-4 border-t border-border space-y-1.5">
         {bottomItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -163,19 +169,19 @@ export function Navigation() {
               href={item.href}
               prefetch={true}
               title={collapsed ? item.label : undefined}
-              className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out ${
                 isActive
-                  ? 'bg-secondary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  ? 'bg-secondary/80 text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5'
               }`}
             >
               <Icon
-                className={`w-4 h-4 flex-shrink-0 ${
-                  isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                className={`w-[18px] h-[18px] flex-shrink-0 transition-transform duration-300 ${
+                  isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground group-hover:scale-110'
                 }`}
               />
               {!collapsed && (
-                <span className="text-sm font-medium text-foreground truncate">
+                <span className="text-sm font-medium truncate">
                   {item.label}
                 </span>
               )}

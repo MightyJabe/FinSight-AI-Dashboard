@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { memo, useState } from 'react';
 
-import { cn , formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 import { CategoryEditor } from './CategoryEditor';
 
@@ -44,6 +44,8 @@ interface TransactionRowProps {
     description: string;
     account: string;
     accountId: string;
+    currency?: string;
+    source?: string;
   };
   onCategoryUpdate: (transactionId: string, newCategory: string, type: 'income' | 'expense') => void;
   isUpdating: boolean;
@@ -273,7 +275,7 @@ export const TransactionRow = memo(function TransactionRow({
               )}
             >
               {isIncome ? '+' : '-'}
-              {formatCurrency(displayAmount)}
+              {formatCurrency(displayAmount, transaction.currency || 'USD')}
             </span>
           </div>
           <span className="text-xs text-muted-foreground mt-0.5">

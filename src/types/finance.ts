@@ -20,6 +20,7 @@ export interface Account {
   type: string;
   balance: number;
   institution: string;
+  currency?: string;
 }
 
 export interface ManualAsset {

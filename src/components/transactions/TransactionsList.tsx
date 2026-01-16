@@ -35,6 +35,8 @@ interface EnhancedTransaction {
   accountId: string;
   createdAt: string;
   updatedAt: string;
+  currency?: string;
+  source?: string;
 }
 
 interface TransactionsListProps {

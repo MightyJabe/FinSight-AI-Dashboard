@@ -7,6 +7,7 @@ import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { ChartSkeleton } from '@/components/common/SkeletonLoader';
 import { useSession } from '@/components/providers/SessionProvider';
 import { useErrorHandler } from '@/hooks/use-error-handler';
+import { formatCurrency } from '@/lib/utils';
 
 interface CategorySpending {
   category: string;
@@ -22,6 +23,7 @@ interface SpendingData {
   netCashFlow: number;
   categories: CategorySpending[];
   period: string;
+  currency: string;
 }
 
 interface SpendingBreakdownProps {
@@ -138,7 +140,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
               <span className="text-sm font-medium text-gray-700">Total Spent</span>
             </div>
             <p className="text-2xl font-bold text-red-600">
-              ${Math.abs(spendingData.totalSpent).toLocaleString()}
+              {formatCurrency(Math.abs(spendingData.totalSpent), spendingData.currency)}
             </p>
           </div>
 
@@ -148,7 +150,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
               <span className="text-sm font-medium text-gray-700">Total Income</span>
             </div>
             <p className="text-2xl font-bold text-green-600">
-              ${spendingData.totalIncome.toLocaleString()}
+              {formatCurrency(spendingData.totalIncome, spendingData.currency)}
             </p>
           </div>
 
@@ -160,8 +162,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
             <p
               className={`text-2xl font-bold ${spendingData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}
             >
-              ${spendingData.netCashFlow >= 0 ? '+' : ''}$
-              {spendingData.netCashFlow.toLocaleString()}
+              {spendingData.netCashFlow >= 0 ? '+' : ''}{formatCurrency(spendingData.netCashFlow, spendingData.currency)}
             </p>
           </div>
         </div>
@@ -184,9 +185,8 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
                 <div className="flex items-center justify-between mb-1">
                   <button
                     onClick={() => onCategoryFilter?.(category.category)}
-                    className={`text-sm font-medium truncate text-left hover:text-blue-600 transition-colors ${
-                      selectedCategory === category.category ? 'text-blue-600' : 'text-gray-900'
-                    }`}
+                    className={`text-sm font-medium truncate text-left hover:text-blue-600 transition-colors ${selectedCategory === category.category ? 'text-blue-600' : 'text-gray-900'
+                      }`}
                     title="Click to filter transactions by this category"
                   >
                     {category.category}
@@ -203,7 +203,7 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
                   <div
                     className="h-2 rounded-full transition-all duration-500"
                     style={{
-                      width: `${category.percentage}%`,
+                      width: `${category.percentage ?? 0}%`,
                       backgroundColor: category.color,
                     }}
                   />
@@ -211,9 +211,9 @@ export function SpendingBreakdown({ onCategoryFilter, selectedCategory }: Spendi
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-900">
-                    ${Math.abs(category.amount).toLocaleString()}
+                    {formatCurrency(Math.abs(category.amount), spendingData.currency)}
                   </span>
-                  <span className="text-xs text-gray-500">{category.percentage.toFixed(1)}%</span>
+                  <span className="text-xs text-gray-500">{(category.percentage ?? 0).toFixed(1)}%</span>
                 </div>
               </div>
             </div>

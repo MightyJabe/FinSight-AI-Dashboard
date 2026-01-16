@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { calculateNetWorth, NetWorthResultSchema } from '@/lib/calculate-net-worth';
 import { getFinancialOverview } from '@/lib/financial-calculator';
-import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 // Response schemas for documentation and validation
@@ -62,11 +61,7 @@ export async function GET(request: NextRequest) {
       rawData.manualAssets.length > 0 ||
       rawData.cryptoAccounts.length > 0;
 
-    // Check if user opted for demo data
-    const userDoc = await db.collection('users').doc(userId).get();
-    const useDemoData = Boolean(userDoc.exists && userDoc.data()?.useDemoData);
-
-    if (!hasAccounts && !useDemoData) {
+    if (!hasAccounts) {
       return NextResponse.json(
         { success: false, error: 'No accounts connected', code: 'NO_ACCOUNTS' } as NetWorthErrorResponse,
         { status: 404 }
@@ -104,15 +99,6 @@ export async function GET(request: NextRequest) {
         name: crypto.name,
       })),
     ];
-
-    // If using demo data and no real accounts, add demo accounts
-    if (useDemoData && accounts.length === 0) {
-      accounts.push(
-        { id: 'demo-checking', type: 'checking', balance: 12500, name: 'Demo Checking' },
-        { id: 'demo-savings', type: 'savings', balance: 25750.82, name: 'High Yield Savings' },
-        { id: 'demo-brokerage', type: 'investment', balance: 89200, name: 'Investment Portfolio' }
-      );
-    }
 
     const netWorthResult = calculateNetWorth(accounts);
 

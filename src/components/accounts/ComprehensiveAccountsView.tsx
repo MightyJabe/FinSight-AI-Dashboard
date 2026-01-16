@@ -9,14 +9,16 @@ import {
   DollarSign,
   Home,
   PlusCircle,
+  Trash2,
   Truck,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
+import { AddBankModal } from '@/components/banking/AddBankModal';
 import { useSession } from '@/components/providers/SessionProvider';
-import { SaltEdgeConnectButton } from '@/components/saltedge/SaltEdgeConnectButton';
+
 import {
   Card,
   CardContent,
@@ -50,7 +52,38 @@ export function ComprehensiveAccountsView() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [plaidItemsNeedingAuth, setPlaidItemsNeedingAuth] = useState<any[]>([]);
+  const [isClearing, setIsClearing] = useState(false);
   const { firebaseUser } = useSession();
+
+  // Handler to clear Israeli bank data
+  const clearIsraeliBankData = useCallback(async () => {
+    if (!confirm('This will delete all Israeli bank connections and transactions. You will need to reconnect your bank. Continue?')) {
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      const response = await fetch('/api/banking/clear', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear data');
+      }
+
+      const result = await response.json();
+      toast.success(`Cleared ${result.deleted.transactions} transactions, ${result.deleted.accounts} accounts`);
+
+      // Refresh the data
+      await fetchFinancialData();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      toast.error('Failed to clear bank data');
+    } finally {
+      setIsClearing(false);
+    }
+  }, []);
 
   const fetchFinancialData = useCallback(async () => {
     try {
@@ -178,10 +211,13 @@ export function ComprehensiveAccountsView() {
     fetchFinancialData();
   }, [fetchFinancialData]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const currencyCode = currency?.toUpperCase() || 'USD';
+    const locale = currencyCode === 'ILS' ? 'he-IL' : 'en-US';
+
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'USD',
+      currency: currencyCode,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -311,7 +347,7 @@ export function ComprehensiveAccountsView() {
                   <p className="font-medium">
                     {formatCurrency(
                       (data.unifiedSummary.totalTrackedDeposits || 0) +
-                        (data.unifiedSummary.totalUntrackedDeposits || 0)
+                      (data.unifiedSummary.totalUntrackedDeposits || 0)
                     )}
                   </p>
                   <p className="text-xs text-blue-300">Total money invested</p>
@@ -341,10 +377,9 @@ export function ComprehensiveAccountsView() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`
                     flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${
-                      activeTab === tab.id
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ${activeTab === tab.id
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
                 >
@@ -414,14 +449,8 @@ export function ComprehensiveAccountsView() {
                         onSuccess={fetchFinancialData}
                         className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2 bg-transparent border-0 text-sm font-normal shadow-none"
                       />
-                      <div className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2">
-                        <SaltEdgeConnectButton
-                          onSuccess={fetchFinancialData}
-                          className="w-full text-left px-0 py-0 bg-transparent border-0 text-sm font-normal shadow-none text-gray-900 hover:text-gray-900"
-                        >
-                          <PlusCircle className="h-5 w-5 text-green-600" />
-                          <span className="text-sm">Connect Israeli Bank</span>
-                        </SaltEdgeConnectButton>
+                      <div className="w-full px-3 py-2">
+                        <AddBankModal onSuccess={fetchFinancialData} />
                       </div>
                     </div>
                     <button
@@ -477,11 +506,29 @@ export function ComprehensiveAccountsView() {
 
           {activeTab === 'banks' && (
             <div className="space-y-4">
+              {/* Bank management actions */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Connected Banks</h3>
+                <div className="flex gap-2">
+                  <AddBankModal onSuccess={fetchFinancialData} />
+                  {data.bankAccounts.length > 0 && (
+                    <button
+                      onClick={clearIsraeliBankData}
+                      disabled={isClearing}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isClearing ? 'Clearing...' : 'Clear & Reconnect'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {data.bankAccounts.length === 0 ? (
                 <EmptyState
                   icon={<Building2 className="w-8 h-8" />}
                   title="No bank accounts connected"
-                  description="Connect your bank accounts via Plaid or Salt Edge to track your finances"
+                  description="Connect your bank accounts via Plaid or Israeli bank connector to track your finances"
                 />
               ) : (
                 data.bankAccounts.map(account => (
@@ -493,12 +540,17 @@ export function ComprehensiveAccountsView() {
                           <p className="text-sm text-gray-500">
                             {account.institutionName} • {account.type}
                           </p>
+                          {account.source === 'israel' && (
+                            <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              🇮🇱 Israeli Bank
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold">{formatCurrency(account.balance)}</p>
+                          <p className="text-xl font-bold">{formatCurrency(account.balance, account.currency)}</p>
                           {account.availableBalance && (
                             <p className="text-sm text-gray-500">
-                              Available: {formatCurrency(account.availableBalance)}
+                              Available: {formatCurrency(account.availableBalance, account.currency)}
                             </p>
                           )}
                         </div>

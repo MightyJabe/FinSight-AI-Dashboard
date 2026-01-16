@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CreditCard,
   Plus,
-  Sparkles,
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,50 +15,40 @@ import { NetWorthHero } from '@/components/dashboard/NetWorthHero';
 import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
 import { DashboardSkeleton } from '@/components/ui';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
-import { useUserSettings } from '@/hooks/use-user-settings';
 import { formatCurrency } from '@/lib/utils';
-
-const demoOverview = {
-  netWorth: 127450.82,
-  totalAssets: 132450.82,
-  totalLiabilities: 5000,
-  monthlyIncome: 12500,
-  monthlyExpenses: 7850,
-  investments: 89200,
-  savings: 38250.82,
-  accounts: [
-    { id: 'demo-checking', balance: 12500, type: 'checking', name: 'Main Checking', institution: 'Demo Bank' },
-    { id: 'demo-savings', balance: 25750.82, type: 'savings', name: 'High Yield Savings', institution: 'Demo Bank' },
-  ],
-  assetsByType: {
-    checking: 12500,
-    savings: 25750.82,
-    investment: 89200,
-  },
-  liabilitiesByType: {
-    credit: 5000,
-  },
-};
 
 function DashboardPage() {
   const { overview, loading, error, refetch } = useDashboardData({
     refetchOnFocus: false,
     refetchInterval: 300000,
   });
-  const { settings } = useUserSettings(true);
-  const useDemo = settings.useDemoData;
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const data = overview || (useDemo ? demoOverview : null);
+  const data = overview;
   const netWorth = data?.netWorth ?? null;
   const totalAssets = data?.totalAssets ?? 0;
   const totalLiabilities = data?.totalLiabilities ?? 0;
   const accounts = data?.accounts ?? [];
 
+  // Determine primary currency from accounts (most common or first available)
+  const primaryCurrency = (() => {
+    const accountsWithCurrency = accounts.filter((acc: { currency?: string }) => acc.currency);
+    if (accountsWithCurrency.length === 0) return 'USD';
+    // Count occurrences of each currency
+    const currencyCounts = accountsWithCurrency.reduce((acc: Record<string, number>, account: { currency?: string }) => {
+      const curr = account.currency || 'USD';
+      acc[curr] = (acc[curr] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    // Return the most common currency
+    return Object.entries(currencyCounts).sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || 'USD';
+  })();
+
   // Calculate assets/liabilities by type from accounts
-  const assetsByType = (data as typeof demoOverview)?.assetsByType ?? {};
-  const liabilitiesByType = (data as typeof demoOverview)?.liabilitiesByType ?? {};
+  // This will be properly populated when we integrate with the net-worth endpoint
+  const assetsByType: Record<string, number> = {};
+  const liabilitiesByType: Record<string, number> = {};
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -79,7 +68,7 @@ function DashboardPage() {
     );
   }
 
-  if (error && !useDemo) {
+  if (error) {
     return (
       <div className="min-h-screen p-6 lg:p-10">
         <div className="max-w-md mx-auto mt-20 p-8 rounded-2xl bg-card border border-border">
@@ -103,131 +92,120 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="p-6 lg:p-10 max-w-[1200px] mx-auto">
-        {/* Header */}
-        <header className="mb-8 animate-in">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium mb-1">Welcome back</p>
-              <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight">
-                Your Finances
-              </h1>
-            </div>
-            <Link
-              href="/accounts"
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Account</span>
-            </Link>
+      {/* Header */}
+      <header className="mb-8 sm:mb-10 lg:mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="animate-in">
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-wider mb-2">
+              Welcome back
+            </p>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display tracking-tight">
+              Your Finances
+            </h1>
           </div>
+          <Link
+            href="/accounts"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:scale-95 animate-in delay-75 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Account</span>
+          </Link>
+        </div>
+      </header>
 
-          {useDemo && (
-            <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                Viewing demo data.{' '}
-                <Link href="/accounts" className="underline underline-offset-2 font-medium">
-                  Connect your accounts
-                </Link>{' '}
-                to see real numbers.
-              </p>
+      {/* Net Worth Hero - THE MAIN THING */}
+      <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-150">
+        <NetWorthHero
+          netWorth={netWorth}
+          previousNetWorth={null}
+          lastUpdated={new Date()}
+          isLoading={loading}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          currency={primaryCurrency}
+        />
+      </section>
+
+      {/* Net Worth Breakdown */}
+      {data && accounts.length > 0 && (
+        <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-225">
+          <NetWorthBreakdown
+            totalAssets={totalAssets}
+            totalLiabilities={totalLiabilities}
+            assetsByType={assetsByType}
+            liabilitiesByType={liabilitiesByType}
+            currency={primaryCurrency}
+          />
+        </section>
+      )}
+
+      {/* Connect Bank CTA */}
+      <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-300">
+        <ConnectBankCTA
+          accountCount={accounts.length}
+          onConnect={handleConnectBank}
+        />
+      </section>
+
+      {/* Connected Accounts */}
+      {data && accounts.length > 0 && (
+        <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-375">
+          <div className="p-5 sm:p-6 lg:p-7 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-5 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">Your Accounts</h3>
+              <Link
+                href="/accounts"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:translate-x-1"
+              >
+                <span>View all</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-          )}
-        </header>
 
-        {/* Net Worth Hero - THE MAIN THING */}
-        <section className="mb-8 animate-in delay-75">
-          <NetWorthHero
-            netWorth={netWorth}
-            previousNetWorth={null} // TODO: Fetch from history
-            lastUpdated={new Date()}
-            isLoading={loading}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
-        </section>
-
-        {/* Net Worth Breakdown */}
-        {data && accounts.length > 0 && (
-          <section className="mb-8 animate-in delay-150">
-            <NetWorthBreakdown
-              totalAssets={totalAssets}
-              totalLiabilities={totalLiabilities}
-              assetsByType={assetsByType}
-              liabilitiesByType={liabilitiesByType}
-            />
-          </section>
-        )}
-
-        {/* Connect Bank CTA */}
-        <section className="mb-8 animate-in delay-225">
-          <ConnectBankCTA
-            accountCount={accounts.length}
-            onConnect={handleConnectBank}
-          />
-        </section>
-
-        {/* Connected Accounts */}
-        {data && accounts.length > 0 && (
-          <section className="mb-8 animate-in delay-300">
-            <div className="p-6 rounded-2xl bg-card border border-border">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Your Accounts</h3>
-                <Link
-                  href="/accounts"
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <div className="space-y-2.5 sm:space-y-3">
+              {(accounts.slice(0, 4) as Array<{ id: string; name: string; type: string; balance: number; currency?: string }>).map((account, index) => (
+                <div
+                  key={account.id}
+                  className="flex items-center justify-between p-4 sm:p-5 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-all duration-300 hover:translate-x-1 cursor-pointer group"
+                  style={{ animationDelay: `${(index + 7) * 50}ms` }}
                 >
-                  View all
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {(accounts.slice(0, 4) as Array<{ id: string; name: string; type: string; balance: number }>).map((account, index) => (
-                  <div
-                    key={account.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
-                    style={{ animationDelay: `${(index + 1) * 50}ms` }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${
+                      account.type === 'checking'
+                        ? 'bg-blue-500/10'
+                        : account.type === 'savings'
+                          ? 'bg-emerald-500/10'
+                          : 'bg-violet-500/10'
+                    }`}>
+                      <Wallet className={`w-5 h-5 sm:w-6 sm:h-6 ${
                         account.type === 'checking'
-                          ? 'bg-blue-500/10'
+                          ? 'text-blue-600 dark:text-blue-400'
                           : account.type === 'savings'
-                            ? 'bg-emerald-500/10'
-                            : 'bg-violet-500/10'
-                      }`}>
-                        <Wallet className={`w-5 h-5 ${
-                          account.type === 'checking'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : account.type === 'savings'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-violet-600 dark:text-violet-400'
-                        }`} />
-                      </div>
-                      <div>
-                        <p className="font-medium">{account.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">{account.type}</p>
-                      </div>
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-violet-600 dark:text-violet-400'
+                      }`} />
                     </div>
-                    <p className="text-lg font-semibold tabular-nums">
-                      {formatCurrency(account.balance)}
-                    </p>
+                    <div>
+                      <p className="font-semibold text-sm sm:text-base">{account.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground capitalize">{account.type}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <p className="text-base sm:text-lg font-bold tabular-nums">
+                    {formatCurrency(account.balance, account.currency || primaryCurrency)}
+                  </p>
+                </div>
+              ))}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        {/* AI Insights (existing component) */}
-        {data && accounts.length > 0 && (
-          <section className="animate-in delay-375">
-            <ProactiveInsightsCard />
-          </section>
-        )}
-      </div>
+      {/* AI Insights */}
+      {data && accounts.length > 0 && (
+        <section className="animate-in" style={{ animationDelay: '450ms' }}>
+          <ProactiveInsightsCard />
+        </section>
+      )}
     </div>
   );
 }
