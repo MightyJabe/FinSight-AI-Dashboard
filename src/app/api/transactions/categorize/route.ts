@@ -91,6 +91,7 @@ export async function POST(request: Request) {
             originalCategory: txn.category || undefined,
             merchant_name: txn.merchant_name || undefined,
             payment_channel: txn.payment_channel || undefined,
+            account_id: txn.account_id || undefined,
           }));
           allTransactions.push(...formattedTransactions);
         } catch (error) {
@@ -117,6 +118,7 @@ export async function POST(request: Request) {
             originalCategory: data.category ? [data.category] : undefined,
             merchant_name: undefined,
             payment_channel: undefined,
+            account_id: data.account_id || undefined,
           };
         });
         allTransactions.push(...manualTransactions);

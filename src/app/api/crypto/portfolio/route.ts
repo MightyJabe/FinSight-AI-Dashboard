@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb } from '@/lib/firebase-admin';
 import { getBinancePortfolio, getCoinbasePortfolio } from '@/lib/integrations/crypto/coinbase';
 import logger from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     const cryptoAccountsSnapshot = await adminDb
       .collection('users')

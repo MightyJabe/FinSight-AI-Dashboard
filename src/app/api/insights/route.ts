@@ -350,7 +350,7 @@ export async function GET(request: Request) {
 
     try {
       openAIResponse = await generateChatCompletion(openAIMessages, {
-        model: 'gpt-5.1',
+        model: 'gpt-4o',
         maxTokens: 2000,
       });
     } catch (error) {

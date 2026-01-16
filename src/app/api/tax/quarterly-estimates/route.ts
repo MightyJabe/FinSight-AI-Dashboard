@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { estimateQuarterlyTaxes } from '@/lib/tax-optimizer';
 
@@ -15,14 +16,11 @@ const requestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
@@ -75,25 +73,20 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     const { searchParams } = new URL(req.url);
     const year = searchParams.get('year');
 
-    let query = adminDb.collection('users').doc(userId).collection('quarterlyTaxEstimates');
+    const baseQuery = adminDb.collection('users').doc(userId).collection('quarterlyTaxEstimates');
 
-    if (year) {
-      query = query.where('year', '==', parseInt(year));
-    }
-
-    const snapshot = await query.get();
+    const snapshot = year
+      ? await baseQuery.where('year', '==', parseInt(year)).get()
+      : await baseQuery.get();
     const estimates = snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),

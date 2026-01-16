@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CountryCode, LinkTokenCreateRequest, Products } from 'plaid';
 
+import { validateAuthToken } from '@/lib/auth-server';
 import { plaidApi } from '@/lib/banking/plaidClient';
 import { encryptSensitiveData } from '@/lib/encryption';
-import { adminAuth,adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 // GET: Create Plaid Link Token
 export async function GET(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('Authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const authResult = await validateAuthToken(req);
+        if (authResult.error) {
+            return authResult.error;
         }
-        const idToken = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        const userId = decodedToken.uid;
+        const userId = authResult.userId;
 
         const request: LinkTokenCreateRequest = {
             user: { client_user_id: userId },
@@ -29,22 +29,20 @@ export async function GET(req: NextRequest) {
         const response = await plaidApi.linkTokenCreate(request);
         return NextResponse.json({ link_token: response.data.link_token });
 
-    } catch (error: any) {
-        console.error('Error creating link token:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        logger.error('Error creating link token', { error });
+        return NextResponse.json({ error: 'Failed to create link token' }, { status: 500 });
     }
 }
 
 // POST: Exchange Token (Plaid) OR Scrape & Save (Israel)
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('Authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const authResult = await validateAuthToken(req);
+        if (authResult.error) {
+            return authResult.error;
         }
-        const idToken = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        const userId = decodedToken.uid;
+        const userId = authResult.userId;
 
         const body = await req.json();
         const { provider, publicToken, credentials, companyId } = body;
@@ -75,11 +73,11 @@ export async function POST(req: NextRequest) {
                 const result = await israelClient.scrapeAll(credsString);
                 scrapedAccounts = result.accounts;
                 scrapedTransactions = result.transactions;
-                console.log(`[Connect] Scraped ${scrapedAccounts.length} accounts, ${scrapedTransactions.length} transactions`);
+                logger.info(`[Connect] Scraped ${scrapedAccounts.length} accounts, ${scrapedTransactions.length} transactions`);
 
-            } catch (err: any) {
-                console.error('Scraper error:', err);
-                return NextResponse.json({ error: `Scraper Failed: ${err.message}` }, { status: 400 });
+            } catch (err) {
+                logger.error('Scraper error', { error: err });
+                return NextResponse.json({ error: 'Scraper failed' }, { status: 400 });
             }
 
             // Encrypt credentials for future use (if needed for refresh)
@@ -128,7 +126,7 @@ export async function POST(req: NextRequest) {
                 });
             }
             await accountsBatch.commit();
-            console.log(`[Connect] Saved ${scrapedAccounts.length} accounts to Firestore`);
+            logger.info(`[Connect] Saved ${scrapedAccounts.length} accounts to Firestore`);
 
             // Save transactions to Firestore
             const txBatch = adminDb.batch();
@@ -147,7 +145,7 @@ export async function POST(req: NextRequest) {
                 });
             }
             await txBatch.commit();
-            console.log(`[Connect] Saved ${scrapedTransactions.length} transactions to Firestore`);
+            logger.info(`[Connect] Saved ${scrapedTransactions.length} transactions to Firestore`);
 
             return NextResponse.json({
                 success: true,
@@ -175,8 +173,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, connectionId: connectionRef.id });
 
-    } catch (error: any) {
-        console.error('Error exchanging token:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        logger.error('Error exchanging token', { error });
+        return NextResponse.json({ error: 'Failed to exchange token' }, { status: 500 });
     }
 }

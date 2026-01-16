@@ -1,23 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { adminAuth,adminDb } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
+
+// Zod schema for query parameters
+const clearDataQuerySchema = z.object({
+  connectionId: z.string().optional(),
+  confirm: z.literal('true'), // Require explicit confirmation
+});
 
 export async function DELETE(request: NextRequest) {
     try {
+        // CSRF Protection: Check origin header matches expected domain
+        const origin = request.headers.get('origin');
+        const host = request.headers.get('host');
+        if (origin && host && !origin.includes(host.split(':')[0]!)) {
+            logger.warn('CSRF protection triggered on banking clear', { origin, host });
+            return NextResponse.json({ success: false, error: 'Invalid request origin' }, { status: 403 });
+        }
+
         // Get userId from session cookie
         const sessionCookie = request.cookies.get('session')?.value;
         if (!sessionCookie) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie);
+        let decodedClaims;
+        try {
+            decodedClaims = await adminAuth.verifySessionCookie(sessionCookie);
+        } catch {
+            return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 401 });
+        }
+
         const userId = decodedClaims.uid;
 
-        // Get the connection ID from query params (optional - if not provided, delete all)
+        // Validate query parameters
         const { searchParams } = new URL(request.url);
-        const connectionId = searchParams.get('connectionId');
+        const queryValidation = clearDataQuerySchema.safeParse({
+            connectionId: searchParams.get('connectionId') || undefined,
+            confirm: searchParams.get('confirm'),
+        });
 
-        console.log(`[Clear Data] Clearing banking data for user ${userId}, connectionId: ${connectionId || 'all'}`);
+        if (!queryValidation.success) {
+            return NextResponse.json(
+                { success: false, error: 'Missing confirmation parameter. Add ?confirm=true to confirm deletion.' },
+                { status: 400 }
+            );
+        }
+
+        const { connectionId } = queryValidation.data;
+
+        // Audit log before deletion
+        logger.info('Banking data deletion initiated', {
+            userId,
+            connectionId: connectionId || 'all',
+            timestamp: new Date().toISOString()
+        });
 
         // Delete transactions
         const transactionsRef = adminDb
@@ -38,7 +77,7 @@ export async function DELETE(request: NextRequest) {
             txBatch.delete(doc.ref);
         });
         await txBatch.commit();
-        console.log(`[Clear Data] Deleted ${transactionsSnapshot.size} transactions`);
+        logger.info('Deleted transactions', { userId, count: transactionsSnapshot.size });
 
         // Delete accounts
         const accountsRef = adminDb
@@ -59,7 +98,7 @@ export async function DELETE(request: NextRequest) {
             accountsBatch.delete(doc.ref);
         });
         await accountsBatch.commit();
-        console.log(`[Clear Data] Deleted ${accountsSnapshot.size} accounts`);
+        logger.info('Deleted accounts', { userId, count: accountsSnapshot.size });
 
         // Delete banking connections
         const connectionsRef = adminDb
@@ -80,7 +119,7 @@ export async function DELETE(request: NextRequest) {
             connectionsBatch.delete(doc.ref);
         });
         await connectionsBatch.commit();
-        console.log(`[Clear Data] Deleted ${connectionsSnapshot.size} banking connections`);
+        logger.info('Deleted banking connections', { userId, count: connectionsSnapshot.size });
 
         // Delete categorized transactions (AI-categorized data)
         const categorizedRef = adminDb
@@ -94,7 +133,19 @@ export async function DELETE(request: NextRequest) {
             categorizedBatch.delete(doc.ref);
         });
         await categorizedBatch.commit();
-        console.log(`[Clear Data] Deleted ${categorizedSnapshot.size} categorized transactions`);
+        logger.info('Deleted categorized transactions', { userId, count: categorizedSnapshot.size });
+
+        // Audit log completion
+        logger.info('Banking data deletion completed', {
+            userId,
+            connectionId: connectionId || 'all',
+            deleted: {
+                transactions: transactionsSnapshot.size,
+                accounts: accountsSnapshot.size,
+                connections: connectionsSnapshot.size,
+                categorizedTransactions: categorizedSnapshot.size
+            }
+        });
 
         return NextResponse.json({
             success: true,
@@ -107,7 +158,8 @@ export async function DELETE(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Error clearing banking data:', error);
+        // Log actual error server-side, return generic message to client
+        logger.error('Error clearing banking data', { error });
         return NextResponse.json(
             { success: false, error: 'Failed to clear data' },
             { status: 500 }

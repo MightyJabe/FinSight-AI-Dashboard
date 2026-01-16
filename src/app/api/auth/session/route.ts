@@ -18,12 +18,26 @@ export async function POST(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json(
+        { success: false, error: 'Missing token' },
+        { status: 401 }
+      );
+    }
 
     // Import Firebase Admin lazily to avoid initialization issues
     const { adminAuth } = await import('@/lib/firebase-admin');
 
     // Verify the ID token first
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(idToken);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
 
     // Create a session cookie
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {

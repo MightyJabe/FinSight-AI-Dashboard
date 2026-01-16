@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 
-import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb as db } from '@/lib/firebase-admin';
 
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     const { exchange, apiKey, apiSecret } = await req.json();
 

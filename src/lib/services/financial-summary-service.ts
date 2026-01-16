@@ -125,7 +125,7 @@ export async function invalidateFinancialSummary(userId: string): Promise<void> 
  * Save a daily snapshot for historical tracking
  */
 export async function saveDailySnapshot(userId: string): Promise<DailySnapshot> {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]!; // YYYY-MM-DD
 
     try {
         const { metrics } = await getCachedFinancialSummary(userId);

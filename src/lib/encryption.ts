@@ -23,20 +23,22 @@ interface EncryptedData {
 
 /**
  * Get encryption key from environment
+ * SECURITY: Never use predictable fallback keys, even in development
  */
 function getEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    // Development fallback - generate a temporary key and warn
+    // In development, provide clear guidance but do not use predictable keys
+    const errorMessage =
+      'ENCRYPTION_KEY environment variable is required.\n' +
+      "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"\n" +
+      'Add it to your .env.local file for local development.';
+
     if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️  ENCRYPTION_KEY not found! Using temporary key for development.');
-      console.warn('⚠️  Add ENCRYPTION_KEY to your .env.local file for secure operation.');
-      console.warn(
-        "⚠️  Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
-      );
-      return 'dev-fallback-key-' + '0'.repeat(48); // 64 chars total
+      console.error('⚠️  CRITICAL SECURITY ERROR ⚠️');
+      console.error(errorMessage);
     }
-    throw new Error('ENCRYPTION_KEY environment variable is required for data protection');
+    throw new Error(errorMessage);
   }
   if (key.length < 32) {
     throw new Error('ENCRYPTION_KEY must be at least 32 characters long');

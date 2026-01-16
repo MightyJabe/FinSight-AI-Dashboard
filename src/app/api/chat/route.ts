@@ -15,10 +15,17 @@ const { openai: openaiEnvVars } = getConfig();
 // Initialize OpenAI client conditionally
 let openai: OpenAI | null = null;
 
-// Skip OpenAI initialization in CI build environment
-if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
-  console.log('Skipping OpenAI initialization in CI build environment');
-  openai = {} as OpenAI;
+// In CI/build environment, defer OpenAI initialization to runtime
+// Never create dummy instances that could silently fail
+if (process.env.CI === 'true' || process.env.VERCEL === '1') {
+  if (!openaiEnvVars.apiKey) {
+    console.warn('OpenAI API key not available during build. Runtime calls will require it.');
+    // openai remains null, will be checked at runtime
+  } else {
+    openai = new OpenAI({
+      apiKey: openaiEnvVars.apiKey,
+    });
+  }
 } else {
   // Validate OpenAI API key
   if (!openaiEnvVars.apiKey) {
@@ -1510,7 +1517,7 @@ IMPORTANT: You CAN read PDFs and images directly from URLs. When you get documen
         throw new Error('OpenAI client not initialized');
       }
       completion = await openai.chat.completions.create({
-        model: 'gpt-5.1',
+        model: 'gpt-4o',
         messages,
         tools,
         tool_choice: 'auto',
@@ -1705,7 +1712,7 @@ IMPORTANT: You CAN read PDFs and images directly from URLs. When you get documen
         }
 
         const finalCompletion = await openai.chat.completions.create({
-          model: 'gpt-5.1',
+          model: 'gpt-4o',
           messages: visionMessages,
           tools,
           tool_choice: 'auto',

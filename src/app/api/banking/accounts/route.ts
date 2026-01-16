@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuth,adminDb } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('Authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const authResult = await validateAuthToken(req);
+        if (authResult.error) {
+            return authResult.error;
         }
-        const idToken = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        const userId = decodedToken.uid;
+        const userId = authResult.userId;
 
         // Fetch accounts from Firestore (cached from scrape)
         const accountsSnapshot = await adminDb
@@ -30,12 +30,12 @@ export async function GET(req: NextRequest) {
             ...doc.data()
         }));
 
-        console.log(`[Accounts] Returning ${accounts.length} cached accounts for user ${userId}`);
+        logger.info('Returning cached accounts', { userId, count: accounts.length });
 
         return NextResponse.json({ accounts });
 
-    } catch (error: any) {
-        console.error('Error fetching accounts:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        logger.error('Error fetching accounts', { error });
+        return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: 500 });
     }
 }

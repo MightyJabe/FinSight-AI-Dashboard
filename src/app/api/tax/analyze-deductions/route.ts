@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { requirePlan } from '@/lib/plan-guard';
 import { analyzeDeductibleExpenses } from '@/lib/tax-optimizer';
@@ -15,14 +16,11 @@ const requestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     // Require at least Pro for tax analysis
     const allowed = await requirePlan(userId, 'pro');
@@ -106,14 +104,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    const userId = authResult.userId;
 
     const allowed = await requirePlan(userId, 'pro');
     if (!allowed) {
