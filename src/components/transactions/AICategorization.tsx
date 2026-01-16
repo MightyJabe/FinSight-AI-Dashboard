@@ -3,7 +3,7 @@
 import { AlertCircle, BarChart3, Brain, CheckCircle, Loader, Play } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAICategorization } from '@/hooks/useAICategorization';
+import { useAICategorization } from '@/hooks/use-ai-categorization';
 
 interface AICategorization {
   onCategorizationComplete?: () => void;

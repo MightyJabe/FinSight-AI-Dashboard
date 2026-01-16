@@ -6,7 +6,8 @@ import { useState } from 'react';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useCryptoPortfolio } from '@/hooks/useCryptoPortfolio';
+import { useCryptoPortfolio } from '@/hooks/use-crypto-portfolio';
+import { cn } from '@/lib/utils';
 
 const ComprehensiveCryptoPortfolio = dynamic(
   () =>
@@ -14,7 +15,7 @@ const ComprehensiveCryptoPortfolio = dynamic(
       default: mod.ComprehensiveCryptoPortfolio,
     })),
   {
-    loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg" />,
+    loading: () => <div className="animate-pulse bg-secondary h-96 rounded-2xl" />,
     ssr: false,
   }
 );
@@ -22,7 +23,7 @@ const ComprehensiveCryptoPortfolio = dynamic(
 export default function CryptoPage() {
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { data, loading, hasData, formatCurrency, formatPercentage } = useCryptoPortfolio({
+  const { data, loading, hasData, formatCurrency } = useCryptoPortfolio({
     autoRefresh: true,
     refreshInterval: 30000,
   });
@@ -39,17 +40,18 @@ export default function CryptoPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-yellow-50 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen">
+        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
           {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
+          <header className="mb-10 animate-in">
+            <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                  <Bitcoin className="h-8 w-8 text-orange-500" />
+                <p className="text-muted-foreground text-sm font-medium mb-1">Digital Assets</p>
+                <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight flex items-center gap-3">
+                  <Bitcoin className="h-8 w-8 text-amber-500" />
                   Cryptocurrency Portfolio
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-muted-foreground">
                   Track your crypto investments with real-time prices and advanced analytics
                 </p>
               </div>
@@ -57,86 +59,104 @@ export default function CryptoPage() {
               {hasData && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2 rounded-full',
+                    'bg-foreground text-background text-sm font-medium',
+                    'hover:opacity-90 transition-opacity'
+                  )}
                 >
-                  <Plus className="h-5 w-5" />
-                  Add Holdings
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Holdings</span>
                 </button>
               )}
             </div>
-          </div>
+          </header>
 
-          {/* Quick Stats Bar */}
+          {/* Quick Stats Hero */}
           {hasData && data && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium opacity-90">Portfolio Value</span>
-                  <DollarSign className="h-4 w-4 opacity-90" />
+            <section className="mb-8 animate-in delay-75">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-6 lg:p-8">
+                {/* Background decoration */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-1/2 -right-1/4 w-72 h-72 bg-amber-500/20 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-orange-500/10 rounded-full blur-3xl" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
                 </div>
-                <p className="text-2xl font-bold">{formatCurrency(data.summary.totalValue)}</p>
-                <p className="text-sm opacity-90">
-                  {formatPercentage(data.summary.totalGainLossPercent)} total return
-                </p>
-              </div>
 
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium opacity-90">24h Change</span>
-                  <TrendingUp className="h-4 w-4 opacity-90" />
-                </div>
-                <p
-                  className={`text-2xl font-bold ${data.summary.dayChange >= 0 ? 'text-white' : 'text-red-200'}`}
-                >
-                  {formatCurrency(data.summary.dayChange)}
-                </p>
-                <p className="text-sm opacity-90">
-                  {formatPercentage(data.summary.dayChangePercent)}
-                </p>
-              </div>
+                <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Portfolio Value</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">
+                        {formatCurrency(data.summary.totalValue)}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium opacity-90">Holdings</span>
-                  <Activity className="h-4 w-4 opacity-90" />
-                </div>
-                <p className="text-2xl font-bold">{data.summary.holdingsCount}</p>
-                <p className="text-sm opacity-90">
-                  {data.summary.diversificationScore.toFixed(0)}% diversified
-                </p>
-              </div>
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center',
+                      data.summary.dayChange >= 0 ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                    )}>
+                      <TrendingUp className={cn(
+                        'w-6 h-6',
+                        data.summary.dayChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      )} />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">24h Change</p>
+                      <p className={cn(
+                        'text-2xl font-semibold tabular-nums',
+                        data.summary.dayChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      )}>
+                        {formatCurrency(data.summary.dayChange)}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium opacity-90">Best Performer</span>
-                  <TrendingUp className="h-4 w-4 opacity-90" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                      <Activity className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Holdings</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">{data.summary.holdingsCount}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Best Performer</p>
+                      <p className="text-2xl font-semibold text-white tabular-nums">{data.summary.topGainer?.symbol || 'N/A'}</p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xl font-bold">{data.summary.topGainer?.symbol || 'N/A'}</p>
-                <p className="text-sm opacity-90">
-                  {data.summary.topGainer
-                    ? formatPercentage(data.summary.topGainer.gainLossPercent)
-                    : 'No data'}
-                </p>
               </div>
-            </div>
+            </section>
           )}
 
           {/* Risk Alerts */}
           {hasData && data && data.summary.diversificationScore < 30 && (
-            <div className="mb-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="mb-6 animate-in delay-100">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                  <h3 className="font-medium text-yellow-800">Portfolio Risk Alert</h3>
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <h3 className="font-medium text-amber-700 dark:text-amber-300">Portfolio Risk Alert</h3>
                 </div>
-                <p className="text-sm text-yellow-700 mb-3">
+                <p className="text-sm text-amber-700 dark:text-amber-300/80 mb-3">
                   Your portfolio has low diversification (
                   {data.summary.diversificationScore.toFixed(0)}%). Consider spreading investments
                   across more cryptocurrencies to reduce risk.
                 </p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="text-sm bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition-colors"
+                  className="text-sm bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-colors"
                 >
                   Diversify Portfolio
                 </button>
@@ -145,32 +165,32 @@ export default function CryptoPage() {
           )}
 
           {/* Main Portfolio Component */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          <div className="rounded-2xl bg-card border border-border overflow-hidden animate-in delay-150">
             <div className="p-6">
               <ComprehensiveCryptoPortfolio />
             </div>
           </div>
 
           {/* Educational Note */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="font-semibold text-blue-900 mb-2">📚 Cryptocurrency Investment Tips</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+          <div className="mt-8 rounded-2xl bg-blue-500/10 border border-blue-500/20 p-6 animate-in delay-200">
+            <h3 className="font-semibold text-foreground mb-4">Cryptocurrency Investment Tips</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
-                <h4 className="font-medium mb-1">Diversification</h4>
+                <h4 className="font-medium text-foreground mb-1">Diversification</h4>
                 <p>
                   Spread investments across different cryptocurrencies, market caps, and use cases.
                 </p>
               </div>
               <div>
-                <h4 className="font-medium mb-1">Dollar-Cost Averaging</h4>
+                <h4 className="font-medium text-foreground mb-1">Dollar-Cost Averaging</h4>
                 <p>Invest fixed amounts regularly to reduce the impact of volatility.</p>
               </div>
               <div>
-                <h4 className="font-medium mb-1">Research</h4>
+                <h4 className="font-medium text-foreground mb-1">Research</h4>
                 <p>Understand the technology, team, and use case before investing.</p>
               </div>
               <div>
-                <h4 className="font-medium mb-1">Risk Management</h4>
+                <h4 className="font-medium text-foreground mb-1">Risk Management</h4>
                 <p>Only invest what you can afford to lose. Crypto is highly volatile.</p>
               </div>
             </div>
@@ -178,25 +198,25 @@ export default function CryptoPage() {
 
           {/* Add Holdings Modal */}
           {showAddModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
                   Add Crypto Holdings
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-muted-foreground mb-6">
                   To add crypto holdings, connect your exchange accounts or manually add platforms
                   in the Investments section.
                 </p>
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                   >
                     Cancel
                   </button>
                   <a
                     href="/investments"
-                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                    className="px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors"
                   >
                     Go to Investments
                   </a>

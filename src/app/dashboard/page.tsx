@@ -1,44 +1,68 @@
 'use client';
 
-import { ArrowRight, CreditCard, Target, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
-import { memo } from 'react';
-
-import { NetWorthCard } from '@/components/dashboard/NetWorthCard';
-import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
-import { QuickActions } from '@/components/dashboard/QuickActions';
 import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  DashboardSkeleton,
-  EmptyState,
-} from '@/components/ui';
+  ArrowRight,
+  CreditCard,
+  Plus,
+  Wallet,
+} from 'lucide-react';
+import Link from 'next/link';
+import { memo, useCallback, useState } from 'react';
+
+import { ConnectBankCTA } from '@/components/dashboard/ConnectBankCTA';
+import { NetWorthBreakdown } from '@/components/dashboard/NetWorthBreakdown';
+import { NetWorthHero } from '@/components/dashboard/NetWorthHero';
+import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
+import { DashboardSkeleton } from '@/components/ui';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
-import { useUserSettings } from '@/hooks/use-user-settings';
 import { formatCurrency } from '@/lib/utils';
 
-const demoOverview = {
-  netWorth: 45231,
-  monthlyIncome: 8500,
-  monthlyExpenses: 5100,
-  accounts: [{ id: 'demo-checking', balance: 12500, type: 'checking', name: 'Demo Checking' }],
-};
-
 function DashboardPage() {
-  const { overview, loading, error } = useDashboardData({
+  const { overview, loading, error, refetch } = useDashboardData({
     refetchOnFocus: false,
     refetchInterval: 300000,
   });
-  const { settings } = useUserSettings(true);
-  const useDemo = settings.useDemoData;
-  const isFree = settings.plan === 'free';
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const data = overview;
+  const netWorth = data?.netWorth ?? null;
+  const totalAssets = data?.totalAssets ?? 0;
+  const totalLiabilities = data?.totalLiabilities ?? 0;
+  const accounts = data?.accounts ?? [];
+
+  // Determine primary currency from accounts (most common or first available)
+  const primaryCurrency = (() => {
+    const accountsWithCurrency = accounts.filter((acc: { currency?: string }) => acc.currency);
+    if (accountsWithCurrency.length === 0) return 'USD';
+    // Count occurrences of each currency
+    const currencyCounts = accountsWithCurrency.reduce((acc: Record<string, number>, account: { currency?: string }) => {
+      const curr = account.currency || 'USD';
+      acc[curr] = (acc[curr] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    // Return the most common currency
+    return Object.entries(currencyCounts).sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || 'USD';
+  })();
+
+  // Calculate assets/liabilities by type from accounts
+  // This will be properly populated when we integrate with the net-worth endpoint
+  const assetsByType: Record<string, number> = {};
+  const liabilitiesByType: Record<string, number> = {};
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  }, [refetch]);
+
+  const handleConnectBank = useCallback(() => {
+    window.location.href = '/accounts?connect=true';
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+      <div className="min-h-screen p-6 lg:p-10">
         <DashboardSkeleton />
       </div>
     );
@@ -46,236 +70,142 @@ function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-        <Card variant="elevated" className="max-w-md mx-auto mt-20">
-          <CardContent className="py-8">
-            <EmptyState
-              icon={<CreditCard className="w-8 h-8" />}
-              title="Unable to load dashboard"
-              description={error}
-              action={{
-                label: 'Retry',
-                onClick: () => window.location.reload(),
-              }}
-            />
-          </CardContent>
-        </Card>
+      <div className="min-h-screen p-6 lg:p-10">
+        <div className="max-w-md mx-auto mt-20 p-8 rounded-2xl bg-card border border-border">
+          <div className="text-center">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-6 h-6 text-destructive" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Unable to load dashboard</h2>
+            <p className="text-muted-foreground text-sm mb-6">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-foreground text-background rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-gray-600">Your financial overview at a glance</p>
-        {useDemo && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-700">
-            <span className="font-medium">Demo data enabled</span>
-            <span className="text-xs text-blue-600">
-              Connect real accounts anytime from Accounts.
-            </span>
-            <Link href="/accounts">
-              <Button size="sm" variant="ghost">
-                Connect accounts
-              </Button>
-            </Link>
+      <header className="mb-8 sm:mb-10 lg:mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="animate-in">
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-wider mb-2">
+              Welcome back
+            </p>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display tracking-tight">
+              Your Finances
+            </h1>
           </div>
-        )}
-        {isFree && (
-          <div className="mt-3 flex flex-col md:flex-row md:items-center md:gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-            <div className="flex-1">
-              <p className="font-semibold">Upgrade to Pro</p>
-              <p className="text-sm">
-                Unlock AI investment optimization, tax deductions, proactive insights, and document
-                uploads.
-              </p>
-            </div>
-            <Link href="/settings">
-              <Button size="sm" variant="primary">
-                Upgrade
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-6">
-        {/* Net Worth Hero Card */}
-        {(overview || useDemo) && (
-          <NetWorthCard
-            netWorth={overview?.netWorth ?? demoOverview.netWorth}
-            change={(overview?.netWorth ?? demoOverview.netWorth) * 0.052}
-            changePercent={5.2}
-          />
-        )}
-
-        {/* Quick Actions */}
-        <QuickActions />
-
-        {/* 3-Column Grid: Cash Flow, Investments, Goals */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Cash Flow Card */}
-          <Card variant="elevated" hover>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                Cash Flow
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500">Monthly Income</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(overview?.monthlyIncome || 0)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Monthly Expenses</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {formatCurrency(overview?.monthlyExpenses || 0)}
-                  </p>
-                </div>
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-gray-500">Net Savings</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {formatCurrency(
-                      (overview?.monthlyIncome || 0) - (overview?.monthlyExpenses || 0)
-                    )}
-                  </p>
-                </div>
-              </div>
-              <Link href="/trends" className="mt-4 block">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                >
-                  View Trends
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Investments Card */}
-          <Card variant="elevated" hover>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                Investments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500">Total Value</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(0)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Performance</p>
-                  <p className="text-lg font-semibold text-green-600">+8.2%</p>
-                </div>
-                <div className="pt-4 border-t">
-                  <p className="text-xs text-gray-500">Last 30 days</p>
-                </div>
-              </div>
-              <Link href="/investments" className="mt-4 block">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                >
-                  View Portfolio
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Goals Card */}
-          <Card variant="elevated" hover>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-purple-600" />
-                Goals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500">Active Goals</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Target</p>
-                  <p className="text-lg font-semibold text-gray-900">{formatCurrency(50000)}</p>
-                </div>
-                <div className="pt-4 border-t">
-                  <p className="text-xs text-gray-500">On track to complete</p>
-                </div>
-              </div>
-              <Link href="/goals" className="mt-4 block">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                >
-                  View Goals
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <Link
+            href="/accounts"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:scale-95 animate-in delay-75 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Account</span>
+          </Link>
         </div>
+      </header>
 
-        {/* AI Insights */}
-        <ProactiveInsightsCard />
+      {/* Net Worth Hero - THE MAIN THING */}
+      <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-150">
+        <NetWorthHero
+          netWorth={netWorth}
+          previousNetWorth={null}
+          lastUpdated={new Date()}
+          isLoading={loading}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          currency={primaryCurrency}
+        />
+      </section>
 
-        {/* Recent Activity */}
-        <Card variant="elevated">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Activity</CardTitle>
-              <Link href="/transactions">
-                <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
-                  View All
-                </Button>
+      {/* Net Worth Breakdown */}
+      {data && accounts.length > 0 && (
+        <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-225">
+          <NetWorthBreakdown
+            totalAssets={totalAssets}
+            totalLiabilities={totalLiabilities}
+            assetsByType={assetsByType}
+            liabilitiesByType={liabilitiesByType}
+            currency={primaryCurrency}
+          />
+        </section>
+      )}
+
+      {/* Connect Bank CTA */}
+      <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-300">
+        <ConnectBankCTA
+          accountCount={accounts.length}
+          onConnect={handleConnectBank}
+        />
+      </section>
+
+      {/* Connected Accounts */}
+      {data && accounts.length > 0 && (
+        <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-375">
+          <div className="p-5 sm:p-6 lg:p-7 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-5 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">Your Accounts</h3>
+              <Link
+                href="/accounts"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:translate-x-1"
+              >
+                <span>View all</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            {overview?.accounts && overview.accounts.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  Connect to Plaid or add manual transactions to see your recent activity here.
-                </p>
-                <Link href="/transactions">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    rightIcon={<ArrowRight className="h-4 w-4" />}
-                  >
-                    Go to Transactions
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <EmptyState
-                icon={<CreditCard className="w-8 h-8" />}
-                title="No accounts connected yet"
-                description="Connect your first account to start tracking your finances"
-                action={{
-                  label: 'Connect Account',
-                  onClick: () => (window.location.href = '/accounts'),
-                }}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+
+            <div className="space-y-2.5 sm:space-y-3">
+              {(accounts.slice(0, 4) as Array<{ id: string; name: string; type: string; balance: number; currency?: string }>).map((account, index) => (
+                <div
+                  key={account.id}
+                  className="flex items-center justify-between p-4 sm:p-5 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-all duration-300 hover:translate-x-1 cursor-pointer group"
+                  style={{ animationDelay: `${(index + 7) * 50}ms` }}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${
+                      account.type === 'checking'
+                        ? 'bg-blue-500/10'
+                        : account.type === 'savings'
+                          ? 'bg-emerald-500/10'
+                          : 'bg-violet-500/10'
+                    }`}>
+                      <Wallet className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                        account.type === 'checking'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : account.type === 'savings'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-violet-600 dark:text-violet-400'
+                      }`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm sm:text-base">{account.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground capitalize">{account.type}</p>
+                    </div>
+                  </div>
+                  <p className="text-base sm:text-lg font-bold tabular-nums">
+                    {formatCurrency(account.balance, account.currency || primaryCurrency)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* AI Insights */}
+      {data && accounts.length > 0 && (
+        <section className="animate-in" style={{ animationDelay: '450ms' }}>
+          <ProactiveInsightsCard />
+        </section>
+      )}
     </div>
   );
 }

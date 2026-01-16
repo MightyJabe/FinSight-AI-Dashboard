@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run type-check)",
+      "Bash(npm run lint:fix)",
+      "Bash(for comp in AICategorization AutoCategorizationBanner SpendingBreakdown SpendingTrends)",
+      "Bash(do echo \"=== $comp ===\")",
+      "Bash(done)",
+      "Bash(npm run clean)",
+      "Bash(npm run build)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__press_key",
+      "mcp__plugin_compound-engineering_pw__browser_navigate",
+      "mcp__plugin_compound-engineering_pw__browser_wait_for",
+      "mcp__plugin_compound-engineering_pw__browser_fill_form",
+      "mcp__plugin_compound-engineering_pw__browser_click",
+      "mcp__plugin_compound-engineering_pw__browser_resize",
+      "mcp__plugin_compound-engineering_pw__browser_snapshot",
+      "mcp__plugin_compound-engineering_pw__browser_press_key",
+      "mcp__plugin_compound-engineering_pw__browser_hover",
+      "mcp__plugin_compound-engineering_pw__browser_take_screenshot",
+      "mcp__plugin_compound-engineering_pw__browser_close",
+      "mcp__plugin_serena_serena__list_dir",
+      "mcp__plugin_serena_serena__activate_project",
+      "mcp__plugin_serena_serena__read_file",
+      "mcp__plugin_serena_serena__find_file",
+      "mcp__plugin_serena_serena__search_for_pattern"
+    ]
+  }
+}

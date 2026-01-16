@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
-import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/useSpendingTrends';
+import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/use-spending-trends';
 
 const CHART_COLORS = [
   '#8884d8',

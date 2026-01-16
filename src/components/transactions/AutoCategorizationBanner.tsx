@@ -3,7 +3,7 @@
 import { ArrowRight, Brain, CheckCircle, X, Zap } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAICategorization } from '@/hooks/useAICategorization';
+import { useAICategorization } from '@/hooks/use-ai-categorization';
 
 interface AutoCategorizationBannerProps {
   onStartCategorization?: () => void;

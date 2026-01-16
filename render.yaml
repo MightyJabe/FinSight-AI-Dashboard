@@ -1,0 +1,19 @@
+# Render Infrastructure as Code
+# https://render.com/docs/infrastructure-as-code
+
+services:
+  # Israeli Bank Scraper Service
+  - type: web
+    name: israel-bank-scraper
+    runtime: docker
+    dockerfilePath: ./services/scraper/Dockerfile
+    dockerContext: ./services/scraper
+    region: frankfurt  # EU region for Israeli users
+    plan: starter      # $7/month
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /health
+    autoDeploy: false  # Manual deploy only for scraper updates

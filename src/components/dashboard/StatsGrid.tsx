@@ -10,6 +10,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface StatCardProps {
   title: string;
   value: string;
@@ -64,29 +66,30 @@ interface StatsGridProps {
   expenses: number;
   investments: number;
   savings: number;
+  currency?: string;
 }
 
-export function StatsGrid({ income, expenses, investments, savings }: StatsGridProps) {
+export function StatsGrid({ income, expenses, investments, savings, currency = 'USD' }: StatsGridProps) {
   const stats = [
     {
       title: 'Monthly Income',
-      value: `$${income.toLocaleString()}`,
+      value: formatCurrency(income, currency),
       change: 5.2,
       icon: DollarSign,
     },
     {
       title: 'Monthly Expenses',
-      value: `$${expenses.toLocaleString()}`,
+      value: formatCurrency(expenses, currency),
       change: -2.1,
       icon: CreditCard,
     },
     {
       title: 'Investments',
-      value: `$${investments.toLocaleString()}`,
+      value: formatCurrency(investments, currency),
       change: 8.4,
       icon: TrendingUp,
     },
-    { title: 'Savings', value: `$${savings.toLocaleString()}`, change: 12.3, icon: PiggyBank },
+    { title: 'Savings', value: formatCurrency(savings, currency), change: 12.3, icon: PiggyBank },
   ];
 
   return (

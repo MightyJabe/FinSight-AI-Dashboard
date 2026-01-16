@@ -36,8 +36,8 @@ const steps: Step[] = [
   },
   {
     id: 'connect',
-    title: 'Connect accounts or use demo data',
-    description: 'Link a Plaid sandbox institution or explore with safe demo data.',
+    title: 'Connect your accounts',
+    description: 'Link your Israeli or international bank accounts securely.',
     icon: CreditCard,
   },
   {
@@ -64,7 +64,6 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, loading } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
-  const [useDemoData, setUseDemoData] = useState(false);
   const [goalName, setGoalName] = useState('Build a 3-month emergency fund');
   const [goalTarget, setGoalTarget] = useState('3000');
   const [proactiveInsights, setProactiveInsights] = useState(true);
@@ -85,7 +84,6 @@ export default function OnboardingPage() {
         const res = await fetch('/api/user/settings');
         if (!res.ok) return;
         const data = await res.json();
-        setUseDemoData(Boolean(data.useDemoData));
         if (data.primaryGoal) setGoalName(data.primaryGoal);
         if (data.goalTarget) setGoalTarget(String(data.goalTarget));
         if (data.aiProactive !== undefined) setProactiveInsights(Boolean(data.aiProactive));
@@ -125,7 +123,6 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           onboardingComplete: true,
-          useDemoData,
           primaryGoal: goalName,
           goalTarget: goalTarget ? Number(goalTarget) : undefined,
           proTrialRequested: proTrial,
@@ -154,38 +151,55 @@ export default function OnboardingPage() {
   if (!step) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-12 px-4">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background/95 py-8 sm:py-12 px-4">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 animate-in">
           <div>
-            <p className="text-sm uppercase tracking-wide text-blue-600 font-semibold">
+            <p className="text-xs sm:text-sm uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400 font-semibold mb-2">
               Guided Onboarding
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Get set up in minutes</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display text-foreground tracking-tight">
+              Get set up in minutes
+            </h1>
+            <p className="text-muted-foreground mt-3 text-sm sm:text-base leading-relaxed max-w-2xl">
               Follow the steps to connect data, set a goal, and personalize AI insights.
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={skip}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={skip}
+            className="w-fit"
+          >
             Skip onboarding
           </Button>
         </div>
 
-        <div className="h-2 w-full rounded-full bg-white/60 shadow-inner overflow-hidden">
+        {/* Progress Bar */}
+        <div className="h-2 w-full rounded-full bg-secondary/60 shadow-inner overflow-hidden animate-in delay-75">
           <div
-            className="h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out shadow-lg"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[1.2fr,0.8fr] items-start">
-          <Card className="shadow-xl border border-white/60">
+        {/* Main Content Grid */}
+        <div className="grid gap-5 sm:gap-6 md:grid-cols-[1.2fr,0.8fr] items-start animate-in delay-150">
+          {/* Main Content Card */}
+          <Card className="shadow-xl border border-border bg-card/80 backdrop-blur-sm hover:shadow-2xl transition-shadow duration-300">
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <step.icon className="h-8 w-8 text-blue-600" />
-                <div>
-                  <CardTitle className="text-2xl">{step.title}</CardTitle>
-                  <p className="text-gray-600">{step.description}</p>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <step.icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-xl sm:text-2xl font-display tracking-tight mb-2">
+                    {step.title}
+                  </CardTitle>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.description}
+                  </p>
                 </div>
               </div>
             </CardHeader>
@@ -211,7 +225,7 @@ export default function OnboardingPage() {
                     <FeatureTile
                       icon={<Rocket className="h-5 w-5 text-purple-600" />}
                       title="Fast start"
-                      description="Use Plaid sandbox or demo data—no real accounts required."
+                      description="Connect Israeli banks via Salt Edge or use Plaid for international accounts."
                     />
                   </div>
                 </div>
@@ -221,24 +235,15 @@ export default function OnboardingPage() {
                 <div className="space-y-4">
                   <div className="rounded-xl border border-dashed border-blue-200 bg-white/60 p-4">
                     <p className="text-sm text-gray-700 mb-3">
-                      Choose how you want to explore FinSight. Sandbox is safe and fast; demo data
-                      is instant.
+                      Connect your Israeli bank accounts via Salt Edge or use Plaid for international banks.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button size="lg" onClick={connectAccounts} leftIcon={<CreditCard />}>
-                        Connect with Plaid sandbox
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant={useDemoData ? 'success' : 'outline'}
-                        onClick={() => setUseDemoData(val => !val)}
-                        leftIcon={<Sparkles />}
-                      >
-                        {useDemoData ? 'Demo data enabled' : 'Try with demo data'}
+                        Connect Bank Accounts
                       </Button>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      You can switch to real accounts anytime from Accounts.
+                      We support Israeli banks (Hapoalim, Leumi, Discount, Mizrahi-Tefahot) and international banks via Plaid.
                     </p>
                   </div>
                 </div>
@@ -308,11 +313,9 @@ export default function OnboardingPage() {
                   <div className="rounded-xl border border-green-100 bg-green-50 p-4 flex items-start gap-3">
                     <CheckCircle2 className="h-6 w-6 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-green-800">You’re all set</p>
+                      <p className="font-semibold text-green-800">You&apos;re all set</p>
                       <p className="text-sm text-green-700">
-                        {useDemoData
-                          ? 'We’ll start with demo data so you can explore safely.'
-                          : 'Your next step is to connect accounts or add manual assets.'}
+                        Your next step is to connect your bank accounts to start tracking your net worth.
                       </p>
                     </div>
                   </div>
@@ -328,10 +331,10 @@ export default function OnboardingPage() {
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={() => router.push('/insights')}
-                      rightIcon={<Sparkles />}
+                      onClick={() => router.push('/accounts')}
+                      rightIcon={<CreditCard />}
                     >
-                      Jump into AI insights
+                      Connect accounts
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500">
@@ -342,14 +345,16 @@ export default function OnboardingPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-white/60 shadow-lg">
+          {/* Progress Sidebar */}
+          <Card className="border border-border bg-card/80 backdrop-blur-sm shadow-lg sticky top-4">
             <CardHeader>
-              <CardTitle className="text-lg">Progress</CardTitle>
-              <p className="text-sm text-gray-600">
+              <CardTitle className="text-lg font-semibold">Progress</CardTitle>
+              <p className="text-sm text-muted-foreground">
                 Step {currentStep + 1} of {steps.length}
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
+              {/* Step List */}
               <div className="space-y-2">
                 {steps.map((s, index) => {
                   const isActive = index === currentStep;
@@ -357,36 +362,48 @@ export default function OnboardingPage() {
                   return (
                     <div
                       key={s.id}
-                      className={`flex items-start gap-3 rounded-lg border p-3 ${
+                      className={`flex items-start gap-3 rounded-xl border p-3 transition-all duration-300 ${
                         isActive
-                          ? 'border-blue-200 bg-white'
+                          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm'
                           : isDone
-                            ? 'border-green-100 bg-green-50'
-                            : 'border-transparent'
+                            ? 'border-emerald-100 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20'
+                            : 'border-transparent bg-secondary/40'
                       }`}
                     >
-                      <s.icon
-                        className={`h-5 w-5 ${
-                          isDone ? 'text-green-600' : isActive ? 'text-blue-600' : 'text-gray-400'
-                        }`}
-                      />
-                      <div>
-                        <p className="font-medium text-gray-900">{s.title}</p>
-                        <p className="text-xs text-gray-600">{s.description}</p>
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center ${
+                        isDone ? 'bg-emerald-600' : isActive ? 'bg-emerald-500' : 'bg-secondary'
+                      }`}>
+                        {isDone ? (
+                          <CheckCircle2 className="h-4 w-4 text-white" />
+                        ) : (
+                          <s.icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground text-sm leading-tight">{s.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{s.description}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={goBack} disabled={currentStep === 0}>
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  disabled={currentStep === 0}
+                  className="flex-shrink-0"
+                >
                   Back
                 </Button>
                 <Button
                   className="flex-1"
                   onClick={goNext}
-                  rightIcon={<ArrowRight />}
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
                   loading={saving}
+                  variant="success"
                 >
                   {isLastStep ? 'Finish' : 'Continue'}
                 </Button>

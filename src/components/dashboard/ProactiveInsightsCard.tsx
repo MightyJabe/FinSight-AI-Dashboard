@@ -4,7 +4,7 @@ import { ArrowRight, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from '@/components/ui';
-import { useProactiveInsights } from '@/hooks/useProactiveInsights';
+import { useProactiveInsights } from '@/hooks/use-proactive-insights';
 
 export function ProactiveInsightsCard() {
   const { insights, isLoading, proRequired } = useProactiveInsights();

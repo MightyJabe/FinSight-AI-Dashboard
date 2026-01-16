@@ -4,9 +4,7 @@ import { ConversationMemory, ConversationMessage } from '@/lib/ai-conversation-m
 import { getConfig } from '@/lib/config';
 import { executeFinancialTool, financialTools } from '@/lib/financial-tools';
 import logger from '@/lib/logger';
-import { getAccountService } from '@/lib/services/account-service';
 import { getUserBudgets } from '@/lib/services/budget-service';
-import { getTransactionService } from '@/lib/services/transaction-service';
 
 const { openai: openaiEnvVars } = getConfig();
 
@@ -116,36 +114,30 @@ export class AIBrainService {
 
   /**
    * Get comprehensive financial context for the user
+   * Uses centralized financial calculator for SSOT
    */
   private async getFinancialContext(): Promise<any> {
     try {
-      const transactionService = getTransactionService(this.userId);
-      const accountService = getAccountService(this.userId);
+      // Use SSOT from financial-calculator
+      const { getFinancialOverview } = await import('@/lib/financial-calculator');
+      const { data: financialData, metrics } = await getFinancialOverview(this.userId);
 
-      const [transactions, accounts, budgets] = await Promise.all([
-        transactionService.getTransactions(30),
-        accountService.getAccounts(),
-        getUserBudgets(this.userId),
-      ]);
-
-      const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-      const monthlySpending = transactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-      const monthlyIncome = transactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+      const budgets = await getUserBudgets(this.userId);
 
       return {
-        totalBalance,
-        monthlySpending,
-        monthlyIncome,
-        netCashFlow: monthlyIncome - monthlySpending,
-        accountCount: accounts.length,
-        transactionCount: transactions.length,
+        totalBalance: metrics.liquidAssets,
+        monthlySpending: metrics.monthlyExpenses,
+        monthlyIncome: metrics.monthlyIncome,
+        netCashFlow: metrics.monthlyCashFlow,
+        totalAssets: metrics.totalAssets,
+        totalLiabilities: metrics.totalLiabilities,
+        netWorth: metrics.netWorth,
+        investments: metrics.investments,
+        accountCount: financialData.plaidAccounts.length + financialData.manualAssets.length,
+        transactionCount: financialData.transactions.length,
         budgetCategories: Object.keys(budgets),
-        topSpendingCategories: this.getTopCategories(transactions),
-        hasRecentActivity: transactions.length > 0,
+        topSpendingCategories: this.getTopCategories(financialData.transactions),
+        hasRecentActivity: financialData.transactions.length > 0,
       };
     } catch (error) {
       logger.error('Error getting financial context', { error, userId: this.userId });
@@ -207,11 +199,10 @@ Current Financial Snapshot:
 - Number of Accounts: ${financialContext.accountCount}
 - Recent Transactions: ${financialContext.transactionCount}
 - Active Budget Categories: ${financialContext.budgetCategories.join(', ')}
-${
-  financialContext.topSpendingCategories.length > 0
-    ? `- Top Spending Categories: ${financialContext.topSpendingCategories.map((c: any) => `${c.category} ($${c.amount.toFixed(2)})`).join(', ')}`
-    : ''
-}
+${financialContext.topSpendingCategories.length > 0
+        ? `- Top Spending Categories: ${financialContext.topSpendingCategories.map((c: any) => `${c.category} ($${c.amount.toFixed(2)})`).join(', ')}`
+        : ''
+      }
 `
       : 'User has limited financial data connected. Focus on general financial guidance and encourage connecting accounts for personalized insights.';
 
@@ -220,9 +211,9 @@ ${
         ? `
 RECENT CONVERSATION HISTORY:
 ${conversationHistory
-  .slice(-6)
-  .map(msg => `${msg.role.toUpperCase()}: ${msg.content.substring(0, 150)}...`)
-  .join('\n')}
+          .slice(-6)
+          .map(msg => `${msg.role.toUpperCase()}: ${msg.content.substring(0, 150)}...`)
+          .join('\n')}
 `
         : '';
 

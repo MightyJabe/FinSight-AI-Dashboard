@@ -183,3 +183,117 @@ export function AccountSkeleton({ count = 3 }: { count?: number }) {
     </div>
   );
 }
+
+/**
+ * Dashboard skeleton for full page loading
+ */
+export function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-48 w-full rounded-2xl" />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+      <CardSkeleton />
+    </div>
+  );
+}
+
+/**
+ * Investments page skeleton for loading state
+ */
+export function InvestmentsSkeleton() {
+  return (
+    <div className="min-h-screen p-6 lg:p-10 max-w-[1600px] mx-auto">
+      {/* Header */}
+      <div className="mb-10">
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-10 w-48" />
+      </div>
+
+      {/* Hero Section */}
+      <div className="mb-10 rounded-3xl bg-card border border-border p-8 lg:p-12">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+          <div>
+            <Skeleton className="h-4 w-32 mb-3" />
+            <Skeleton className="h-16 w-64 mb-4" />
+            <Skeleton className="h-5 w-40" />
+          </div>
+          <div className="flex items-end gap-1 h-20">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="w-3 lg:w-4 rounded-t"
+                style={{ height: `${Math.random() * 60 + 30}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-10">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="p-6 rounded-2xl bg-card border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-24 mb-2" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+        ))}
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Holdings Table */}
+        <div className="lg:col-span-2 rounded-2xl bg-card border border-border p-6">
+          <div className="flex items-center justify-between mb-6">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-xl bg-secondary/30"
+              >
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <div>
+                    <Skeleton className="h-4 w-20 mb-1" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Skeleton className="h-5 w-24 mb-1" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Asset Allocation */}
+        <div className="rounded-2xl bg-card border border-border p-6">
+          <Skeleton className="h-6 w-40 mb-6" />
+          <Skeleton className="h-48 w-full rounded-xl mb-6" />
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-3 rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

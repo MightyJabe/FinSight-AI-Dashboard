@@ -2,28 +2,28 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/MightyJade/finsight-ai-dashboard/ci.yml?branch=main)](https://github.com/MightyJade/finsight-ai-dashboard/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Next.js](https://img.shields.io/badge/Next.js-14.1.0-black)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)](https://www.typescriptlang.org)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2.30-black)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.2-blue)](https://www.typescriptlang.org)
 
-An intelligent financial management platform that aggregates all your financial accounts into one unified dashboard. Powered by GPT-5.1 for personalized insights, budget recommendations, and investment optimizations.
+An intelligent financial management platform that aggregates all your financial accounts into one unified dashboard. Powered by GPT-4 for personalized insights, budget recommendations, and investment optimizations.
 
 ## Features
 
 ### Core Features
 
 - **Multi-Account Dashboard** - Connect and view all financial accounts in one place
-- **AI-Powered Insights** - GPT-5.1 analyzes your finances for personalized recommendations
+- **AI-Powered Insights** - GPT-4 analyzes your finances for personalized recommendations
 - **Smart Budgeting** - Real-time tracking with intelligent spending analysis
 - **Investment Optimization** - Portfolio analysis and opportunity identification
 - **Cash Flow Forecasting** - Predict future financial states and plan ahead
 - **Secure & Private** - Bank-level encryption with multi-factor authentication
 
-### New Features (98% Financial Coverage)
+### Additional Features
 
 - **[Tax Intelligence](/tax)** - AI-powered deduction analysis, quarterly tax estimates, and personalized tax strategies
 - **[Subscription Management](/subscriptions)** - Automatic recurring charge detection with monthly/yearly cost tracking
 - **[Manual Entry](/manual-data)** - Track all assets (real estate, vehicles, jewelry, etc.) and informal debts
-- **[Document Management](/documents)** - Upload and analyze financial documents with GPT-5.1 vision
+- **[Document Management](/documents)** - Upload and analyze financial documents with GPT-4 vision
 
 ## Quick Start
 
@@ -58,7 +58,7 @@ npm run build        # Build for production
 npm run test         # Run tests
 npm run lint         # Check code quality
 npm run type-check   # TypeScript validation
-npm run analyze      # Build with bundle analyzer (reports in .next/analyze/)
+npm run analyze      # Build with bundle analyzer
 npm run clean        # Remove .next cache and tsbuildinfo
 ```
 
@@ -70,21 +70,10 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 
 ## Documentation
 
-### Essential Docs (Root Level)
-
-- **[project.md](project.md)** - Technical architecture and design details
+- **[CLAUDE.md](CLAUDE.md)** - Development standards, coding conventions, and Claude Code integration
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
-
-### Organized Documentation (`/docs/`)
-
-- **[docs/README.md](docs/README.md)** - Complete documentation index
-- **[docs/completed-phases/](docs/completed-phases/)** - Implementation history (Phases 1-4, 98% coverage)
-- **[docs/technical/](docs/technical/)** - Technical guides and fixes
-- **[docs/planning/](docs/planning/)** - Roadmaps and production checklist
-
-### Development Standards
-
-- **[.amazonq/rules/](/.amazonq/rules/)** - Coding standards, testing guidelines, and best practices
+- **[docs/technical/](docs/technical/)** - Technical guides and implementation details
+- **[docs/planning/](docs/planning/)** - Feature roadmap and planning documents
 
 ## Environment Variables
 
@@ -100,17 +89,15 @@ See `.env.example` for required variables. Key integrations:
 
 ```
 src/
-├── app/          # Next.js app router
-├── components/   # React components
-├── lib/          # Core configurations
-├── hooks/        # Custom React hooks
-├── utils/        # Utility functions
-└── types/        # TypeScript types
+├── app/          # Next.js App Router (pages + API routes)
+├── components/   # React components by feature
+├── hooks/        # Custom React hooks (use-*.ts)
+├── lib/          # Core library code
+├── types/        # TypeScript interfaces
+└── utils/        # Utility functions
 ```
 
 ## Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md).
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -125,27 +112,13 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - **Plaid "Invalid credentials"** - Verify credentials in `.env.local` and check environment (sandbox/development)
 - **Firebase auth errors** - Add your domain to Firebase Auth settings
 - **OpenAI rate limits** - Check API usage and implement proper rate limiting
-- **Module not found** - Run `npm install` and clear Next.js cache
-
-For detailed troubleshooting, see [project.md](project.md).
+- **Module not found** - Run `npm install` and clear Next.js cache with `npm run clean`
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Testing
-
-See [.amazonq/rules/testing-standards.md](.amazonq/rules/testing-standards.md) for comprehensive testing guidelines including:
-
-- Unit testing with Jest
-- E2E testing with Playwright
-- When to use each test type
-- Testing best practices
-
 ## Support
 
-- **Documentation**: [project.md](project.md)
-- **Roadmap**: [ROADMAP.md](ROADMAP.md)
-- **Testing Guide**: [.amazonq/rules/testing-standards.md](.amazonq/rules/testing-standards.md)
+- **Development Guide**: [CLAUDE.md](CLAUDE.md)
 - **Issues**: [GitHub Issues](https://github.com/MightyJade/finsight-ai-dashboard/issues)
-- **Security**: Report to security@finsight.ai

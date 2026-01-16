@@ -49,7 +49,8 @@ module.exports = {
         ring: 'rgb(var(--ring) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont'],
+        sans: ['Outfit', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont'],
+        display: ['DM Serif Display', 'Georgia', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       // Semantic spacing

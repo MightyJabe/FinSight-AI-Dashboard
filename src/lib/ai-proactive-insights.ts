@@ -3,7 +3,7 @@ import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firesto
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
-import { getAccountService } from '@/lib/services/account-service';
+
 import { getTransactionService } from '@/lib/services/transaction-service';
 
 export interface ProactiveInsight {
@@ -73,30 +73,17 @@ Keep it under 100 words, friendly tone, highlight key insights.`;
 
   async generateMonthlySummary(): Promise<ProactiveInsight> {
     try {
-      const transactionService = getTransactionService(this.userId);
-      const accountService = getAccountService(this.userId);
-
-      const [transactions, accounts] = await Promise.all([
-        transactionService.getTransactions(30),
-        accountService.getAccounts(),
-      ]);
-
-      const totalSpending = transactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalIncome = transactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+      // Use SSOT from financial-calculator
+      const { getFinancialOverview } = await import('@/lib/financial-calculator');
+      const { metrics } = await getFinancialOverview(this.userId);
 
       const prompt = `Generate a comprehensive monthly financial report for a user with:
-- Total spending: $${totalSpending.toFixed(2)}
-- Total income: $${totalIncome.toFixed(2)}
-- Net savings: $${(totalIncome - totalSpending).toFixed(2)}
-- Current balance: $${totalBalance.toFixed(2)}
-- Savings rate: ${(((totalIncome - totalSpending) / totalIncome) * 100).toFixed(1)}%
+- Total spending: $${metrics.monthlyExpenses.toFixed(2)}
+- Total income: $${metrics.monthlyIncome.toFixed(2)}
+- Net savings: $${metrics.monthlyCashFlow.toFixed(2)}
+- Current balance: $${metrics.liquidAssets.toFixed(2)}
+- Net worth: $${metrics.netWorth.toFixed(2)}
+- Savings rate: ${((metrics.monthlyCashFlow / (metrics.monthlyIncome || 1)) * 100).toFixed(1)}%
 
 Provide 3 key insights and 2 actionable recommendations. Keep under 150 words.`;
 
@@ -113,7 +100,12 @@ Provide 3 key insights and 2 actionable recommendations. Keep under 150 words.`;
         priority: 'high',
         status: 'new',
         createdAt: new Date(),
-        data: { totalSpending, totalIncome, totalBalance },
+        data: {
+          totalSpending: metrics.monthlyExpenses,
+          totalIncome: metrics.monthlyIncome,
+          totalBalance: metrics.liquidAssets,
+          netWorth: metrics.netWorth,
+        },
       };
 
       await this.saveInsight(insight);

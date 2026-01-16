@@ -68,3 +68,15 @@ Thumbs.db
 
 # AI assistant files
 .amazonq/
+
+# Scraper service
+services/scraper/node_modules/
+services/scraper/dist/
+services/scraper/.env
+services/scraper/*.log
+
+# Puppeteer/Chrome cache
+.cache/puppeteer/
+
+# Docker
+.docker/

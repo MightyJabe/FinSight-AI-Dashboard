@@ -1,0 +1,14 @@
+services:
+  # Scraper Service
+  scraper:
+    build:
+      context: ./services/scraper
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000" # Expose on 3001 locally to avoid conflict if Next.js is on 3000
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+  # We don't necessarily need to run Next.js in docker locally (npm run dev is usually better),
+  # but this service provides the scraper for 'npm run dev' to talk to.
+  # URL in .env.local should be: ISRAEL_SCRAPER_URL=http://localhost:3001
