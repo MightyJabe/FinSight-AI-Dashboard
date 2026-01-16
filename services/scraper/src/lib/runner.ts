@@ -1,5 +1,5 @@
 // israeli-bank-scrapers v6.6.0 with visible browser mode for 2FA
-import { createScraper, CompanyTypes } from 'israeli-bank-scrapers';
+import { CompanyTypes,createScraper } from 'israeli-bank-scrapers';
 import { ScraperCredentials, ScraperScrapingResult } from 'israeli-bank-scrapers/lib/scrapers/interface';
 
 const isLocalMode = process.env.PUPPETEER_LOCAL === 'true';

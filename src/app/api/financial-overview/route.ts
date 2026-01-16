@@ -68,21 +68,36 @@ export async function GET(request: NextRequest) {
       .collection('accounts')
       .get();
 
-    const israeliAccounts = israeliAccountsSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+    interface IsraeliAccount {
+      id: string;
+      name: string;
+      balance: number;
+      availableBalance: number | null;
+      type: string;
+      subtype: string;
+      accountType: string;
+      institutionName: string;
+      mask: string | null;
+      currency: string;
+      source: string;
+      providerId: string;
+    }
+
+    const israeliAccounts: IsraeliAccount[] = israeliAccountsSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
         id: doc.id,
-        name: data.name || `Account ${data.mask || doc.id}`,
-        balance: data.balance?.current || 0,
-        availableBalance: data.balance?.available || null,
-        type: data.type || 'depository',
-        subtype: data.subtype || 'checking',
-        accountType: data.type || 'depository',
-        institutionName: data.institutionName || 'Israeli Bank',
-        mask: data.mask || null,
-        currency: data.currency || 'ILS',
+        name: (data.name as string) || `Account ${(data.mask as string) || doc.id}`,
+        balance: (data.balance?.current as number) || 0,
+        availableBalance: (data.balance?.available as number) || null,
+        type: (data.type as string) || 'depository',
+        subtype: (data.subtype as string) || 'checking',
+        accountType: (data.type as string) || 'depository',
+        institutionName: (data.institutionName as string) || 'Israeli Bank',
+        mask: (data.mask as string) || null,
+        currency: (data.currency as string) || 'ILS',
         source: 'israel',
-        providerId: data.providerId || 'israel',
+        providerId: (data.providerId as string) || 'israel',
       };
     });
 
@@ -126,7 +141,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Calculate Israeli accounts totals
-    const israeliAccountsTotal = israeliAccounts.reduce((sum: number, acc) => sum + (acc.balance || 0), 0);
+    const israeliAccountsTotal = israeliAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
 
     const transformedData = {
       summary: {

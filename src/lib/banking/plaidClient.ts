@@ -1,12 +1,27 @@
-import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
-import { BankingProvider, BankingAccount, BankingTransaction } from './types';
+import { Configuration, PlaidApi } from 'plaid';
+
+import { BankingAccount, BankingProvider, BankingTransaction } from './types';
+
+// Plaid environment URLs
+const PLAID_URLS = {
+    sandbox: 'https://sandbox.plaid.com',
+    development: 'https://development.plaid.com',
+    production: 'https://production.plaid.com',
+} as const;
+
+function getPlaidBasePath(): string {
+    const env = process.env.PLAID_ENV;
+    if (env === 'production') return PLAID_URLS.production;
+    if (env === 'development') return PLAID_URLS.development;
+    return PLAID_URLS.sandbox;
+}
 
 const configuration = new Configuration({
-    basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
+    basePath: getPlaidBasePath(),
     baseOptions: {
         headers: {
-            'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID || '',
-            'PLAID-SECRET': process.env.PLAID_SECRET || '',
+            'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID ?? '',
+            'PLAID-SECRET': process.env.PLAID_SECRET ?? '',
         },
     },
 });
@@ -38,10 +53,13 @@ export class PlaidClient implements BankingProvider {
     }
 
     async getTransactions(accessToken: string, startDate: Date, endDate: Date): Promise<BankingTransaction[]> {
+        const startDateStr = startDate.toISOString().slice(0, 10);
+        const endDateStr = endDate.toISOString().slice(0, 10);
+
         const response = await plaidApi.transactionsGet({
             access_token: accessToken,
-            start_date: startDate.toISOString().split('T')[0],
-            end_date: endDate.toISOString().split('T')[0]
+            start_date: startDateStr,
+            end_date: endDateStr
         });
 
         return response.data.transactions.map(tx => ({

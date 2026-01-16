@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
@@ -16,8 +15,6 @@ interface RootLayoutContentProps {
 
 export function RootLayoutContent({ children }: RootLayoutContentProps) {
   const { user, loading } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
   const [checkedOnboarding, setCheckedOnboarding] = useState(false);
 
   // Onboarding redirect disabled for testing

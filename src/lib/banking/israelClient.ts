@@ -1,4 +1,4 @@
-import { BankingProvider, BankingAccount, BankingTransaction } from './types';
+import { BankingAccount, BankingProvider, BankingTransaction } from './types';
 
 export interface ScrapeResult {
     accounts: BankingAccount[];
@@ -55,7 +55,12 @@ export class IsraelClient implements BankingProvider {
         return result.accounts;
     }
 
-    async getTransactions(credentialsJson: string, _startDate: Date, _endDate: Date): Promise<BankingTransaction[]> {
+    // Date parameters required by BankingProvider interface but not used by Israeli scrapers
+    async getTransactions(
+        credentialsJson: string,
+        _startDate: Date, // eslint-disable-line @typescript-eslint/no-unused-vars
+        _endDate: Date // eslint-disable-line @typescript-eslint/no-unused-vars
+    ): Promise<BankingTransaction[]> {
         const result = await this.scrapeAll(credentialsJson);
         return result.transactions;
     }

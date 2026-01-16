@@ -1,6 +1,7 @@
 import React from 'react';
-import { AddBankModal } from '@/components/banking/AddBankModal';
+
 import { AccountList } from '@/components/banking/AccountList';
+import { AddBankModal } from '@/components/banking/AddBankModal';
 
 export default function BankingPage() {
     return (

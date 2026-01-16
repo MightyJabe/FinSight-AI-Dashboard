@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
+
+import { adminAuth,adminDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ accounts: [] });
         }
 
-        const accounts = accountsSnapshot.docs.map(doc => ({
+        const accounts = accountsSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
             id: doc.id,
             ...doc.data()
         }));

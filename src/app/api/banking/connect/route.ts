@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import { plaidApi } from '@/lib/banking/plaidClient';
 import { CountryCode, LinkTokenCreateRequest, Products } from 'plaid';
+
+import { plaidApi } from '@/lib/banking/plaidClient';
 import { encryptSensitiveData } from '@/lib/encryption';
+import { adminAuth,adminDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 

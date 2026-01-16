@@ -1,5 +1,6 @@
-import express, { Request, Response } from 'express';
 import cors from 'cors';
+import express, { Request, Response } from 'express';
+
 import { runScrape, ScrapeRequest } from './lib/runner';
 
 const app = express();

@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, Building2, CheckCircle2,Loader2, Shield } from 'lucide-react';
+import React, { useCallback,useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { usePlaidLink } from 'react-plaid-link';
-import { Modal } from '@/components/ui/Modal';
+
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { useAuth } from '@/lib/auth';
-import { Loader2, Building2, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 
 // Bank-specific login field configurations from israeli-bank-scrapers
 const BANK_CONFIGS: Record<string, { name: string; fields: { key: string; label: string; type?: string; placeholder?: string }[] }> = {
@@ -114,7 +115,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
             } else {
                 toast.error(`Connection failed: ${data.error}`);
             }
-        } catch (e) {
+        } catch {
             toast.error('Connection error');
         } finally {
             setIsProcessing(false);
@@ -165,7 +166,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                 toast.error(`Connection failed: ${data.error}`);
                 setTimeout(() => setConnectionStatus('idle'), 2000);
             }
-        } catch (e) {
+        } catch {
             setConnectionStatus('error');
             toast.error('Scraper connection error');
             setTimeout(() => setConnectionStatus('idle'), 2000);
@@ -236,7 +237,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                     {provider === 'plaid' ? (
                         <div className="text-center py-6">
                             <p className="text-gray-600 dark:text-gray-400 mb-4">
-                                Connect to banks in US, UK, Canada, and Europe via Plaid's secure connection.
+                                Connect to banks in US, UK, Canada, and Europe via Plaid&apos;s secure connection.
                             </p>
                             <Button
                                 onClick={() => openPlaid()}

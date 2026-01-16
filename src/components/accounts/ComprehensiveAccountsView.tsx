@@ -15,10 +15,9 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { AddBankModal } from '@/components/banking/AddBankModal';
+import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { useSession } from '@/components/providers/SessionProvider';
-
 import {
   Card,
   CardContent,
@@ -54,36 +53,6 @@ export function ComprehensiveAccountsView() {
   const [plaidItemsNeedingAuth, setPlaidItemsNeedingAuth] = useState<any[]>([]);
   const [isClearing, setIsClearing] = useState(false);
   const { firebaseUser } = useSession();
-
-  // Handler to clear Israeli bank data
-  const clearIsraeliBankData = useCallback(async () => {
-    if (!confirm('This will delete all Israeli bank connections and transactions. You will need to reconnect your bank. Continue?')) {
-      return;
-    }
-
-    setIsClearing(true);
-    try {
-      const response = await fetch('/api/banking/clear', {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to clear data');
-      }
-
-      const result = await response.json();
-      toast.success(`Cleared ${result.deleted.transactions} transactions, ${result.deleted.accounts} accounts`);
-
-      // Refresh the data
-      await fetchFinancialData();
-    } catch (error) {
-      console.error('Error clearing data:', error);
-      toast.error('Failed to clear bank data');
-    } finally {
-      setIsClearing(false);
-    }
-  }, []);
 
   const fetchFinancialData = useCallback(async () => {
     try {
@@ -206,6 +175,36 @@ export function ComprehensiveAccountsView() {
       setLoading(false);
     }
   }, [firebaseUser]);
+
+  // Handler to clear Israeli bank data
+  const clearIsraeliBankData = useCallback(async () => {
+    if (!confirm('This will delete all Israeli bank connections and transactions. You will need to reconnect your bank. Continue?')) {
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      const response = await fetch('/api/banking/clear', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear data');
+      }
+
+      const result = await response.json();
+      toast.success(`Cleared ${result.deleted.transactions} transactions, ${result.deleted.accounts} accounts`);
+
+      // Refresh the data
+      await fetchFinancialData();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      toast.error('Failed to clear bank data');
+    } finally {
+      setIsClearing(false);
+    }
+  }, [fetchFinancialData]);
 
   useEffect(() => {
     fetchFinancialData();

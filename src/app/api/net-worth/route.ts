@@ -5,24 +5,22 @@ import { calculateNetWorth, NetWorthResultSchema } from '@/lib/calculate-net-wor
 import { getFinancialOverview } from '@/lib/financial-calculator';
 import logger from '@/lib/logger';
 
-// Response schemas for documentation and validation
-const _ResponseSchema = z.object({
-  success: z.literal(true),
-  data: NetWorthResultSchema,
-});
+// Response type definitions for documentation
+type SuccessResponse = {
+  success: true;
+  data: z.infer<typeof NetWorthResultSchema>;
+};
 
-const _ErrorResponseSchema = z.object({
-  success: z.literal(false),
-  error: z.string(),
-  code: z.enum(['UNAUTHORIZED', 'NO_ACCOUNTS', 'FETCH_FAILED']),
-});
+type ErrorResponse = {
+  success: false;
+  error: string;
+  code: 'UNAUTHORIZED' | 'NO_ACCOUNTS' | 'FETCH_FAILED';
+};
 
-// Export types derived from schemas
-export type NetWorthResponse = z.infer<typeof _ResponseSchema>;
-export type NetWorthErrorResponse = z.infer<typeof _ErrorResponseSchema>;
+export type NetWorthApiResponse = SuccessResponse | ErrorResponse;
 
 // Cache for 60 seconds
-const cache = new Map<string, { data: NetWorthResponse; timestamp: number }>();
+const cache = new Map<string, { data: SuccessResponse; timestamp: number }>();
 const CACHE_TTL = 60 * 1000;
 
 export async function GET(request: NextRequest) {
@@ -31,7 +29,7 @@ export async function GET(request: NextRequest) {
     const sessionCookie = request.cookies.get('session')?.value;
     if (!sessionCookie) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' } as NetWorthErrorResponse,
+        { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' } as ErrorResponse,
         { status: 401 }
       );
     }
@@ -63,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     if (!hasAccounts) {
       return NextResponse.json(
-        { success: false, error: 'No accounts connected', code: 'NO_ACCOUNTS' } as NetWorthErrorResponse,
+        { success: false, error: 'No accounts connected', code: 'NO_ACCOUNTS' } as ErrorResponse,
         { status: 404 }
       );
     }
@@ -102,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     const netWorthResult = calculateNetWorth(accounts);
 
-    const responseData: NetWorthResponse = {
+    const responseData: SuccessResponse = {
       success: true,
       data: netWorthResult,
     };
@@ -132,7 +130,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: false, error: 'Failed to calculate net worth', code: 'FETCH_FAILED' } as NetWorthErrorResponse,
+      { success: false, error: 'Failed to calculate net worth', code: 'FETCH_FAILED' } as ErrorResponse,
       { status: 500 }
     );
   }

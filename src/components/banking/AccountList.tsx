@@ -2,9 +2,10 @@
 
 import React from 'react';
 import useSWR from 'swr';
-import { useAuth } from '@/lib/auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+
 import { Skeleton } from '@/components/common/SkeletonLoader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useAuth } from '@/lib/auth';
 import { BankingAccount } from '@/lib/banking/types';
 import { formatCurrency } from '@/lib/utils';
 

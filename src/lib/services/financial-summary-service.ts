@@ -12,8 +12,8 @@
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { FieldValue } from 'firebase-admin/firestore';
 
-import { adminDb as db } from '@/lib/firebase-admin';
 import { calculateFinancialMetrics, fetchFinancialData, FinancialMetrics } from '@/lib/financial-calculator';
+import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 export interface CachedSummary {
@@ -115,7 +115,7 @@ export async function invalidateFinancialSummary(userId: string): Promise<void> 
             lastCalculatedAt: new Date(0), // Force cache miss on next read
         });
         logger.info('Financial summary cache invalidated', { userId });
-    } catch (error) {
+    } catch {
         // Ignore if document doesn't exist
         logger.warn('Could not invalidate summary cache (may not exist)', { userId });
     }

@@ -3,7 +3,6 @@ import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firesto
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { generateChatCompletion } from '@/lib/openai';
-
 import { getTransactionService } from '@/lib/services/transaction-service';
 
 export interface ProactiveInsight {

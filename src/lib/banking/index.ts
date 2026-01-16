@@ -1,5 +1,5 @@
-import { PlaidClient } from './plaidClient';
 import { IsraelClient } from './israelClient';
+import { PlaidClient } from './plaidClient';
 import { BankingProvider } from './types';
 
 // Singleton instances or factory

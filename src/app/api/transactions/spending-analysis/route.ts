@@ -6,8 +6,7 @@ import logger from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 // Simple in-memory cache for spending analysis
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 30 * 1000; // 30 seconds
+const cache = new Map<string, { data: unknown; timestamp: number }>();
 
 const CATEGORY_COLORS = {
   Housing: '#3B82F6',

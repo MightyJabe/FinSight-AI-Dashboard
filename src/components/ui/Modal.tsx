@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+
 import { cn } from '@/lib/utils';
 
 interface ModalProps {
