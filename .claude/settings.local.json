@@ -31,7 +31,12 @@
       "mcp__plugin_serena_serena__activate_project",
       "mcp__plugin_serena_serena__read_file",
       "mcp__plugin_serena_serena__find_file",
-      "mcp__plugin_serena_serena__search_for_pattern"
+      "mcp__plugin_serena_serena__search_for_pattern",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "Bash(curl:*)",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_network_requests"
     ]
   }
 }

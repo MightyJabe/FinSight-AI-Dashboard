@@ -1,8 +1,9 @@
-// israeli-bank-scrapers v6.6.0 with visible browser mode for 2FA
+// israeli-bank-scrapers v6.6.0 with Browserless cloud browser for 2FA support
 import { CompanyTypes, createScraper } from 'israeli-bank-scrapers';
 import { ScraperCredentials, ScraperScrapingResult } from 'israeli-bank-scrapers/lib/scrapers/interface';
 
 const isLocalMode = process.env.PUPPETEER_LOCAL === 'true';
+const browserlessApiKey = process.env.BROWSERLESS_API_KEY;
 
 export interface ScrapeRequest {
     companyId: string;
@@ -11,16 +12,26 @@ export interface ScrapeRequest {
     showBrowser?: boolean;
 }
 
-export async function runScrape(req: ScrapeRequest): Promise<ScraperScrapingResult> {
+export interface ScrapeResponse extends ScraperScrapingResult {
+    // Add live session URL for 2FA interaction
+    liveSessionUrl?: string;
+}
+
+export async function runScrape(req: ScrapeRequest): Promise<ScrapeResponse> {
     const { companyId, credentials, startDate, showBrowser } = req;
 
+    // Determine mode: Local, Browserless (cloud), or Docker
+    const useBrowserless = !isLocalMode && browserlessApiKey;
+    const mode = isLocalMode ? 'LOCAL' : useBrowserless ? 'BROWSERLESS' : 'DOCKER';
+
     console.log(`[Scraper] Starting scrape for ${companyId}`);
-    console.log(`[Scraper] Mode: ${isLocalMode ? 'LOCAL (visible browser)' : 'DOCKER (headless)'}`);
+    console.log(`[Scraper] Mode: ${mode}`);
 
     // In local mode, force showBrowser to true for OTP entry
     const effectiveShowBrowser = isLocalMode ? true : !!showBrowser;
 
     let browser;
+    let liveSessionUrl: string | undefined;
 
     if (isLocalMode) {
         // Local mode: use regular puppeteer which bundles Chromium
@@ -34,6 +45,24 @@ export async function runScrape(req: ScrapeRequest): Promise<ScraperScrapingResu
             ]
         });
         console.log(`[Scraper] Browser launched in ${effectiveShowBrowser ? 'VISIBLE' : 'headless'} mode`);
+    } else if (useBrowserless) {
+        // Browserless cloud mode: connect via WebSocket for 2FA support
+        const puppeteerCore = await import('puppeteer-core');
+
+        // Browserless WebSocket URL with live debugging enabled
+        const browserlessUrl = `wss://chrome.browserless.io?token=${browserlessApiKey}&--window-size=1920,1080`;
+
+        console.log(`[Scraper] Connecting to Browserless cloud browser...`);
+
+        browser = await puppeteerCore.default.connect({
+            browserWSEndpoint: browserlessUrl
+        });
+
+        // Get the live session URL for the user to interact with 2FA
+        // Browserless provides a live view at: https://chrome.browserless.io/live?token=TOKEN
+        liveSessionUrl = `https://chrome.browserless.io/live?token=${browserlessApiKey}`;
+        console.log(`[Scraper] Live session available at: ${liveSessionUrl}`);
+        console.log(`[Scraper] Connected to Browserless successfully`);
     } else {
         // Docker mode: use puppeteer-core with installed Chrome
         const puppeteerCore = await import('puppeteer-core');
@@ -57,10 +86,10 @@ export async function runScrape(req: ScrapeRequest): Promise<ScraperScrapingResu
             showBrowser: effectiveShowBrowser,
             verbose: true,
             browser: browser as any, // Cast to any - Puppeteer types don't match israeli-bank-scrapers
-            // Very long timeout for manual OTP entry (10 minutes)
-            defaultTimeout: isLocalMode ? 600000 : 120000,
+            // Very long timeout for manual OTP entry (10 minutes for cloud, 2 min for headless)
+            defaultTimeout: isLocalMode || useBrowserless ? 600000 : 120000,
             // Also set navigation timeout
-            timeout: isLocalMode ? 600000 : 120000
+            timeout: isLocalMode || useBrowserless ? 600000 : 120000
         });
 
         // Listen for progress events
@@ -83,12 +112,21 @@ export async function runScrape(req: ScrapeRequest): Promise<ScraperScrapingResu
             console.error(`  - Error Message: ${scraperResult.errorMessage || 'No message'}`);
         }
 
-        return scraperResult;
+        // Return result with optional live session URL
+        return {
+            ...scraperResult,
+            liveSessionUrl
+        };
 
     } catch (e) {
         console.error(`[Scraper] Unexpected error:`, e);
         throw e;
     } finally {
-        await browser.close();
+        // For Browserless, disconnect instead of close to preserve session
+        if (useBrowserless) {
+            await browser.disconnect();
+        } else {
+            await browser.close();
+        }
     }
 }
