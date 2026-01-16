@@ -1,5 +1,5 @@
 // israeli-bank-scrapers v6.6.0 with visible browser mode for 2FA
-import { CompanyTypes,createScraper } from 'israeli-bank-scrapers';
+import { CompanyTypes, createScraper } from 'israeli-bank-scrapers';
 import { ScraperCredentials, ScraperScrapingResult } from 'israeli-bank-scrapers/lib/scrapers/interface';
 
 const isLocalMode = process.env.PUPPETEER_LOCAL === 'true';
@@ -56,7 +56,7 @@ export async function runScrape(req: ScrapeRequest): Promise<ScraperScrapingResu
             combineInstallments: false,
             showBrowser: effectiveShowBrowser,
             verbose: true,
-            browser,
+            browser: browser as any, // Cast to any - Puppeteer types don't match israeli-bank-scrapers
             // Very long timeout for manual OTP entry (10 minutes)
             defaultTimeout: isLocalMode ? 600000 : 120000,
             // Also set navigation timeout
