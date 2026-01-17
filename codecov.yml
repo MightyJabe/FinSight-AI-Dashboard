@@ -1,0 +1,50 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+
+  ignore:
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "**/*.spec.ts"
+    - "**/*.spec.tsx"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/mocks/**"
+    - "**/tests/**"
+    - "jest.config.js"
+    - "jest.setup.js"
+    - "playwright.config.ts"
+    - "next.config.js"
+    - "tailwind.config.js"
+    - "postcss.config.js"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: no
+  require_base: no
+  require_head: yes
+
+flags:
+  unittests:
+    paths:
+      - src/
+    carryforward: true
