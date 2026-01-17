@@ -52,7 +52,11 @@
       "mcp__plugin_context7_context7__query-docs",
       "mcp__plugin_serena_serena__find_symbol",
       "mcp__plugin_serena_serena__get_symbols_overview",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "mcp__plugin_firebase_firebase__firebase_read_resources",
+      "mcp__plugin_firebase_firebase__firebase_list_apps",
+      "mcp__plugin_firebase_firebase__firebase_get_sdk_config",
+      "mcp__plugin_firebase_firebase__firebase_get_security_rules"
     ]
   }
 }
