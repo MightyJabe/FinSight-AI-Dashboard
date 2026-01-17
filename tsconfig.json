@@ -41,5 +41,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "coverage", ".next", "out", "build", "dist", "services", "tests", "**/*.test.ts", "**/*.test.tsx", "**/__tests__", "**/__mocks__"]
+  "exclude": ["node_modules", "coverage", ".next", "out", "build", "dist", "services", "tests", "**/*.test.ts", "**/*.test.tsx", "**/__tests__", "**/__mocks__", "jest.config.js", "jest.setup.js", "playwright.config.ts"]
 }
