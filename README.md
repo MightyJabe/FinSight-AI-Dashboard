@@ -83,7 +83,6 @@ See `.env.example` for required variables. Key integrations:
 - **Plaid** - Financial account aggregation
 - **OpenAI** - AI-powered insights
 - **Redis (optional)** - Distributed rate limiting; falls back to in-memory if not set
-- **Stripe (optional)** - Subscriptions for paid plans (`pro`, `elite`)
 
 ## Project Structure
 

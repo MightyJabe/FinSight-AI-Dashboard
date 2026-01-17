@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
-import { requirePlan } from '@/lib/plan-guard';
 import { calculateMonthlyTotal, detectSubscriptions } from '@/lib/subscription-detector';
 
 export async function POST(req: NextRequest) {
@@ -14,20 +12,6 @@ export async function POST(req: NextRequest) {
       return authResult.error;
     }
     const userId = authResult.userId;
-
-    const allowed = await requirePlan(userId, 'pro');
-    if (!allowed) {
-      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
-        userId,
-        endpoint: '/api/subscriptions/detect',
-        resource: 'subscriptions',
-        errorMessage: 'Pro plan required for subscription detection',
-      });
-      return NextResponse.json(
-        { success: false, error: 'Pro plan required for subscription detection' },
-        { status: 402 }
-      );
-    }
 
     const snapshot = await adminDb
       .collection('users')
@@ -95,20 +79,6 @@ export async function GET(req: NextRequest) {
       return authResult.error;
     }
     const userId = authResult.userId;
-
-    const allowed = await requirePlan(userId, 'pro');
-    if (!allowed) {
-      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
-        userId,
-        endpoint: '/api/subscriptions/detect',
-        resource: 'subscriptions',
-        errorMessage: 'Pro plan required to view subscriptions',
-      });
-      return NextResponse.json(
-        { success: false, error: 'Pro plan required to view subscriptions' },
-        { status: 402 }
-      );
-    }
 
     const snapshot = await adminDb
       .collection('users')

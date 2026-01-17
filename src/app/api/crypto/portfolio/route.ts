@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
+import { decryptSensitiveData, isEncryptedData } from '@/lib/encryption';
 import { adminDb } from '@/lib/firebase-admin';
 import { getBinancePortfolio, getCoinbasePortfolio } from '@/lib/integrations/crypto/coinbase';
 import logger from '@/lib/logger';
@@ -19,30 +20,44 @@ export async function GET(req: NextRequest) {
       .collection('cryptoAccounts')
       .get();
 
-    const portfolios = [];
-
-    for (const doc of cryptoAccountsSnapshot.docs) {
+    // PERFORMANCE FIX: Fetch all portfolios in parallel instead of sequentially
+    const portfolioPromises = cryptoAccountsSnapshot.docs.map(async (doc) => {
       const account = doc.data();
 
       try {
-        let portfolio;
-        if (account.exchange === 'coinbase') {
-          portfolio = await getCoinbasePortfolio(account.apiKey, account.apiSecret);
-        } else if (account.exchange === 'binance') {
-          portfolio = await getBinancePortfolio(account.apiKey, account.apiSecret);
+        // SECURITY: Decrypt API keys before use
+        let apiKey = account.apiKey;
+        let apiSecret = account.apiSecret;
+
+        // Handle both encrypted (new) and plaintext (legacy) credentials
+        if (isEncryptedData(apiKey)) {
+          apiKey = decryptSensitiveData(apiKey);
+        }
+        if (isEncryptedData(apiSecret)) {
+          apiSecret = decryptSensitiveData(apiSecret);
         }
 
-        if (portfolio) {
-          portfolios.push(portfolio);
+        let portfolio;
+        if (account.exchange === 'coinbase') {
+          portfolio = await getCoinbasePortfolio(apiKey, apiSecret);
+        } else if (account.exchange === 'binance') {
+          portfolio = await getBinancePortfolio(apiKey, apiSecret);
         }
+
+        return portfolio;
       } catch (error) {
         logger.error('Error fetching crypto portfolio', {
           userId,
           exchange: account.exchange,
           error,
         });
+        return null; // Don't fail entire request for one exchange error
       }
-    }
+    });
+
+    // Wait for all portfolio fetches in parallel
+    const results = await Promise.all(portfolioPromises);
+    const portfolios = results.filter((p): p is NonNullable<typeof p> => p !== null);
 
     const totalValue = portfolios.reduce((sum, p) => sum + p.totalValue, 0);
 

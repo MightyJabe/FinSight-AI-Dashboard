@@ -99,8 +99,6 @@ export async function POST(request: Request) {
   delete updates.proExpiresAt;
   delete updates.trialUsed;
   delete updates.trialEndsAt;
-  delete updates.stripeCustomerId;
-  delete updates.stripeSubscriptionId;
 
   await db.collection('users').doc(userId).set(updates, { merge: true });
 

@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
-import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import { validateAuthToken } from '@/lib/auth-server';
+import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 import { requirePlan } from '@/lib/plan-guard';
+
+// Zod schema for document deletion
+const deleteSchema = z.object({
+  documentId: z.string().min(1, 'Document ID required').max(200),
+});
 
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await validateAuthToken(req);
+    if (authResult.error) {
+      return authResult.error;
     }
-
-    const decoded = await auth.verifyIdToken(token);
-    const userId = decoded.uid;
+    const userId = authResult.userId;
 
     const allowed = await requirePlan(userId, 'pro');
     if (!allowed) {
@@ -28,15 +34,52 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const { documentId } = await req.json();
+    const body = await req.json();
+    const parsed = deleteSchema.safeParse(body);
 
-    await db.collection('documents').doc(documentId).delete();
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, errors: parsed.error.formErrors.fieldErrors },
+        { status: 400 }
+      );
+    }
 
-    // Storage deletion removed - adminStorage not available
+    const { documentId } = parsed.data;
+
+    // SECURITY FIX: Verify document exists and belongs to user before deleting
+    const docRef = db.collection('documents').doc(documentId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return NextResponse.json(
+        { success: false, error: 'Document not found' },
+        { status: 404 }
+      );
+    }
+
+    // CRITICAL: Check ownership to prevent IDOR attacks
+    const docData = doc.data();
+    if (docData?.userId !== userId) {
+      await logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, AuditSeverity.HIGH, {
+        userId,
+        endpoint: '/api/documents/delete',
+        resource: 'documents',
+        errorMessage: 'Attempted to delete document owned by another user',
+        details: { documentId },
+      });
+      logger.warn('IDOR attempt blocked on document delete', { userId, documentId });
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    await docRef.delete();
+    logger.info('Document deleted', { userId, documentId });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting document:', error);
+    logger.error('Error deleting document', { error });
     return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });
   }
 }

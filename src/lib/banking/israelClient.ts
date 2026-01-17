@@ -1,3 +1,5 @@
+import logger from '@/lib/logger';
+
 import { BankingAccount, BankingProvider, BankingTransaction } from './types';
 
 export interface ScrapeResult {
@@ -5,48 +7,236 @@ export interface ScrapeResult {
     transactions: BankingTransaction[];
 }
 
+export interface RetryConfig {
+    maxRetries: number;
+    baseDelayMs: number;
+    maxDelayMs: number;
+    timeoutMs: number;
+}
+
+// Error types that should trigger a retry
+const RETRYABLE_ERROR_TYPES = [
+    'TIMEOUT',
+    'NETWORK_ERROR',
+    'RATE_LIMITED',
+    'SERVICE_UNAVAILABLE',
+    'TEMPORARY_ERROR',
+];
+
+// Error types that should NOT be retried (invalid credentials, etc.)
+const NON_RETRYABLE_ERROR_TYPES = [
+    'INVALID_PASSWORD',
+    'INVALID_CREDENTIALS',
+    'ACCOUNT_BLOCKED',
+    'CHANGE_PASSWORD',
+];
+
 export class IsraelClient implements BankingProvider {
     name = 'israeli-scraper';
     private serviceUrl = process.env.ISRAEL_SCRAPER_URL || 'http://localhost:3002';
+    private retryConfig: RetryConfig = {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+        maxDelayMs: 30000,
+        timeoutMs: 120000, // 2 minutes for scraping (can be slow)
+    };
 
-    // Single scrape that returns both accounts and transactions
+    /**
+     * Sleep for a specified duration
+     */
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Calculate delay with exponential backoff and jitter
+     */
+    private calculateDelay(attempt: number): number {
+        const exponentialDelay = this.retryConfig.baseDelayMs * Math.pow(2, attempt);
+        const jitter = Math.random() * 1000; // Add up to 1 second of jitter
+        return Math.min(exponentialDelay + jitter, this.retryConfig.maxDelayMs);
+    }
+
+    /**
+     * Check if an error is retryable
+     */
+    private isRetryableError(errorType: string | undefined, statusCode?: number): boolean {
+        // Don't retry authentication errors
+        if (errorType && NON_RETRYABLE_ERROR_TYPES.includes(errorType)) {
+            return false;
+        }
+
+        // Retry network errors and rate limits
+        if (errorType && RETRYABLE_ERROR_TYPES.includes(errorType)) {
+            return true;
+        }
+
+        // Retry on 5xx server errors or network issues
+        if (statusCode && statusCode >= 500) {
+            return true;
+        }
+
+        // Retry on 429 rate limit
+        if (statusCode === 429) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Make a fetch request with timeout
+     */
+    private async fetchWithTimeout(
+        url: string,
+        options: RequestInit,
+        timeoutMs: number
+    ): Promise<Response> {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+            });
+            return response;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    // Single scrape that returns both accounts and transactions with retry logic
     async scrapeAll(credentialsJson: string): Promise<ScrapeResult> {
         const credentials = JSON.parse(credentialsJson);
+        let lastError: Error | null = null;
 
-        const response = await fetch(`${this.serviceUrl}/scrape`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                companyId: credentials.companyId,
-                credentials: credentials.creds,
-                showBrowser: true // Force visible for 2FA
-            })
-        });
+        for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
+            try {
+                logger.info('Israeli bank scrape attempt', {
+                    attempt: attempt + 1,
+                    maxRetries: this.retryConfig.maxRetries + 1,
+                    bankId: credentials.companyId,
+                });
 
-        if (!response.ok) {
-            throw new Error(`Scraper failed: ${response.statusText}`);
-        }
+                const response = await this.fetchWithTimeout(
+                    `${this.serviceUrl}/scrape`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            companyId: credentials.companyId,
+                            credentials: credentials.creds,
+                            showBrowser: true // Force visible for 2FA
+                        })
+                    },
+                    this.retryConfig.timeoutMs
+                );
 
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(`Scraper Error: ${data.errorType} - ${data.errorMessage || 'Unknown'}`);
-        }
+                if (!response.ok) {
+                    const errorMessage = `Scraper failed: ${response.statusText}`;
 
-        const accounts = this.mapAccounts(data.accounts || [], credentials.companyId);
+                    if (this.isRetryableError(undefined, response.status) && attempt < this.retryConfig.maxRetries) {
+                        const delay = this.calculateDelay(attempt);
+                        logger.warn('Retryable HTTP error, will retry', {
+                            attempt: attempt + 1,
+                            statusCode: response.status,
+                            delayMs: delay,
+                        });
+                        await this.sleep(delay);
+                        continue;
+                    }
 
-        // Extract transactions from all accounts
-        let allTransactions: BankingTransaction[] = [];
-        if (data.accounts) {
-            for (const acc of data.accounts) {
-                if (acc.txns) {
-                    allTransactions = allTransactions.concat(
-                        this.mapTransactions(acc.txns, acc.accountNumber, credentials.companyId)
-                    );
+                    throw new Error(errorMessage);
                 }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    const errorType = data.errorType;
+                    const errorMessage = `Scraper Error: ${errorType} - ${data.errorMessage || 'Unknown'}`;
+
+                    if (this.isRetryableError(errorType) && attempt < this.retryConfig.maxRetries) {
+                        const delay = this.calculateDelay(attempt);
+                        logger.warn('Retryable scraper error, will retry', {
+                            attempt: attempt + 1,
+                            errorType,
+                            delayMs: delay,
+                        });
+                        await this.sleep(delay);
+                        continue;
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                // Success!
+                const accounts = this.mapAccounts(data.accounts || [], credentials.companyId);
+
+                // Extract transactions from all accounts
+                let allTransactions: BankingTransaction[] = [];
+                if (data.accounts) {
+                    for (const acc of data.accounts) {
+                        if (acc.txns) {
+                            allTransactions = allTransactions.concat(
+                                this.mapTransactions(acc.txns, acc.accountNumber, credentials.companyId)
+                            );
+                        }
+                    }
+                }
+
+                logger.info('Israeli bank scrape successful', {
+                    bankId: credentials.companyId,
+                    accountCount: accounts.length,
+                    transactionCount: allTransactions.length,
+                    attempts: attempt + 1,
+                });
+
+                return { accounts, transactions: allTransactions };
+
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+
+                // Check if it's an abort error (timeout)
+                if (lastError.name === 'AbortError') {
+                    lastError = new Error(`Scraper timeout after ${this.retryConfig.timeoutMs}ms`);
+
+                    if (attempt < this.retryConfig.maxRetries) {
+                        const delay = this.calculateDelay(attempt);
+                        logger.warn('Request timeout, will retry', {
+                            attempt: attempt + 1,
+                            delayMs: delay,
+                        });
+                        await this.sleep(delay);
+                        continue;
+                    }
+                }
+
+                // Check for network errors
+                if (lastError.message.includes('fetch') || lastError.message.includes('network')) {
+                    if (attempt < this.retryConfig.maxRetries) {
+                        const delay = this.calculateDelay(attempt);
+                        logger.warn('Network error, will retry', {
+                            attempt: attempt + 1,
+                            error: lastError.message,
+                            delayMs: delay,
+                        });
+                        await this.sleep(delay);
+                        continue;
+                    }
+                }
+
+                // Non-retryable error or max retries reached
+                logger.error('Israeli bank scrape failed', {
+                    bankId: credentials.companyId,
+                    error: lastError.message,
+                    attempts: attempt + 1,
+                });
             }
         }
 
-        return { accounts, transactions: allTransactions };
+        // All retries exhausted
+        throw lastError || new Error('Scraper failed after all retries');
     }
 
     // Legacy interface - now just wraps scrapeAll

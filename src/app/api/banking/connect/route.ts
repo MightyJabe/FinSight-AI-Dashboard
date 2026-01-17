@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CountryCode, LinkTokenCreateRequest, Products } from 'plaid';
+import { z } from 'zod';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { plaidApi } from '@/lib/banking/plaidClient';
@@ -8,6 +9,29 @@ import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+
+// Zod validation schemas for POST body
+const plaidConnectionSchema = z.object({
+  provider: z.literal('plaid'),
+  publicToken: z.string().min(1, 'Public token is required'),
+});
+
+const israelConnectionSchema = z.object({
+  provider: z.literal('israel'),
+  companyId: z.string().min(1, 'Company ID is required'),
+  credentials: z.object({
+    username: z.string().optional(),
+    password: z.string().optional(),
+    id: z.string().optional(),
+    num: z.string().optional(),
+    card6Digits: z.string().optional(),
+  }).passthrough(), // Allow additional credential fields
+});
+
+const connectionSchema = z.discriminatedUnion('provider', [
+  plaidConnectionSchema,
+  israelConnectionSchema,
+]);
 
 // GET: Create Plaid Link Token
 export async function GET(req: NextRequest) {
@@ -45,20 +69,30 @@ export async function POST(req: NextRequest) {
         const userId = authResult.userId;
 
         const body = await req.json();
-        const { provider, publicToken, credentials, companyId } = body;
+        const parsed = connectionSchema.safeParse(body);
+
+        if (!parsed.success) {
+            return NextResponse.json(
+                { success: false, errors: parsed.error.formErrors.fieldErrors },
+                { status: 400 }
+            );
+        }
+
+        const validatedData = parsed.data;
 
         let accessToken = '';
         let itemId = '';
         let institutionName = '';
 
-        if (provider === 'plaid') {
+        if (validatedData.provider === 'plaid') {
             const response = await plaidApi.itemPublicTokenExchange({
-                public_token: publicToken,
+                public_token: validatedData.publicToken,
             });
             accessToken = response.data.access_token;
             itemId = response.data.item_id;
             institutionName = 'Plaid Bank';
-        } else if (provider === 'israel') {
+        } else if (validatedData.provider === 'israel') {
+            const { companyId, credentials } = validatedData;
             const credsString = JSON.stringify({ companyId, creds: credentials });
 
             // Import and use the scrapeAll method for single scrape
@@ -91,7 +125,7 @@ export async function POST(req: NextRequest) {
             await connectionRef.set({
                 id: connectionRef.id,
                 userId,
-                provider,
+                provider: validatedData.provider,
                 itemId,
                 institutionName,
                 accessToken,
@@ -153,8 +187,6 @@ export async function POST(req: NextRequest) {
                 accountsCount: scrapedAccounts.length,
                 transactionsCount: scrapedTransactions.length
             });
-        } else {
-            return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
         }
 
         // Plaid path: Save connection only (accounts fetched on-demand)
@@ -162,7 +194,7 @@ export async function POST(req: NextRequest) {
         await connectionRef.set({
             id: connectionRef.id,
             userId,
-            provider,
+            provider: validatedData.provider,
             itemId,
             institutionName,
             accessToken,

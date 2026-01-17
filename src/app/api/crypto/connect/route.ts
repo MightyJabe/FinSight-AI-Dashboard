@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { validateAuthToken } from '@/lib/auth-server';
+import { encryptSensitiveData } from '@/lib/encryption';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
+
+// Zod schema for crypto connection
+const connectSchema = z.object({
+  exchange: z.enum(['coinbase', 'binance', 'kraken', 'bit2c', 'wallet']),
+  apiKey: z.string().min(10, 'API key too short').max(500),
+  apiSecret: z.string().max(500).optional(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -11,11 +21,17 @@ export async function POST(req: Request) {
     }
     const userId = authResult.userId;
 
-    const { exchange, apiKey, apiSecret } = await req.json();
+    const body = await req.json();
+    const parsed = connectSchema.safeParse(body);
 
-    if (!exchange || !apiKey) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, errors: parsed.error.formErrors.fieldErrors },
+        { status: 400 }
+      );
     }
+
+    const { exchange, apiKey, apiSecret } = parsed.data;
 
     // For wallet type, validate address format and blockchain
     if (exchange === 'wallet') {
@@ -65,19 +81,25 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Invalid API credentials' }, { status: 400 });
       }
 
+      // SECURITY: Encrypt API credentials before storing
+      const encryptedApiKey = encryptSensitiveData(apiKey.trim());
+      const encryptedApiSecret = encryptSensitiveData(apiSecret.trim());
+
       await db.collection('crypto_accounts').add({
         userId,
         exchange,
-        apiKey: apiKey.trim(),
-        apiSecret: apiSecret.trim(),
+        apiKey: encryptedApiKey,
+        apiSecret: encryptedApiSecret,
         createdAt: new Date(),
         status: 'active',
       });
+
+      logger.info('Crypto exchange connected with encrypted credentials', { userId, exchange });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error connecting crypto:', error);
+    logger.error('Error connecting crypto', { error });
     return NextResponse.json({ error: 'Failed to connect' }, { status: 500 });
   }
 }

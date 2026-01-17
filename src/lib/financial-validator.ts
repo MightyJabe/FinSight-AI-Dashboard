@@ -1,9 +1,20 @@
 /**
  * FINANCIAL ACCURACY ENFORCER
  * Critical system to ensure 100% accuracy in all financial calculations
+ *
+ * Uses decimal.js for precise financial math to avoid floating-point errors
+ * (e.g., 0.1 + 0.2 !== 0.3 in JavaScript)
  */
 
+import Decimal from 'decimal.js';
+
 import { FinancialMetrics } from './financial-calculator';
+
+// Configure Decimal.js for financial calculations
+Decimal.set({
+  precision: 20,       // High precision for intermediate calculations
+  rounding: Decimal.ROUND_HALF_UP,  // Standard banker's rounding
+});
 
 export interface ValidationResult {
   isValid: boolean;
@@ -97,9 +108,41 @@ export function enforceFinancialAccuracy(metrics: FinancialMetrics, context: str
 
 /**
  * Rounds financial values to 2 decimal places for consistency
+ * Uses Decimal.js to avoid floating-point precision errors
+ *
+ * @example
+ * // JavaScript: Math.round(0.615 * 100) / 100 = 0.61 (WRONG!)
+ * // decimal.js: roundFinancialValue(0.615) = 0.62 (CORRECT)
  */
 export function roundFinancialValue(value: number): number {
-  return Math.round(value * 100) / 100;
+  if (!Number.isFinite(value)) {
+    return value; // Return NaN/Infinity as-is for validation to catch
+  }
+  return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+}
+
+/**
+ * Adds two financial values with precision
+ * Avoids JavaScript floating-point errors like 0.1 + 0.2 !== 0.3
+ */
+export function addFinancialValues(a: number, b: number): number {
+  return new Decimal(a).plus(b).toNumber();
+}
+
+/**
+ * Subtracts two financial values with precision
+ */
+export function subtractFinancialValues(a: number, b: number): number {
+  return new Decimal(a).minus(b).toNumber();
+}
+
+/**
+ * Sums an array of financial values with precision
+ */
+export function sumFinancialValues(values: number[]): number {
+  return values
+    .reduce((sum, val) => sum.plus(val), new Decimal(0))
+    .toNumber();
 }
 
 /**

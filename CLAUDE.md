@@ -41,7 +41,6 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 |-------|-------|-------------|
 | `frontend-design` | `/frontend-design` | Creating/modifying UI components, styling, responsive layouts |
 | `feature-dev` | `/feature-dev` | Guided feature development with architecture focus |
-| `stripe` | Stripe tools | Payment integration, checkout flows, subscriptions |
 | `playwright` | Browser tools | E2E testing, browser automation |
 | `figma` | `implement-design` | Converting Figma designs to code |
 
@@ -73,7 +72,6 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 - **Financial Data**: Plaid API, Salt Edge
 - **AI**: OpenAI GPT-4
 - **State**: SWR for server state, React hooks for local state
-- **Payments**: Stripe (optional)
 - **Rate Limiting**: Upstash Redis (optional)
 
 ### Key Directories
@@ -258,6 +256,6 @@ import { config, getConfig } from '@/lib/config';
 ```
 
 Required: Firebase (client + admin), Plaid, OpenAI
-Optional: Redis (rate limiting), Stripe (paid tiers)
+Optional: Redis (rate limiting)
 
 See `.env.example` for all variables.

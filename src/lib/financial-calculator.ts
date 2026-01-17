@@ -1,6 +1,13 @@
 import { cookies } from 'next/headers';
 
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import { getCryptoBalance } from '@/lib/services/crypto-balance-service';
+import { getPensionFunds, pensionFundsToAccounts } from '@/lib/services/pension-service';
+import {
+  getMortgageLiabilities,
+  getRealEstateProperties,
+  propertiesToAccounts,
+} from '@/lib/services/real-estate-service';
 
 /**
  * Centralized financial calculation system
@@ -35,6 +42,24 @@ export interface FinancialData {
     name: string;
     balance: number;
     type: 'exchange' | 'wallet';
+  }>;
+  realEstateAssets: Array<{
+    id: string;
+    name: string;
+    balance: number;
+    type: string;
+  }>;
+  pensionAssets: Array<{
+    id: string;
+    name: string;
+    balance: number;
+    type: string;
+  }>;
+  mortgageLiabilities: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    type: string;
   }>;
   transactions: Array<{
     id: string;
@@ -80,19 +105,34 @@ async function getCurrentUserId(): Promise<string> {
 export async function fetchFinancialData(userId: string): Promise<FinancialData> {
   const actualUserId = userId;
 
-  // Fetch all data in parallel
-  const [manualAssetsSnapshot, liabilitiesSnapshot, transactionsSnapshot, cryptoAccountsSnapshot] =
-    await Promise.all([
-      db.collection(`users/${actualUserId}/manualAssets`).get(),
-      db.collection(`users/${actualUserId}/manualLiabilities`).get(),
-      db
-        .collection('transactions')
-        .where('userId', '==', actualUserId)
-        .orderBy('date', 'desc')
-        .limit(200)
-        .get(),
-      db.collection(`users/${actualUserId}/crypto_accounts`).get(),
-    ]);
+  // Fetch all data in parallel (including real crypto, real estate, and pension)
+  const [
+    manualAssetsSnapshot,
+    liabilitiesSnapshot,
+    transactionsSnapshot,
+    cryptoBalanceResult,
+    realEstateResult,
+    pensionResult,
+    // Also fetch static/demo collections
+    staticCryptoSnapshot,
+    staticPensionSnapshot,
+  ] = await Promise.all([
+    db.collection(`users/${actualUserId}/manualAssets`).get(),
+    db.collection(`users/${actualUserId}/manualLiabilities`).get(),
+    db
+      .collection('transactions')
+      .where('userId', '==', actualUserId)
+      .orderBy('date', 'desc')
+      .limit(200)
+      .get(),
+    getCryptoBalance(actualUserId),
+    getRealEstateProperties(actualUserId),
+    getPensionFunds(actualUserId),
+    // Static/demo crypto holdings (stored directly, not via exchange API)
+    db.collection(`users/${actualUserId}/crypto`).get(),
+    // Static/demo pension funds (stored directly)
+    db.collection(`users/${actualUserId}/pension`).get(),
+  ]);
 
   // Process manual assets
   const manualAssets = manualAssetsSnapshot.docs.map((doc: any) => {
@@ -172,22 +212,53 @@ export async function fetchFinancialData(userId: string): Promise<FinancialData>
     };
   });
 
-  // Process crypto accounts (placeholder balances until blockchain API integration)
-  const cryptoAccounts = cryptoAccountsSnapshot.docs.map((doc: any) => {
+  // Process crypto accounts with real balances from exchanges
+  const apiCryptoAccounts = cryptoBalanceResult.accounts;
+
+  // Process static/demo crypto holdings (from 'crypto' collection)
+  const staticCryptoAccounts = staticCryptoSnapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,
-      name: data.exchange || data.blockchain || 'Crypto Account',
-      balance: 0, // TODO: Fetch real balance from blockchain/exchange API
-      type: data.type as 'exchange' | 'wallet',
+      name: data.name || data.symbol || 'Crypto',
+      exchange: data.exchange || 'manual',
+      balance: Number(data.balance || (data.amount * (data.currentPrice || 0)) || 0),
+      type: 'exchange' as const,
     };
   });
+
+  // Merge API-based and static crypto accounts
+  const cryptoAccounts = [...apiCryptoAccounts, ...staticCryptoAccounts];
+
+  // Process real estate properties
+  const realEstateAssets = propertiesToAccounts(realEstateResult.properties);
+  const mortgageLiabilities = getMortgageLiabilities(realEstateResult.properties);
+
+  // Process pension funds from API/service
+  const apiPensionAssets = pensionFundsToAccounts(pensionResult.funds);
+
+  // Process static/demo pension funds (from 'pension' collection)
+  const staticPensionAssets = staticPensionSnapshot.docs.map((doc: any) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      name: data.name || 'Pension Fund',
+      balance: Number(data.balance || data.currentValue || 0),
+      type: 'pension',
+    };
+  });
+
+  // Merge API-based and static pension assets
+  const pensionAssets = [...apiPensionAssets, ...staticPensionAssets];
 
   return {
     manualAssets,
     manualLiabilities,
     plaidAccounts,
     cryptoAccounts,
+    realEstateAssets,
+    pensionAssets,
+    mortgageLiabilities,
     transactions,
   };
 }
@@ -197,17 +268,24 @@ export async function fetchFinancialData(userId: string): Promise<FinancialData>
  * This is the single source of truth for all financial calculations
  */
 export async function calculateFinancialMetrics(data: FinancialData): Promise<FinancialMetrics> {
-  // Calculate total assets
+  // Calculate total assets (including real estate and pension)
   const manualAssetTotal = data.manualAssets.reduce((sum, asset) => sum + asset.currentBalance, 0);
   const plaidAssetTotal = data.plaidAccounts.reduce((sum, acc) => sum + acc.balance, 0);
   const cryptoAssetTotal = data.cryptoAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const totalAssets = manualAssetTotal + plaidAssetTotal + cryptoAssetTotal;
+  const realEstateTotal = data.realEstateAssets.reduce((sum, asset) => sum + asset.balance, 0);
+  const pensionTotal = data.pensionAssets.reduce((sum, asset) => sum + asset.balance, 0);
+  const totalAssets = manualAssetTotal + plaidAssetTotal + cryptoAssetTotal + realEstateTotal + pensionTotal;
 
-  // Calculate total liabilities
-  const totalLiabilities = data.manualLiabilities.reduce(
+  // Calculate total liabilities (including mortgages)
+  const manualLiabilitiesTotal = data.manualLiabilities.reduce(
     (sum, liability) => sum + liability.amount,
     0
   );
+  const mortgageTotal = data.mortgageLiabilities.reduce(
+    (sum, mortgage) => sum + mortgage.amount,
+    0
+  );
+  const totalLiabilities = manualLiabilitiesTotal + mortgageTotal;
 
   // Calculate net worth
   const netWorth = totalAssets - totalLiabilities;

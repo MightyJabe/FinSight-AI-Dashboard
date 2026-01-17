@@ -7,29 +7,48 @@ import {
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback } from 'react';
 
+import { RealTimeIndicator } from '@/components/common/RealTimeIndicator';
 import { ConnectBankCTA } from '@/components/dashboard/ConnectBankCTA';
 import { NetWorthBreakdown } from '@/components/dashboard/NetWorthBreakdown';
 import { NetWorthHero } from '@/components/dashboard/NetWorthHero';
 import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
 import { DashboardSkeleton } from '@/components/ui';
-import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { useNetWorth } from '@/hooks/use-net-worth';
+import { useRealtimeDashboard } from '@/hooks/use-realtime-dashboard';
 import { formatCurrency } from '@/lib/utils';
 
 function DashboardPage() {
-  const { overview, loading, error, refetch } = useDashboardData({
-    refetchOnFocus: false,
-    refetchInterval: 300000,
-  });
+  // Real-time net worth with 10-second polling
+  const {
+    data: netWorthData,
+    trend,
+    isLoading: netWorthLoading,
+    isValidating: netWorthValidating,
+    isStale: netWorthStale,
+    refresh: refreshNetWorth,
+    lastRefresh: netWorthLastRefresh,
+  } = useNetWorth();
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // Real-time dashboard data with 15-second polling
+  const {
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    isValidating: dashboardValidating,
+    isStale: dashboardStale,
+    refresh: refreshDashboard,
+    lastRefresh: dashboardLastRefresh,
+  } = useRealtimeDashboard();
 
-  const data = overview;
-  const netWorth = data?.netWorth ?? null;
-  const totalAssets = data?.totalAssets ?? 0;
-  const totalLiabilities = data?.totalLiabilities ?? 0;
-  const accounts = data?.accounts ?? [];
+  const isLoading = netWorthLoading || dashboardLoading;
+  const overview = dashboardData.overview;
+  const accounts = overview?.accounts ?? [];
+
+  // Use net worth from dedicated hook (more accurate, real-time)
+  const netWorth = netWorthData?.netWorth ?? overview?.netWorth ?? null;
+  const totalAssets = netWorthData?.totalAssets ?? overview?.totalAssets ?? 0;
+  const totalLiabilities = netWorthData?.totalLiabilities ?? overview?.totalLiabilities ?? 0;
 
   // Determine primary currency from accounts (most common or first available)
   const primaryCurrency = (() => {
@@ -45,22 +64,28 @@ function DashboardPage() {
     return Object.entries(currencyCounts).sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || 'USD';
   })();
 
-  // Calculate assets/liabilities by type from accounts
-  // This will be properly populated when we integrate with the net-worth endpoint
+  // Calculate assets/liabilities by type from net worth data
   const assetsByType: Record<string, number> = {};
   const liabilitiesByType: Record<string, number> = {};
 
+  if (netWorthData) {
+    if (netWorthData.liquidAssets > 0) assetsByType['Cash & Checking'] = netWorthData.liquidAssets;
+    if (netWorthData.investments > 0) assetsByType['Investments'] = netWorthData.investments;
+    if (netWorthData.cryptoBalance > 0) assetsByType['Crypto'] = netWorthData.cryptoBalance;
+    if (netWorthData.realEstate > 0) assetsByType['Real Estate'] = netWorthData.realEstate;
+    if (netWorthData.pension > 0) assetsByType['Pension'] = netWorthData.pension;
+  }
+
+  // Coordinated refresh - refreshes both hooks
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  }, [refetch]);
+    await Promise.all([refreshNetWorth(), refreshDashboard()]);
+  }, [refreshNetWorth, refreshDashboard]);
 
   const handleConnectBank = useCallback(() => {
     window.location.href = '/accounts?connect=true';
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen p-6 lg:p-10">
         <DashboardSkeleton />
@@ -68,7 +93,9 @@ function DashboardPage() {
     );
   }
 
-  if (error) {
+  const hasError = !overview && !netWorthData;
+
+  if (hasError) {
     return (
       <div className="min-h-screen p-6 lg:p-10">
         <div className="max-w-md mx-auto mt-20 p-8 rounded-2xl bg-card border border-border">
@@ -77,7 +104,7 @@ function DashboardPage() {
               <CreditCard className="w-6 h-6 text-destructive" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Unable to load dashboard</h2>
-            <p className="text-muted-foreground text-sm mb-6">{error}</p>
+            <p className="text-muted-foreground text-sm mb-6">Please try again later.</p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-2.5 bg-foreground text-background rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
@@ -96,9 +123,19 @@ function DashboardPage() {
       <header className="mb-8 sm:mb-10 lg:mb-12">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="animate-in">
-            <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-wider mb-2">
-              Welcome back
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-muted-foreground text-xs sm:text-sm font-medium uppercase tracking-wider">
+                Welcome back
+              </p>
+              {/* Real-time status indicator */}
+              <RealTimeIndicator
+                lastRefresh={netWorthLastRefresh || dashboardLastRefresh}
+                isValidating={netWorthValidating || dashboardValidating}
+                isStale={netWorthStale || dashboardStale}
+                onRefresh={handleRefresh}
+                variant="compact"
+              />
+            </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display tracking-tight">
               Your Finances
             </h1>
@@ -113,21 +150,22 @@ function DashboardPage() {
         </div>
       </header>
 
-      {/* Net Worth Hero - THE MAIN THING */}
+      {/* Net Worth Hero - THE MAIN THING with real-time updates */}
       <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-150">
         <NetWorthHero
           netWorth={netWorth}
-          previousNetWorth={null}
-          lastUpdated={new Date()}
-          isLoading={loading}
+          trend={trend}
+          lastUpdated={netWorthLastRefresh}
+          isLoading={netWorthLoading}
+          isValidating={netWorthValidating}
+          isStale={netWorthStale}
           onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
           currency={primaryCurrency}
         />
       </section>
 
       {/* Net Worth Breakdown */}
-      {data && accounts.length > 0 && (
+      {(netWorthData || overview) && accounts.length > 0 && (
         <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-225">
           <NetWorthBreakdown
             totalAssets={totalAssets}
@@ -148,11 +186,16 @@ function DashboardPage() {
       </section>
 
       {/* Connected Accounts */}
-      {data && accounts.length > 0 && (
+      {overview && accounts.length > 0 && (
         <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-375">
           <div className="p-5 sm:p-6 lg:p-7 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex items-center justify-between mb-5 sm:mb-6">
-              <h3 className="text-lg sm:text-xl font-semibold">Your Accounts</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg sm:text-xl font-semibold">Your Accounts</h3>
+                {dashboardValidating && (
+                  <span className="text-xs text-muted-foreground animate-pulse">Updating...</span>
+                )}
+              </div>
               <Link
                 href="/accounts"
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:translate-x-1"
@@ -201,7 +244,7 @@ function DashboardPage() {
       )}
 
       {/* AI Insights */}
-      {data && accounts.length > 0 && (
+      {overview && accounts.length > 0 && (
         <section className="animate-in" style={{ animationDelay: '450ms' }}>
           <ProactiveInsightsCard />
         </section>

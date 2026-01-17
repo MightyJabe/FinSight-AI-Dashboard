@@ -10,6 +10,7 @@ import {
   FileText,
   HelpCircle,
   Home,
+  Landmark,
   Lightbulb,
   MessageSquare,
   PiggyBank,
@@ -18,6 +19,7 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  Wallet,
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -45,6 +47,7 @@ const navigationGroups = [
     label: 'Insights',
     items: [
       { href: '/trends', label: 'Trends', icon: BarChart3, description: 'Spending trends' },
+      { href: '/expenses', label: 'Expenses', icon: Wallet, description: 'Expense optimizer' },
       { href: '/insights', label: 'AI Insights', icon: Lightbulb, description: 'Smart recommendations' },
       { href: '/chat', label: 'AI Chat', icon: MessageSquare, description: 'Financial assistant' },
     ],
@@ -53,6 +56,7 @@ const navigationGroups = [
     label: 'Tools',
     items: [
       { href: '/subscriptions', label: 'Subscriptions', icon: Receipt, description: 'Recurring payments' },
+      { href: '/retirement', label: 'Retirement', icon: Landmark, description: 'Retirement planner' },
       { href: '/tax', label: 'Tax', icon: PiggyBank, description: 'Tax planning' },
       { href: '/documents', label: 'Documents', icon: FileText, description: 'Financial docs' },
     ],
