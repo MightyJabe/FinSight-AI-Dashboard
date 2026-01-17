@@ -7,6 +7,13 @@ out/
 
 # Testing
 coverage/
+playwright-report/
+test-results/
+tests/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/__mocks__/
 
 # Misc
 .DS_Store
