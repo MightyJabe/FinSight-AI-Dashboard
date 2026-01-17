@@ -244,3 +244,13 @@ jest.mock('@/lib/openai', () => ({
     role: 'assistant',
   }),
 }));
+
+// Import Plaid mock
+import '@/__mocks__/plaid';
+
+// MSW Setup - disabled in global setup due to module resolution issues with Jest
+// Import MSW server directly in tests that need it instead:
+// import { server } from '@/mocks/server';
+// beforeAll(() => server.listen());
+// afterEach(() => server.resetHandlers());
+// afterAll(() => server.close());
