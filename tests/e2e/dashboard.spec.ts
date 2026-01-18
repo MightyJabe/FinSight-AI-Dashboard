@@ -190,8 +190,8 @@ test.describe('Dashboard Flow', () => {
 
   test.describe('Accessibility', () => {
     test('should have proper heading hierarchy', async ({ page }) => {
-      // Check for h1
-      const h1 = page.locator('h1');
+      // Check for h1 (page may have multiple, check first one)
+      const h1 = page.locator('h1').first();
       await expect(h1).toBeVisible();
 
       // Check for proper headings structure

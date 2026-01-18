@@ -13,7 +13,8 @@ export class LoginPage {
     this.emailInput = page.locator('#email');
     this.passwordInput = page.locator('#password');
     this.signInButton = page.locator('button[type="submit"]');
-    this.signUpLink = page.locator('a[href="/signup"]');
+    // Use the signup link in the form, not the header
+    this.signUpLink = page.getByRole('link', { name: 'Sign up' });
     this.pageTitle = page.locator('h2');
   }
 
@@ -36,5 +37,6 @@ export class LoginPage {
 
   async clickSignUp() {
     await this.signUpLink.click();
+    await this.page.waitForURL('/signup');
   }
 }

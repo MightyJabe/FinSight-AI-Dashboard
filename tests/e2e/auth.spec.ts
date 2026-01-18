@@ -4,6 +4,9 @@ import { DashboardPage } from './pages/DashboardPage';
 
 test.describe('Authentication Flow', () => {
   test.describe('Login Page', () => {
+    // Override authenticated state for login page tests
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test('should display login page elements', async ({ page }) => {
       const loginPage = new LoginPage(page);
       await loginPage.goto();
@@ -84,16 +87,22 @@ test.describe('Authentication Flow', () => {
   });
 
   test.describe('Protected Routes', () => {
-    test('should redirect to login when accessing protected route without auth', async ({ page, context }) => {
-      // Clear any existing auth state
-      await context.clearCookies();
-      await context.clearPermissions();
+    test('should redirect to login when accessing protected route without auth', async ({ browser }) => {
+      // Create a completely fresh context without any auth state or mocks
+      const context = await browser.newContext({
+        storageState: { cookies: [], origins: [] }
+      });
+      const page = await context.newPage();
 
-      // Try to access dashboard directly
-      await page.goto('/dashboard');
+      try {
+        // Try to access dashboard directly (without logging in)
+        await page.goto('/dashboard', { waitUntil: 'networkidle' });
 
-      // Should redirect to login
-      await expect(page).toHaveURL('/login', { timeout: 10000 });
+        // Should redirect to login
+        await expect(page).toHaveURL('/login', { timeout: 10000 });
+      } finally {
+        await context.close();
+      }
     });
 
     test('should allow access to dashboard when authenticated', async ({ page }) => {
