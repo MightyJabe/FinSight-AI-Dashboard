@@ -4,116 +4,86 @@ service cloud.firestore {
     // Allow users to read and write only their own data
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
+
       // User's Plaid items - most sensitive financial data
       match /plaidItems/{itemId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
-        
+
         // Plaid accounts under items
         match /accounts/{accountId} {
           allow read, write: if request.auth != null && request.auth.uid == userId;
         }
       }
-      
+
       // User's categorized transactions
       match /categorizedTransactions/{transactionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's chat conversations
       match /conversations/{conversationId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's manual financial data
       match /manualData/{dataId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's insights cache
       match /insights/{insightId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's AI analysis results
       match /analysis/{analysisId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's physical assets
       match /physicalAssets/{assetId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's informal debts
       match /informalDebts/{debtId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's documents (subcollection)
       match /documents/{documentId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's tax data
       match /taxData/{taxId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's subscriptions
       match /subscriptions/{subscriptionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+
       // User's financial memory (AI context)
       match /financialMemory/{memoryId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // User's deductible expenses
-      match /deductibleExpenses/{expenseId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User's quarterly tax estimates
-      match /quarterlyTaxEstimates/{estimateId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User's tax strategies
-      match /taxStrategies/{strategyId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User's transactions
-      match /transactions/{transactionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User's subscriptions
-      match /subscriptions/{subscriptionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
-    
+
     // Top-level documents collection
     match /documents/{documentId} {
       allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
-    
+
     // Admin-only access for system data (if needed)
     match /system/{document=**} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.token.email_verified == true &&
         request.auth.token.email in ['admin@finsight.ai']; // Replace with actual admin emails
     }
 
-    // Audit logs are write-only via backend; no client read/write
-    match /audit_logs/{docId} {
-      allow read, write: if false;
-    }
-    
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

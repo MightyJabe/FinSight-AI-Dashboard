@@ -2,6 +2,8 @@
 import '@testing-library/jest-dom';
 // Add Web Fetch API shim for OpenAI
 import 'openai/shims/node';
+// Import Plaid mock
+import '@/__mocks__/plaid';
 
 import { TextDecoder, TextEncoder } from 'util';
 
@@ -244,3 +246,10 @@ jest.mock('@/lib/openai', () => ({
     role: 'assistant',
   }),
 }));
+
+// MSW Setup - disabled in global setup due to module resolution issues with Jest
+// Import MSW server directly in tests that need it instead:
+// import { server } from '@/mocks/server';
+// beforeAll(() => server.listen());
+// afterEach(() => server.resetHandlers());
+// afterAll(() => server.close());

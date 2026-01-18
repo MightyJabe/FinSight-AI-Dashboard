@@ -44,7 +44,19 @@
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_wait_for",
-      "mcp__plugin_playwright_playwright__browser_press_key"
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_serena_serena__list_memories",
+      "mcp__plugin_serena_serena__write_memory",
+      "mcp__plugin_serena_serena__read_memory",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__plugin_serena_serena__find_symbol",
+      "mcp__plugin_serena_serena__get_symbols_overview",
+      "Bash(npm test:*)",
+      "mcp__plugin_firebase_firebase__firebase_read_resources",
+      "mcp__plugin_firebase_firebase__firebase_list_apps",
+      "mcp__plugin_firebase_firebase__firebase_get_sdk_config",
+      "mcp__plugin_firebase_firebase__firebase_get_security_rules"
     ]
   }
 }

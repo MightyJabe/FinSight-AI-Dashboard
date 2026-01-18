@@ -4,6 +4,16 @@
     "regions": [
         "fra1"
     ],
+    "git": {
+        "deploymentEnabled": {
+            "master": true,
+            "main": true
+        }
+    },
+    "github": {
+        "enabled": true,
+        "autoAlias": false
+    },
     "build": {
         "env": {
             "NEXT_TELEMETRY_DISABLED": "1"

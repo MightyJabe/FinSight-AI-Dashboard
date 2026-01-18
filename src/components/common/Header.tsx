@@ -215,7 +215,7 @@ export function Header() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes dropdownEnter {
           from {
             opacity: 0;
