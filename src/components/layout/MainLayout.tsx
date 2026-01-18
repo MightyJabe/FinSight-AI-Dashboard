@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
@@ -15,12 +16,25 @@ interface RootLayoutContentProps {
 
 export function RootLayoutContent({ children }: RootLayoutContentProps) {
   const { user, loading } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const [checkedOnboarding, setCheckedOnboarding] = useState(false);
+
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/signup', '/reset-password', '/verify-email'];
+  const isPublicRoute = publicRoutes.includes(pathname);
 
   // Onboarding redirect disabled for testing
   useEffect(() => {
     setCheckedOnboarding(true);
   }, []);
+
+  // Redirect to login if not authenticated and accessing protected route
+  useEffect(() => {
+    if (!loading && !user && !isPublicRoute) {
+      router.push('/login');
+    }
+  }, [user, loading, isPublicRoute, router]);
 
   if (loading || (!user && !checkedOnboarding)) {
     return (

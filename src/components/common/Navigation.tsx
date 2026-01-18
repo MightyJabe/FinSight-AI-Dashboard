@@ -88,7 +88,7 @@ export function Navigation() {
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <h1 className="font-display text-base text-foreground tracking-tight">FinSight</h1>
+                <span className="font-display text-base text-foreground tracking-tight">FinSight</span>
               </div>
             )}
           </Link>
