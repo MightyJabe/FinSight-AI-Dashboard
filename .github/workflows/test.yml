@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
   lint-and-typecheck:
@@ -31,12 +30,6 @@ jobs:
 
       - name: Run TypeScript type check
         run: npm run type-check
-
-      - name: 'notify vercel'
-        if: always()
-        uses: 'vercel/repository-dispatch/actions/status@v1'
-        with:
-          name: 'Vercel - finsight-ai-dashboard: Lint & Type Check'
 
   unit-tests:
     name: Unit Tests
@@ -88,12 +81,6 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 7
-
-      - name: 'notify vercel'
-        if: always()
-        uses: 'vercel/repository-dispatch/actions/status@v1'
-        with:
-          name: 'Vercel - finsight-ai-dashboard: Unit Tests'
 
   e2e-tests:
     name: E2E Tests
@@ -161,12 +148,6 @@ jobs:
           path: test-results/
           retention-days: 7
 
-      - name: 'notify vercel'
-        if: always()
-        uses: 'vercel/repository-dispatch/actions/status@v1'
-        with:
-          name: 'Vercel - finsight-ai-dashboard: E2E Tests'
-
   build:
     name: Build Application
     runs-on: ubuntu-latest
@@ -199,9 +180,3 @@ jobs:
           echo "Build completed successfully!"
           echo "Checking .next directory..."
           ls -lah .next/ || true
-
-      - name: 'notify vercel'
-        if: always()
-        uses: 'vercel/repository-dispatch/actions/status@v1'
-        with:
-          name: 'Vercel - finsight-ai-dashboard: Build Application'
