@@ -1,4 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env.test for E2E tests (unless in CI, where secrets are set directly)
+if (!process.env.CI) {
+  dotenv.config({ path: path.resolve(__dirname, '.env.test') });
+}
 
 const workers = process.env.CI ? 1 : undefined;
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/api-mocks';
 import { DashboardPage } from './pages/DashboardPage';
 
 test.describe('Dashboard Flow', () => {

@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect } from './fixtures/api-mocks';
 import path from 'path';
 
 const authFile = path.join(__dirname, '.auth', 'user.json');
