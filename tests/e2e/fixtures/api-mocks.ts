@@ -172,7 +172,16 @@ async function setupApiMocks(page: Page) {
     });
   });
 
-  console.log('[API Mocks] Route interception set up for /api/net-worth, /api/financial-overview, and /api/insights/proactive');
+  // Mock /api/plaid/items endpoint (returns empty array for mocked tests)
+  await page.route('**/api/plaid/items**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, items: [] }),
+    });
+  });
+
+  console.log('[API Mocks] Route interception set up for /api/net-worth, /api/financial-overview, /api/insights/proactive, and /api/plaid/items');
 }
 
 /**

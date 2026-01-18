@@ -58,7 +58,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {
-      // Pass Firebase Admin credentials to the Next.js dev server
+      // Pass all environment variables to the Next.js dev server
+      ...process.env,
+      // Explicitly ensure Firebase Admin credentials are passed
       FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
       FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
       FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
