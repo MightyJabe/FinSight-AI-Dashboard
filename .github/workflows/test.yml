@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master, develop]
 
+permissions:
+  contents: read
+  statuses: write
+
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
