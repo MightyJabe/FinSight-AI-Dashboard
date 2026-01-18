@@ -289,3 +289,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Development Guide**: [CLAUDE.md](CLAUDE.md)
 - **Issues**: [GitHub Issues](https://github.com/MightyJade/finsight-ai-dashboard/issues)
+
+---
+
+<!-- Test: Vercel deployment checks integration -->
