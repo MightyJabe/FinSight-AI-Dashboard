@@ -115,6 +115,31 @@ const mockFinancialOverviewResponse = {
   },
 };
 
+const mockProactiveInsightsResponse = {
+  success: true,
+  insights: [
+    {
+      id: 'mock-insight-1',
+      type: 'savings_opportunity',
+      title: 'High spending on dining out',
+      content: 'Your dining expenses are 25% above average for your income level. Consider meal planning to reduce costs and save more money each month.',
+      priority: 'medium',
+      status: 'new',
+      createdAt: new Date('2024-01-15').toISOString(),
+    },
+    {
+      id: 'mock-insight-2',
+      type: 'investment_suggestion',
+      title: 'Emergency fund is well-funded',
+      content: 'Your emergency fund covers 6 months of expenses. Consider investing surplus cash for better returns and long-term wealth growth.',
+      priority: 'low',
+      status: 'new',
+      createdAt: new Date('2024-01-14').toISOString(),
+    },
+  ],
+  proRequired: false,
+};
+
 /**
  * Set up API route mocking for a page
  * Intercepts API calls and returns mock data without requiring Firebase Admin credentials
@@ -138,7 +163,16 @@ async function setupApiMocks(page: Page) {
     });
   });
 
-  console.log('[API Mocks] Route interception set up for /api/net-worth and /api/financial-overview');
+  // Mock /api/insights/proactive endpoint
+  await page.route('**/api/insights/proactive**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockProactiveInsightsResponse),
+    });
+  });
+
+  console.log('[API Mocks] Route interception set up for /api/net-worth, /api/financial-overview, and /api/insights/proactive');
 }
 
 /**

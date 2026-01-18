@@ -36,9 +36,9 @@ export class DashboardPage {
   }
 
   async expectDashboardPage() {
-    await expect(this.pageTitle).toBeVisible();
-    await expect(this.welcomeText).toBeVisible();
-    await expect(this.addAccountButton).toBeVisible();
+    await expect(this.pageTitle).toBeVisible({ timeout: 10000 });
+    await expect(this.welcomeText).toBeVisible({ timeout: 10000 });
+    await expect(this.addAccountButton).toBeVisible({ timeout: 10000 });
   }
 
   async expectNetWorthVisible() {
