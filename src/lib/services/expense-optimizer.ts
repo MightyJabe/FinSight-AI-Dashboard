@@ -99,8 +99,7 @@ export const SUBSCRIPTION_ALTERNATIVES: Record<string, { alternatives: string[];
  * Analyze spending by category
  */
 export function analyzeSpendingByCategory(
-  transactions: Transaction[],
-  _monthlyIncome: number
+  transactions: Transaction[]
 ): SpendingCategory[] {
   const expenses = transactions.filter(t => t.type === 'expense');
   const totalSpending = expenses.reduce((sum, t) => sum + t.amount, 0);
@@ -350,7 +349,7 @@ export async function analyzeExpenses(
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const categoryBreakdown = analyzeSpendingByCategory(transactions, monthlyIncome);
+  const categoryBreakdown = analyzeSpendingByCategory(transactions);
   const benchmarks = compareToIsraeliBenchmarks(categoryBreakdown, monthlyIncome);
   const opportunities = findOptimizationOpportunities(transactions, categoryBreakdown, benchmarks);
 

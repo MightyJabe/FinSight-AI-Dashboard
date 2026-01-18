@@ -377,7 +377,7 @@ export async function GET(request: NextRequest) {
       isDemoAccount: userData?.isDemoAccount || false,
       demoSeededAt: userData?.demoSeededAt?.toDate() || null,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to check demo status' },
       { status: 500 }
