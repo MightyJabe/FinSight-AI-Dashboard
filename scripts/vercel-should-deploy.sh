@@ -63,19 +63,45 @@ fi
 echo "   Found $TOTAL_COUNT check run(s)"
 echo ""
 
-# Check if any checks are still running
-IN_PROGRESS=$(echo "$RESPONSE" | grep -c '"status":"in_progress"' || true)
-if [[ "$IN_PROGRESS" -gt 0 ]]; then
-  echo "⏳ GitHub Actions are still running ($IN_PROGRESS in progress)"
-  echo "❌ Skipping deployment - waiting for checks to complete"
-  exit 1
-fi
+# Wait for checks to complete (with timeout)
+MAX_WAIT_SECONDS=420  # 7 minutes (E2E tests take ~5-6 minutes)
+WAIT_INTERVAL=15      # Check every 15 seconds
+ELAPSED=0
 
-# Check if all checks are completed
+while [[ $ELAPSED -lt $MAX_WAIT_SECONDS ]]; do
+  # Check if any checks are still running
+  IN_PROGRESS=$(echo "$RESPONSE" | grep -c '"status":"in_progress"' || true)
+  COMPLETED=$(echo "$RESPONSE" | grep -c '"status":"completed"' || true)
+
+  if [[ "$COMPLETED" -eq "$TOTAL_COUNT" ]]; then
+    echo "✅ All checks completed after ${ELAPSED}s"
+    break
+  fi
+
+  if [[ $ELAPSED -eq 0 ]]; then
+    echo "⏳ Waiting for GitHub Actions to complete..."
+    echo "   In progress: $IN_PROGRESS / $TOTAL_COUNT"
+  fi
+
+  sleep $WAIT_INTERVAL
+  ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+
+  # Re-fetch status
+  RESPONSE=$(curl -s -H "Accept: application/vnd.github+json" "$GITHUB_API")
+  COMPLETED=$(echo "$RESPONSE" | grep -c '"status":"completed"' || true)
+
+  if [[ $((ELAPSED % 60)) -eq 0 ]]; then
+    IN_PROGRESS=$(echo "$RESPONSE" | grep -c '"status":"in_progress"' || true)
+    echo "   Still waiting... (${ELAPSED}s elapsed, $IN_PROGRESS still running)"
+  fi
+done
+
+# Check if we timed out
 COMPLETED=$(echo "$RESPONSE" | grep -c '"status":"completed"' || true)
 if [[ "$COMPLETED" -ne "$TOTAL_COUNT" ]]; then
-  echo "⏳ Not all checks are completed yet ($COMPLETED/$TOTAL_COUNT)"
-  echo "❌ Skipping deployment - waiting for all checks"
+  echo "⏱️  Timeout reached after ${ELAPSED}s"
+  echo "❌ Not all checks completed in time ($COMPLETED/$TOTAL_COUNT)"
+  echo "❌ Skipping deployment for safety"
   exit 1
 fi
 
