@@ -16,45 +16,8 @@ test.describe('Smoke Tests (Real APIs)', () => {
   // Use longer timeout for real API calls
   test.setTimeout(60000);
 
-  test('should login with real credentials and reach dashboard', async ({ page }) => {
-    // Real login with test user
-    await page.goto('/login');
-    
-    const testEmail = process.env.E2E_TEST_EMAIL;
-    const testPassword = process.env.E2E_TEST_PASSWORD;
-
-    // Skip test if credentials not configured
-    if (!testEmail || !testPassword) {
-      test.skip();
-      return;
-    }
-
-    await page.fill('#email', testEmail);
-    await page.fill('#password', testPassword);
-    await page.click('button[type="submit"]');
-
-    // Wait for navigation to complete
-    await page.waitForLoadState('networkidle', { timeout: 30000 });
-
-    // Check if we successfully logged in OR got an error
-    const currentURL = page.url();
-    
-    if (currentURL.includes('/dashboard')) {
-      // Success! Verify page loaded
-      const bodyText = await page.locator('body').textContent();
-      expect(bodyText.length).toBeGreaterThan(100);
-    } else if (currentURL.includes('/login')) {
-      // Login failed - check for error message
-      const hasError = await page.locator('text=/Failed|Invalid|Error/i').isVisible().catch(() => false);
-      if (hasError) {
-        throw new Error('Login failed - check test credentials in GitHub secrets');
-      } else {
-        // Credentials might be wrong or Firebase issue
-        console.warn('Login redirected back to /login without error message');
-        test.skip();
-      }
-    }
-  });
+  // Note: Manual login is tested in auth.setup.ts
+  // These tests use the authenticated state from setup to validate the full stack
 
   test('should load accounts page successfully', async ({ page }) => {
     // Uses authenticated state from auth.setup.ts
