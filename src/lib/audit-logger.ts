@@ -65,11 +65,11 @@ export interface AuditLogEntry {
   method?: string;
   resource?: string;
   resourceId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: Date;
   success: boolean;
   errorMessage?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -94,14 +94,14 @@ class AuditLogger {
     method?: string;
     resource?: string;
     resourceId?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     success?: boolean;
     errorMessage?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }): Promise<void> {
     try {
       // Filter out undefined values to prevent Firestore issues
-      const auditEntry: Record<string, any> = {
+      const auditEntry: Record<string, unknown> = {
         eventType: entry.eventType,
         severity: entry.severity,
         timestamp: new Date(),
@@ -166,7 +166,7 @@ class AuditLogger {
       delete: AuditEventType.FINANCIAL_DATA_DELETE,
     };
 
-    const logEntry: any = {
+    const logEntry: Record<string, unknown> = {
       eventType: eventTypeMap[params.operation],
       severity: params.operation === 'delete' ? AuditSeverity.HIGH : AuditSeverity.MEDIUM,
       userId: params.userId,
@@ -184,7 +184,7 @@ class AuditLogger {
     if (params.errorMessage) logEntry.errorMessage = params.errorMessage;
     if (params.details) logEntry.details = params.details;
 
-    await this.log(logEntry);
+    await this.log(logEntry as Parameters<typeof this.log>[0]);
   }
 
   /**
@@ -211,7 +211,7 @@ class AuditLogger {
       decrypt_token: AuditEventType.PLAID_TOKEN_DECRYPTED,
     };
 
-    const logEntry: any = {
+    const logEntry: Record<string, unknown> = {
       eventType: eventTypeMap[params.operation],
       severity: ['link', 'unlink', 'encrypt_token', 'decrypt_token'].includes(params.operation)
         ? AuditSeverity.HIGH
@@ -234,7 +234,7 @@ class AuditLogger {
       };
     }
 
-    await this.log(logEntry);
+    await this.log(logEntry as Parameters<typeof this.log>[0]);
   }
 
   /**
@@ -252,9 +252,9 @@ class AuditLogger {
     resource?: string;
     success?: boolean;
     errorMessage?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   }): Promise<void> {
-    const logEntry: any = {
+    const logEntry: Record<string, unknown> = {
       eventType: params.eventType,
       severity: params.severity,
       success: params.success,
@@ -270,7 +270,7 @@ class AuditLogger {
     if (params.errorMessage) logEntry.errorMessage = params.errorMessage;
     if (params.details) logEntry.details = params.details;
 
-    await this.log(logEntry);
+    await this.log(logEntry as Parameters<typeof this.log>[0]);
   }
 
   /**
@@ -299,7 +299,7 @@ class AuditLogger {
       investment_advice: AuditEventType.AI_INVESTMENT_ADVICE,
     };
 
-    const logEntry: any = {
+    const logEntry: Record<string, unknown> = {
       eventType: eventTypeMap[params.operation],
       severity: AuditSeverity.MEDIUM,
       userId: params.userId,
@@ -319,7 +319,7 @@ class AuditLogger {
       };
     }
 
-    await this.log(logEntry);
+    await this.log(logEntry as Parameters<typeof this.log>[0]);
   }
 
   /**
@@ -361,9 +361,10 @@ class AuditLogger {
       }
 
       const snapshot = await query.get();
-      return snapshot.docs.map(
-        (doc: any) => ({ id: doc.id, ...doc.data() }) as AuditLogEntry & { id: string }
-      );
+      return snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      }) as AuditLogEntry & { id: string });
     } catch (error) {
       logger.error('Failed to query audit logs', { error, params });
       throw error;

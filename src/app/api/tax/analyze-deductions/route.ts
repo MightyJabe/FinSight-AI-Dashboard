@@ -7,6 +7,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { requirePlan } from '@/lib/plan-guard';
 import { analyzeDeductibleExpenses } from '@/lib/tax-optimizer';
+import { queryDocToData } from '@/types/firestore';
 
 const requestSchema = z.object({
   year: z.number().optional(),
@@ -64,10 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     const snapshot = await query.limit(1000).get();
-    const transactions = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as any[];
+    const transactions = snapshot.docs.map(doc => queryDocToData(doc)) as any[];
 
     const deductibleExpenses = await analyzeDeductibleExpenses(userId, transactions);
 
@@ -131,10 +129,7 @@ export async function GET(req: NextRequest) {
       .orderBy('date', 'desc')
       .get();
 
-    const expenses = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const expenses = snapshot.docs.map(doc => queryDocToData(doc));
 
     return NextResponse.json({ success: true, expenses });
   } catch (error) {

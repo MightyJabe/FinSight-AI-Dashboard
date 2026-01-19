@@ -30,7 +30,7 @@ export async function retrieveRelevantContext(
     .limit(limit)
     .get();
 
-  return snapshot.docs.map((doc: any) => {
+  return snapshot.docs.map(doc => {
     const data = doc.data();
     return {
       content: data.content || '',

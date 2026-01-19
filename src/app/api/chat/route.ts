@@ -1177,7 +1177,7 @@ async function searchDocuments(
 
     logger.info('Document search results', { userId, category, count: snapshot.docs.length });
 
-    let docs = snapshot.docs.map((doc: any) => {
+    let docs = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         fileName: data.fileName,
@@ -1382,8 +1382,8 @@ async function getUserConversations(
       .get();
 
     return snapshot.docs
-      .filter((doc: any) => doc.id !== 'ai-brain')
-      .map((doc: any) => {
+      .filter(doc => doc.id !== 'ai-brain')
+      .map(doc => {
         const data = doc.data();
         const messages = data.messages || [];
         const firstUserMessage =

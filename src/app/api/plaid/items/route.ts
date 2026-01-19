@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { queryDocToData } from '@/types/firestore';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +26,7 @@ export async function GET(request: Request) {
       .collection('plaidItems')
       .get();
 
-    const items = plaidItemsSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const items = plaidItemsSnapshot.docs.map(doc => queryDocToData(doc));
 
     return NextResponse.json({ items });
   } catch (error) {

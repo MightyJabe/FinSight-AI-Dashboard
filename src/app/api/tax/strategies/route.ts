@@ -5,6 +5,7 @@ import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { suggestTaxStrategies } from '@/lib/tax-optimizer';
+import { queryDocToData } from '@/types/firestore';
 
 const requestSchema = z.object({
   income: z.number().positive(),
@@ -91,10 +92,7 @@ export async function GET(req: NextRequest) {
       .orderBy('priority', 'desc')
       .get();
 
-    const strategies = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const strategies = snapshot.docs.map(doc => queryDocToData(doc));
 
     return NextResponse.json({ success: true, strategies });
   } catch (error) {

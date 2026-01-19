@@ -33,9 +33,9 @@ export interface AIResponse {
   type: 'financial_analysis' | 'general_chat' | 'financial_query' | 'error';
   visualization?: {
     type: 'chart' | 'metric' | 'table' | 'list';
-    config: any;
+    config: Record<string, unknown>;
   };
-  data?: any;
+  data?: Record<string, unknown>;
   suggestions?: string[];
   context?: string;
   conversationId?: string;
@@ -434,9 +434,10 @@ Remember: You have access to the user's complete financial picture. Use this dat
       baseSuggestions.Dashboard;
 
     // Add response-specific suggestions
-    if (response.data?.categories) {
-      const topCategory = response.data.categories[0]?.[0];
-      if (topCategory) {
+    if (response.data && 'categories' in response.data) {
+      const categories = response.data.categories as unknown[][];
+      const topCategory = categories[0]?.[0];
+      if (topCategory && typeof topCategory === 'string') {
         contextSuggestions.unshift(`How can I reduce my ${topCategory} spending?`);
       }
     }

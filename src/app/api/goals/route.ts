@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
+import { queryDocToData } from '@/types/firestore';
 
 const goalSchema = z.object({
   name: z.string().min(1),
@@ -37,10 +38,7 @@ export async function GET(req: Request) {
       .orderBy('createdAt', 'desc')
       .get();
 
-    const goals = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const goals = snapshot.docs.map(doc => queryDocToData(doc));
 
     return NextResponse.json({ success: true, goals });
   } catch (error) {

@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     // Get the data from Firestore
     const snapshot = await db.collection(collectionName).orderBy('date', 'desc').get();
-    const data = snapshot.docs.map((doc: any) => {
+    const data = snapshot.docs.map(doc => {
       const docData = doc.data();
       return {
         id: doc.id,

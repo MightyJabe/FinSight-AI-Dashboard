@@ -4,6 +4,7 @@ import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { calculateMonthlyTotal, detectSubscriptions } from '@/lib/subscription-detector';
+import { queryDocToData } from '@/types/firestore';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,10 +22,7 @@ export async function POST(req: NextRequest) {
       .limit(500)
       .get();
 
-    const transactions = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as any[];
+    const transactions = snapshot.docs.map(doc => queryDocToData(doc)) as any[];
 
     const subscriptions = detectSubscriptions(transactions);
 
@@ -87,10 +85,7 @@ export async function GET(req: NextRequest) {
       .where('status', '==', 'active')
       .get();
 
-    const subscriptions = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const subscriptions = snapshot.docs.map(doc => queryDocToData(doc));
 
     const monthlyTotal = calculateMonthlyTotal(subscriptions as any[]);
 
