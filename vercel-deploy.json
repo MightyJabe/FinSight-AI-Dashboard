@@ -1,6 +1,0 @@
-{
-  "check": "Are GitHub commit statuses being created?",
-  "issue": "Vercel not auto-promoting to production after checks pass",
-  "expected": "vercel/repository-dispatch should create commit statuses that Vercel reads",
-  "actual": "Manual promotion required"
-}

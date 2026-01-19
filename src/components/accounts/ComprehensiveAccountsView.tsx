@@ -16,7 +16,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { AddBankModal } from '@/components/banking/AddBankModal';
-import logger from '@/lib/logger';
 import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { useSession } from '@/components/providers/SessionProvider';
 import {
@@ -28,6 +27,7 @@ import {
   EmptyState,
   Skeleton,
 } from '@/components/ui';
+import logger from '@/lib/logger';
 
 interface FinancialData {
   bankAccounts: any[];
