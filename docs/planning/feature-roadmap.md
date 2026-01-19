@@ -2,6 +2,19 @@
 
 > **Note:** This document tracks near-term feature enhancements and integration plans (Phases 1-5). For long-term strategic vision (6-12 months), see [long-term-vision.md](long-term-vision.md). For immediate production tasks, see [pre-production-assessment.md](pre-production-assessment.md).
 
+## 📝 Recent Technical Improvements (January 2026)
+
+**Repository Quality Improvements - Not part of feature phases, but significant technical work:**
+
+- ✅ **Type Safety**: Reduced `any` types from 69 to ~20 (71% reduction)
+- ✅ **Centralized Logging**: Migrated 61 files to structured logger service
+- ✅ **Code Cleanliness**: Removed empty JSDoc blocks and vague TODOs
+- ✅ **Type-Safe Firestore Helpers**: Created 4 reusable wrapper functions
+
+📖 **[Read Full Details →](../technical/repository-cleanup-summary.md)**
+
+---
+
 ## 🎯 Vision
 
 Transform FinSight into a modern, professional, and intuitive financial command center with comprehensive data integration and beautiful UX.

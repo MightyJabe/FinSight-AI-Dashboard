@@ -103,6 +103,7 @@ src/
 | `src/lib/config.ts` | Environment configuration (Zod validated) |
 | `src/lib/firebase.ts` | Firebase client SDK initialization |
 | `src/lib/firebase-admin.ts` | Firebase Admin SDK (server-only) |
+| `src/types/firestore.ts` | Type-safe Firestore document wrappers |
 | `src/components/providers/SessionProvider.tsx` | Auth context provider |
 | `src/components/auth/AuthGuard.tsx` | Route protection component |
 | `src/components/common/SkeletonLoader.tsx` | All loading skeleton components |
