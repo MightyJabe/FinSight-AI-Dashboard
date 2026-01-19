@@ -140,13 +140,14 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      - name: Upload Playwright report (Smoke)
+      - name: Upload test results (if any)
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: playwright-report-smoke
+          name: e2e-test-results
           path: test-results/
           retention-days: 7
+          if-no-files-found: ignore
 
   build:
     name: Build Application
