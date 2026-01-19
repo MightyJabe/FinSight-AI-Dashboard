@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -47,7 +48,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       message: 'Exchange balance requires API keys',
     });
   } catch (error) {
-    console.error('Error fetching balance:', error);
+    logger.error('Error fetching balance', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/crypto/balance/[id]',
+      method: 'GET',
+      accountId: params.id,
+    });
     return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 });
   }
 }

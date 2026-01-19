@@ -1,4 +1,7 @@
+import { queryDocToData } from '@/types/firestore';
+
 import { adminDb as db } from './firebase-admin';
+import logger from './logger';
 
 export interface Alert {
   id?: string;
@@ -34,8 +37,8 @@ export async function generateAlerts(userId: string): Promise<Alert[]> {
     db.collection('goals').where('userId', '==', userId).get(),
   ]);
 
-  const transactions = transactionsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-  const goals = goalsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+  const transactions = transactionsSnapshot.docs.map(doc => queryDocToData(doc));
+  const goals = goalsSnapshot.docs.map(doc => queryDocToData(doc));
 
   // 1. Unusual Spending Detection
   const recentSpending = transactions
@@ -185,14 +188,19 @@ export async function getUserAlerts(userId: string, unreadOnly = false): Promise
     }
 
     const snapshot = await query.get();
-    const alerts = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }) as Alert);
+    const alerts = snapshot.docs.map(doc => queryDocToData<Alert>(doc));
 
     // Sort in memory instead of using Firestore orderBy (avoids index requirement)
     return alerts
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 20);
   } catch (error) {
-    console.error('Error fetching alerts:', error);
+    logger.error('Error fetching user alerts', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      unreadOnly,
+      operation: 'getUserAlerts',
+    });
     return [];
   }
 }

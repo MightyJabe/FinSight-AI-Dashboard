@@ -176,7 +176,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    logger.error('Error in spending trends analysis:', error);
+    logger.error('Error in spending trends analysis', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/analytics/spending-trends',
+      method: 'GET',
+    });
 
     return NextResponse.json(
       { success: false, error: 'Failed to analyze spending trends' },

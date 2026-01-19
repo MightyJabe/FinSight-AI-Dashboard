@@ -4,6 +4,7 @@ import { storeFinancialContext } from '@/lib/ai-memory';
 import { AuditEventType, AuditSeverity, logSecurityEvent } from '@/lib/audit-logger';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import { uploadDocumentAdmin } from '@/lib/firebase-storage-admin';
+import logger from '@/lib/logger';
 import { requirePlan } from '@/lib/plan-guard';
 
 export async function POST(request: NextRequest) {
@@ -67,7 +68,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, url });
   } catch (error) {
-    console.error('Document upload error:', error);
+    logger.error('Document upload error', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/documents/upload',
+      method: 'POST',
+    });
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

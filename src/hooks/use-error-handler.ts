@@ -3,6 +3,8 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import logger from '@/lib/logger';
+
 export interface ErrorState {
   message: string;
   type: 'network' | 'validation' | 'server' | 'unknown';
@@ -112,7 +114,11 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
     
     // Log error for debugging
     if (logErrors) {
-      console.error(`Error in ${context || 'unknown context'}:`, error);
+      logger.error('Error caught by error handler', {
+        error: error instanceof Error ? error.message : String(error),
+        context: context || 'unknown context',
+        errorType: type,
+      });
     }
     
     // Show toast notification
@@ -147,7 +153,12 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       });
       
       if (logErrors) {
-        console.error(`Retry ${newRetryCount} failed:`, retryError);
+        logger.error('Retry attempt failed', {
+          error: retryError instanceof Error ? retryError.message : String(retryError),
+          retryCount: newRetryCount,
+          maxRetries,
+          errorType: type,
+        });
       }
       
       if (newRetryCount >= maxRetries && showToast) {

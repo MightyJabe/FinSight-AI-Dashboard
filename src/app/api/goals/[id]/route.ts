@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 const goalSchema = z.object({
   name: z.string().min(1),
@@ -54,7 +55,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating goal:', error);
+    logger.error('Error updating goal', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/goals/[id]',
+      method: 'PUT',
+      goalId: params.id,
+    });
     return NextResponse.json({ error: 'Failed to update goal' }, { status: 500 });
   }
 }
@@ -77,7 +83,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     await docRef.delete();
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting goal:', error);
+    logger.error('Error deleting goal', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/goals/[id]',
+      method: 'DELETE',
+      goalId: params.id,
+    });
     return NextResponse.json({ error: 'Failed to delete goal' }, { status: 500 });
   }
 }

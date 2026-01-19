@@ -3,6 +3,17 @@
  */
 
 import { auth } from './firebase';
+import logger from './logger';
+
+/**
+ * Standard API response format
+ */
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  errors?: Record<string, string[]>;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -26,7 +37,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
       return { Authorization: `Bearer ${token}` };
     }
   } catch (error) {
-    console.error('Failed to get auth token:', error);
+    logger.error('Failed to get Firebase auth token', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getAuthHeaders',
+    });
   }
   return {};
 }
@@ -61,7 +75,11 @@ export async function apiGet(url: string, options?: RequestInit): Promise<Respon
 /**
  * Make a POST request
  */
-export async function apiPost(url: string, data?: any, options?: RequestInit): Promise<Response> {
+export async function apiPost(
+  url: string,
+  data?: Record<string, unknown>,
+  options?: RequestInit
+): Promise<Response> {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -86,7 +104,11 @@ export async function apiPost(url: string, data?: any, options?: RequestInit): P
 /**
  * Make a PUT request
  */
-export async function apiPut(url: string, data?: any, options?: RequestInit): Promise<Response> {
+export async function apiPut(
+  url: string,
+  data?: Record<string, unknown>,
+  options?: RequestInit
+): Promise<Response> {
   const response = await fetch(url, {
     method: 'PUT',
     headers: {

@@ -27,6 +27,7 @@ import {
   EmptyState,
   Skeleton,
 } from '@/components/ui';
+import logger from '@/lib/logger';
 
 interface FinancialData {
   bankAccounts: any[];
@@ -165,12 +166,20 @@ export function ComprehensiveAccountsView() {
             setPlaidItemsNeedingAuth(itemsNeedingAuth);
           }
         } catch (error) {
-          console.error('Error checking Plaid items status:', error);
+          logger.error('Error checking Plaid items status', {
+            error: error instanceof Error ? error.message : String(error),
+            component: 'ComprehensiveAccountsView',
+            operation: 'checkPlaidItemsStatus',
+          });
         }
       }
     } catch (error) {
       toast.error('Failed to load financial data');
-      console.error(error);
+      logger.error('Error fetching financial data', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'ComprehensiveAccountsView',
+        operation: 'fetchFinancialData',
+      });
     } finally {
       setLoading(false);
     }
@@ -199,7 +208,11 @@ export function ComprehensiveAccountsView() {
       // Refresh the data
       await fetchFinancialData();
     } catch (error) {
-      console.error('Error clearing data:', error);
+      logger.error('Error clearing Israeli bank data', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'ComprehensiveAccountsView',
+        operation: 'clearIsraeliBankData',
+      });
       toast.error('Failed to clear bank data');
     } finally {
       setIsClearing(false);

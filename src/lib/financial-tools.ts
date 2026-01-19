@@ -549,11 +549,11 @@ export async function analyzeDebtToIncomeRatio(
 }
 
 // Add more simplified tool functions...
-export async function analyzeCashFlow(userId: string, months = 6, projectionMonths = 3) {
-  // Parameters available for future implementation
-  void months;
-  void projectionMonths;
-  // Simplified cash flow analysis
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function analyzeCashFlow(userId: string, _months = 6, _projectionMonths = 3) {
+  // TODO: Implement historical analysis over specified _months parameter
+  // TODO: Implement cash flow projection for future periods specified by _projectionMonths
+  // Simplified cash flow analysis for current month only
   const summary = await getMonthlySummary(userId);
   return {
     currentCashFlow: summary.savings,
@@ -565,10 +565,10 @@ export async function analyzeCashFlow(userId: string, months = 6, projectionMont
   };
 }
 
-export async function analyzeSpendingPatterns(userId: string, analysisPeriod = '3_months') {
-  // Parameter available for future implementation
-  void analysisPeriod;
-  // Simplified spending pattern analysis
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function analyzeSpendingPatterns(userId: string, _analysisPeriod = '3_months') {
+  // TODO: Implement analysis for different time periods (3_months, 6_months, 1_year) specified by _analysisPeriod
+  // Simplified spending pattern analysis using monthly data only
   const spending = await getSpendingByCategory(userId, 'month');
   return {
     topCategories: spending.slice(0, 5),

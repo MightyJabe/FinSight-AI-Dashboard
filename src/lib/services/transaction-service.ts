@@ -1,6 +1,7 @@
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 import type { Transaction } from '@/types/finance';
 
 export interface TransactionService {
@@ -43,7 +44,13 @@ export function getTransactionService(userId: string): TransactionService {
 
         return transactions;
       } catch (error) {
-        console.error('Error fetching transactions:', error);
+        logger.error('Error fetching transactions', {
+          error: error instanceof Error ? error.message : String(error),
+          userId,
+          limit,
+          service: 'TransactionService',
+          operation: 'getTransactions',
+        });
         return [];
       }
     },
@@ -76,7 +83,14 @@ export function getTransactionService(userId: string): TransactionService {
 
         return transactions;
       } catch (error) {
-        console.error('Error fetching transactions by date range:', error);
+        logger.error('Error fetching transactions by date range', {
+          error: error instanceof Error ? error.message : String(error),
+          userId,
+          startDate,
+          endDate,
+          service: 'TransactionService',
+          operation: 'getTransactionsByDateRange',
+        });
         return [];
       }
     },

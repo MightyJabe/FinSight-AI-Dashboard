@@ -257,17 +257,17 @@ export async function POST(request: NextRequest) {
       success: true,
       data: newPlatform,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error creating platform', {
-      error: error.message,
-      stack: error.stack,
-      name: error.name,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
     });
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to create platform',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

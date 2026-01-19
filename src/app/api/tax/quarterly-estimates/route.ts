@@ -5,6 +5,7 @@ import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 import { estimateQuarterlyTaxes } from '@/lib/tax-optimizer';
+import { queryDocToData } from '@/types/firestore';
 
 const requestSchema = z.object({
   income: z.number().positive(),
@@ -87,10 +88,7 @@ export async function GET(req: NextRequest) {
     const snapshot = year
       ? await baseQuery.where('year', '==', parseInt(year)).get()
       : await baseQuery.get();
-    const estimates = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const estimates = snapshot.docs.map(doc => queryDocToData(doc));
 
     return NextResponse.json({ success: true, estimates });
   } catch (error) {

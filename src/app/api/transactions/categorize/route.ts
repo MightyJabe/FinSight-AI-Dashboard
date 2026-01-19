@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
       // Process manual transactions
       if (!manualResponse.empty) {
-        const manualTransactions = manualResponse.docs.map((doc: any) => {
+        const manualTransactions = manualResponse.docs.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,

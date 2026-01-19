@@ -1,13 +1,13 @@
 // Simple logger that works in both client and server environments
 interface Logger {
-  error: (message: string, meta?: any) => void;
-  warn: (message: string, meta?: any) => void;
-  info: (message: string, meta?: any) => void;
-  debug: (message: string, meta?: any) => void;
+  error: (message: string, meta?: Record<string, unknown>) => void;
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  info: (message: string, meta?: Record<string, unknown>) => void;
+  debug: (message: string, meta?: Record<string, unknown>) => void;
 }
 
 const createLogger = (): Logger => {
-  const log = (level: string, message: string, meta?: any) => {
+  const log = (level: string, message: string, meta?: Record<string, unknown>) => {
     const timestamp = new Date().toISOString();
     const logData = {
       timestamp,
@@ -30,10 +30,10 @@ const createLogger = (): Logger => {
   };
 
   return {
-    error: (message: string, meta?: any) => log('error', message, meta),
-    warn: (message: string, meta?: any) => log('warn', message, meta),
-    info: (message: string, meta?: any) => log('info', message, meta),
-    debug: (message: string, meta?: any) => log('debug', message, meta),
+    error: (message: string, meta?: Record<string, unknown>) => log('error', message, meta),
+    warn: (message: string, meta?: Record<string, unknown>) => log('warn', message, meta),
+    info: (message: string, meta?: Record<string, unknown>) => log('info', message, meta),
+    debug: (message: string, meta?: Record<string, unknown>) => log('debug', message, meta),
   };
 };
 

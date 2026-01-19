@@ -4,6 +4,8 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import React from 'react';
 import { toast } from 'react-hot-toast';
 
+import logger from '@/lib/logger';
+
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -42,8 +44,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
     
-    // Log error to your error reporting service
-    console.error('Error caught by boundary:', error, errorInfo);
+    // Log error to error reporting service
+    logger.error('React Error Boundary caught error', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      retryCount: this.state.retryCount,
+      component: 'ErrorBoundary',
+    });
     
     // Call optional error handler
     this.props.onError?.(error, errorInfo);

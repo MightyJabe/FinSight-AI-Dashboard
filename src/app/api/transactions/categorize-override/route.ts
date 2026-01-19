@@ -228,7 +228,7 @@ export async function GET(request: Request) {
         .limit(100)
         .get();
 
-      const overrides = snapshot.docs.map((doc: any) => {
+      const overrides = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           transactionId: doc.id,

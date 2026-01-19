@@ -1,11 +1,14 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-import { LIQUID_ASSET_TYPES } from '@/lib/finance'; // Assuming LIQUID_ASSET_TYPES is exported from finance.ts
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// Liquid asset types definition
+const LIQUID_ASSET_TYPES = ['checking', 'savings', 'cash', 'money_market'];
 
 /**
  *
@@ -19,7 +22,11 @@ async function getUserIdFromSession(): Promise<string | null> {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true /** checkRevoked */);
     return decodedClaims.uid;
   } catch (error) {
-    console.error('Error verifying session cookie in liquid-assets API:', error);
+    logger.error('Error verifying session cookie', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/liquid-assets',
+      operation: 'getUserIdFromSession',
+    });
     return null;
   }
 }
@@ -41,7 +48,7 @@ export async function GET() {
       return NextResponse.json([], { status: 200 }); // No assets found, return empty array
     }
 
-    const allAssets = assetsSnapshot.docs.map((doc: any) => ({
+    const allAssets = assetsSnapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().name as string,
       type: doc.data().type as string,
@@ -49,17 +56,21 @@ export async function GET() {
       // Add other fields if necessary, but keep it minimal for the dropdown
     }));
 
-    const liquidAssets = allAssets.filter((asset: any) => LIQUID_ASSET_TYPES.includes(asset.type));
+    const liquidAssets = allAssets.filter(asset => LIQUID_ASSET_TYPES.includes(asset.type));
 
     // We only need id and name for the dropdown
-    const dropdownAssets = liquidAssets.map((asset: any) => ({
+    const dropdownAssets = liquidAssets.map(asset => ({
       id: asset.id,
       name: `${asset.name} (${asset.type}) - Balance: ${asset.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`,
     }));
 
     return NextResponse.json(dropdownAssets, { status: 200 });
   } catch (error) {
-    console.error('Error fetching liquid assets:', error);
+    logger.error('Error fetching liquid assets', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/liquid-assets',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

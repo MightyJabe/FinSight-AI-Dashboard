@@ -56,7 +56,11 @@
       "mcp__plugin_firebase_firebase__firebase_read_resources",
       "mcp__plugin_firebase_firebase__firebase_list_apps",
       "mcp__plugin_firebase_firebase__firebase_get_sdk_config",
-      "mcp__plugin_firebase_firebase__firebase_get_security_rules"
+      "mcp__plugin_firebase_firebase__firebase_get_security_rules",
+      "mcp__plugin_github_github__pull_request_read",
+      "Bash(vercel env:*)",
+      "Bash(vercel inspect:*)",
+      "mcp__plugin_serena_serena__replace_content"
     ]
   }
 }

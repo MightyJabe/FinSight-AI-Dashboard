@@ -90,3 +90,4 @@ public/worker-*.js
 public/worker-*.js.map
 .playwright-mcp/
 artifacts/
+.env*.local

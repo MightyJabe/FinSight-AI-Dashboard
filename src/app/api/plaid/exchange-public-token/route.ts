@@ -16,7 +16,9 @@ const exchangeTokenSchema = z.object({
 });
 
 /**
- *
+ * Get user ID from request (Authorization header or session cookie)
+ * @param request - The HTTP request object
+ * @returns The user ID or null if authentication fails
  */
 async function getUserIdFromRequest(request: Request): Promise<string | null> {
   // Try to get user ID from Authorization header first
@@ -27,7 +29,11 @@ async function getUserIdFromRequest(request: Request): Promise<string | null> {
       const decodedToken = await auth.verifyIdToken(idToken);
       return decodedToken.uid;
     } catch (error) {
-      console.error('Error verifying ID token:', error);
+      logger.error('Error verifying ID token', {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: '/api/plaid/exchange-public-token',
+        operation: 'verifyIdToken',
+      });
     }
   }
 
@@ -38,7 +44,11 @@ async function getUserIdFromRequest(request: Request): Promise<string | null> {
       const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
       return decodedClaims.uid;
     } catch (error) {
-      console.error('Error verifying session cookie for token exchange:', error);
+      logger.error('Error verifying session cookie for token exchange', {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: '/api/plaid/exchange-public-token',
+        operation: 'verifySessionCookie',
+      });
     }
   }
 
@@ -49,7 +59,9 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 /**
- *
+ * Exchanges a Plaid public token for an access token and stores it securely
+ * @param request - The HTTP request containing publicToken, institution_id, and institution_name
+ * @returns JSON response with success message and itemId, or error details
  */
 export async function POST(request: Request) {
   try {
@@ -141,7 +153,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Plaid item linked successfully', itemId: item_id });
   } catch (error: unknown) {
-    console.error('Error exchanging public token:', error);
+    logger.error('Error exchanging public token', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/plaid/exchange-public-token',
+      method: 'POST',
+    });
     let errorMessage = 'An unknown error occurred while exchanging public token.';
     if (error instanceof Error) {
       errorMessage = error.message;

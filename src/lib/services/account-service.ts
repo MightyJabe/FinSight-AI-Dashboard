@@ -1,6 +1,7 @@
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export interface Account {
   id: string;
@@ -47,7 +48,11 @@ export function getAccountService(userId: string): AccountService {
 
         return accounts;
       } catch (error) {
-        console.error('Error fetching accounts:', error);
+        logger.error('Error fetching accounts from service', {
+          error: error instanceof Error ? error.message : String(error),
+          service: 'AccountService',
+          operation: 'getAccounts',
+        });
         return [];
       }
     },

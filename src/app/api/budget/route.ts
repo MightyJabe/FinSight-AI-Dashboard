@@ -2,6 +2,7 @@ import { formatISO, startOfMonth } from 'date-fns';
 import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
+import logger from '@/lib/logger';
 import { getTransactions } from '@/lib/plaid';
 import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 
@@ -68,7 +69,11 @@ export async function GET(request: Request) {
       totalCategories: spendingByCategory.length,
     });
   } catch (error) {
-    console.error('Error fetching budget data:', error);
+    logger.error('Error fetching budget data', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/budget',
+      method: 'GET',
+    });
     return NextResponse.json(
       {
         error: 'Failed to fetch budget data',
