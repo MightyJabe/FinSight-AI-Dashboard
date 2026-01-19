@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 
 import { getConfig } from './config';
+import logger from './logger';
 
 const { openai: openaiEnvVars } = getConfig();
 
@@ -78,7 +79,11 @@ export async function generateChatCompletion(
 ): Promise<ChatCompletionResponse> {
   try {
     if (!openai || !openaiEnvVars.apiKey) {
-      console.warn('OpenAI API key is missing or client not initialized. Using fallback response.');
+      logger.warn('OpenAI API key is missing or client not initialized. Using fallback response.', {
+        operation: 'generateChatCompletion',
+        hasClient: !!openai,
+        hasApiKey: !!openaiEnvVars.apiKey,
+      });
       return {
         content:
           'I notice you have not connected your bank account yet. To get personalized financial insights, please connect your bank account through Plaid. In the meantime, here are some general financial tips:\n\n1. Start building an emergency fund with 3-6 months of expenses\n2. Pay off high-interest debt as quickly as possible\n3. Consider investing in a diversified portfolio\n4. Review your spending habits and look for areas to save\n5. Set up automatic savings and bill payments',
@@ -133,7 +138,12 @@ export async function generateChatCompletion(
         error?.code === 'model_not_found' ||
         error?.message?.includes('max_tokens')
       ) {
-        console.warn('GPT-5.1 not available or parameter issue, falling back to GPT-4o');
+        logger.warn('GPT-5.1 not available or parameter issue, falling back to GPT-4o', {
+          operation: 'generateChatCompletion',
+          model: completionParams.model,
+          errorStatus: error?.status,
+          errorCode: error?.code,
+        });
         const fallbackParams = {
           ...completionParams,
           model: 'gpt-4o',
@@ -152,7 +162,11 @@ export async function generateChatCompletion(
 
     const response = completion.choices[0]?.message;
     if (!response) {
-      console.error('No response in completion choices:', completion);
+      logger.error('No response in completion choices', {
+        operation: 'generateChatCompletion',
+        model: completionParams.model,
+        choicesLength: completion.choices?.length,
+      });
       throw new Error('No response from OpenAI');
     }
 
@@ -161,14 +175,15 @@ export async function generateChatCompletion(
       role: response.role as 'assistant' | 'user' | 'system',
     };
   } catch (error) {
-    console.error('Error generating chat completion:', error);
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
-    }
+    logger.error('Error generating chat completion', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'generateChatCompletion',
+      model: config.model,
+      ...(error instanceof Error && {
+        errorName: error.name,
+        errorStack: error.stack,
+      }),
+    });
     return {
       content:
         'I apologize, but I am unable to generate insights at the moment. Please try again later.',

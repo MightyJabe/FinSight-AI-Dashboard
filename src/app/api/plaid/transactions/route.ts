@@ -138,7 +138,12 @@ export async function GET(request: Request) {
 
         allTransactions.push(...transformedTransactions);
       } catch (error: any) {
-        console.error('Error fetching transactions for Plaid item:', error);
+        logger.error('Error fetching transactions for Plaid item', {
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: '/api/plaid/transactions',
+          operation: 'fetchItemTransactions',
+          itemId: plaidItemDoc.id,
+        });
 
         // Check if it's an ITEM_LOGIN_REQUIRED error
         if (error?.response?.data?.error_code === 'ITEM_LOGIN_REQUIRED') {
@@ -188,7 +193,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ transactions: allTransactions });
   } catch (error) {
-    console.error('Error in Plaid transactions API:', error);
+    logger.error('Error in Plaid transactions API', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/plaid/transactions',
+      method: 'GET',
+    });
 
     // Log system error
     await logSecurityEvent(AuditEventType.SYSTEM_ERROR, AuditSeverity.HIGH, {

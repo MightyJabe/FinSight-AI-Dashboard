@@ -4,7 +4,10 @@ import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
 /**
- *
+ * Deletes a conversation and all its messages for the authenticated user
+ * @param request - The Next.js request object with authorization header
+ * @param params - Route parameters containing the conversationId
+ * @returns JSON response indicating success or error
  */
 export async function DELETE(
   request: NextRequest,

@@ -10,6 +10,7 @@ import {
 } from 'plaid';
 
 import { getConfig } from './config';
+import logger from './logger';
 
 const { plaid: plaidEnvVars } = getConfig();
 
@@ -44,9 +45,10 @@ if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
 
 export { plaidClient };
 
-// Helper function to create a link token
 /**
- *
+ * Creates a Plaid Link token for connecting bank accounts
+ * @param userId - The authenticated user's ID
+ * @returns The link token string for initializing Plaid Link
  */
 export async function createLinkToken(userId: string) {
   try {
@@ -68,14 +70,19 @@ export async function createLinkToken(userId: string) {
     const response = await plaidClient.linkTokenCreate(request);
     return response.data.link_token;
   } catch (error) {
-    console.error('Error creating link token:', error);
+    logger.error('Error creating link token', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      operation: 'createLinkToken',
+    });
     throw error;
   }
 }
 
-// Helper function to exchange public token for access token
 /**
- *
+ * Exchanges a Plaid public token for a permanent access token
+ * @param publicToken - The public token obtained from Plaid Link
+ * @returns The access token for making Plaid API requests
  */
 export async function exchangePublicToken(publicToken: string) {
   try {
@@ -84,14 +91,18 @@ export async function exchangePublicToken(publicToken: string) {
     });
     return response.data.access_token;
   } catch (error) {
-    console.error('Error exchanging public token:', error);
+    logger.error('Error exchanging public token', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'exchangePublicToken',
+    });
     throw error;
   }
 }
 
-// Helper function to get account balances
 /**
- *
+ * Retrieves account balances from Plaid for all connected accounts
+ * @param accessToken - The Plaid access token for the user's connected item
+ * @returns Array of account objects with balance information
  */
 export async function getAccountBalances(
   accessToken: string
@@ -100,7 +111,10 @@ export async function getAccountBalances(
     const response = await plaidClient.accountsBalanceGet({ access_token: accessToken });
     return response.data.accounts;
   } catch (error: unknown) {
-    console.error('Error fetching account balances from Plaid:', error);
+    logger.error('Error fetching account balances from Plaid', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getAccountBalances',
+    });
     if (error instanceof Error) {
       throw new Error(`Plaid API error: ${error.message}`);
     }
@@ -108,9 +122,12 @@ export async function getAccountBalances(
   }
 }
 
-// Helper function to get transactions
 /**
- *
+ * Retrieves transactions from Plaid for a specified date range
+ * @param accessToken - The Plaid access token for the user's connected item
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @returns Array of transaction objects
  */
 export async function getTransactions(
   accessToken: string,
@@ -130,7 +147,12 @@ export async function getTransactions(
     const transactions = response.data.transactions;
     return transactions;
   } catch (error: unknown) {
-    console.error('Error fetching transactions from Plaid:', error);
+    logger.error('Error fetching transactions from Plaid', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getTransactions',
+      startDate,
+      endDate,
+    });
     if (error instanceof Error) {
       throw new Error(`Plaid API error: ${error.message}`);
     }
@@ -155,7 +177,10 @@ export async function getInvestmentHoldings(accessToken: string): Promise<{
       accounts: response.data.accounts,
     };
   } catch (error: unknown) {
-    console.error('Error fetching investment holdings from Plaid:', error);
+    logger.error('Error fetching investment holdings from Plaid', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getInvestmentHoldings',
+    });
     if (error instanceof Error) {
       throw new Error(`Plaid API error: ${error.message}`);
     }
@@ -178,7 +203,10 @@ export async function getLiabilities(accessToken: string): Promise<{
       accounts: response.data.accounts,
     };
   } catch (error: unknown) {
-    console.error('Error fetching liabilities from Plaid:', error);
+    logger.error('Error fetching liabilities from Plaid', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getLiabilities',
+    });
     if (error instanceof Error) {
       throw new Error(`Plaid API error: ${error.message}`);
     }
@@ -197,7 +225,10 @@ export async function getDetailedAccounts(
     const response = await plaidClient.accountsGet(request);
     return response.data.accounts;
   } catch (error: unknown) {
-    console.error('Error fetching detailed accounts from Plaid:', error);
+    logger.error('Error fetching detailed accounts from Plaid', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getDetailedAccounts',
+    });
     if (error instanceof Error) {
       throw new Error(`Plaid API error: ${error.message}`);
     }
@@ -223,15 +254,20 @@ const mapToPlaidProducts = (productStr: string): Products => {
       return Products.CreditDetails;
     case 'income_verification':
       return Products.IncomeVerification;
-    // case 'deposit_switch': // Temporarily commented out due to TS error
-    //   return Products.DepositSwitch; // Temporarily commented out
+    // TODO: Re-enable deposit_switch once Plaid SDK type definitions are updated
+    // The Products.DepositSwitch type may not exist in the current Plaid SDK version
+    // case 'deposit_switch':
+    //   return Products.DepositSwitch;
     case 'payment_initiation':
       return Products.PaymentInitiation;
     case 'transfer':
       return Products.Transfer;
     // Add other products as needed
     default:
-      console.warn(`Unknown Plaid product string: '${productStr}'. Defaulting to Transactions.`);
+      logger.warn(`Unknown Plaid product string: '${productStr}'. Defaulting to Transactions.`, {
+        productStr,
+        operation: 'mapToPlaidProducts',
+      });
       return Products.Transactions; // Fallback or throw error
   }
 };

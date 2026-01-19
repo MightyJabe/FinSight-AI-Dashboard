@@ -10,6 +10,7 @@ import {
 } from '@/lib/audit-logger';
 import { decryptPlaidToken, isEncryptedData } from '@/lib/encryption';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 import { PLAID_COUNTRY_CODES, PLAID_PRODUCTS, plaidClient } from '@/lib/plaid';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,11 @@ async function getUserIdFromRequest(request: Request): Promise<string | null> {
       const decodedToken = await auth.verifyIdToken(idToken);
       return decodedToken.uid;
     } catch (error) {
-      console.error('Error verifying ID token:', error);
+      logger.error('Error verifying ID token', {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: '/api/plaid/create-link-token',
+        operation: 'verifyIdToken',
+      });
     }
   }
 
@@ -37,7 +42,11 @@ async function getUserIdFromRequest(request: Request): Promise<string | null> {
       const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
       return decodedClaims.uid;
     } catch (error) {
-      console.error('Error verifying session cookie for link token creation:', error);
+      logger.error('Error verifying session cookie for link token creation', {
+        error: error instanceof Error ? error.message : String(error),
+        endpoint: '/api/plaid/create-link-token',
+        operation: 'verifySessionCookie',
+      });
     }
   }
 
@@ -118,7 +127,13 @@ export async function POST(request: Request) {
           }
         }
       } catch (error) {
-        console.error('Error getting access token for update mode:', error);
+        logger.error('Error getting access token for update mode', {
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: '/api/plaid/create-link-token',
+          operation: 'getAccessTokenForUpdate',
+          userId,
+          itemId,
+        });
         // Continue with create mode if we can't get the access token
       }
     }
@@ -140,7 +155,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ linkToken: tokenResponse.data.link_token });
   } catch (error: unknown) {
-    console.error('Error creating link token:', error);
+    logger.error('Error creating link token', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/plaid/create-link-token',
+      method: 'POST',
+    });
     let errorMessage = 'An unknown error occurred while creating link token.';
     if (error instanceof Error) {
       errorMessage = error.message;

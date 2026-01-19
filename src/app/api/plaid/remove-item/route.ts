@@ -19,7 +19,8 @@ const removeItemSchema = z.object({
 });
 
 /**
- *
+ * Get user ID from session cookie
+ * @returns The user ID or null if authentication fails
  */
 async function getUserIdFromSession(): Promise<string | null> {
   const sessionCookie = cookies().get('session')?.value;
@@ -28,13 +29,19 @@ async function getUserIdFromSession(): Promise<string | null> {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
     return decodedClaims.uid;
   } catch (error) {
-    console.error('Error verifying session cookie for Plaid item removal:', error);
+    logger.error('Error verifying session cookie for Plaid item removal', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/plaid/remove-item',
+      operation: 'verifySessionCookie',
+    });
     return null;
   }
 }
 
 /**
- *
+ * Remove a Plaid item and revoke its access token
+ * @param request - The HTTP request containing itemId in the body
+ * @returns JSON response indicating success or error
  */
 export async function POST(request: Request) {
   try {
@@ -139,7 +146,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Plaid item unlinked successfully.', itemId });
   } catch (error: unknown) {
-    console.error('Error unlinking Plaid item:', error);
+    logger.error('Error unlinking Plaid item', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/plaid/remove-item',
+      method: 'POST',
+    });
     let errorMessage = 'Failed to unlink Plaid item';
     if (error instanceof Error) {
       errorMessage = error.message;
