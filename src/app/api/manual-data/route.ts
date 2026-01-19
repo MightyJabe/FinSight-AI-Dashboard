@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 // Zod schemas for input validation
 const manualAssetSchema = z.object({
@@ -118,7 +119,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error('Error fetching manual data:', error);
+    logger.error('Error fetching manual data', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/manual-data',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -255,7 +260,11 @@ export async function POST(request: NextRequest) {
       data: dataToSave,
     });
   } catch (error: unknown) {
-    console.error('Error adding manual data:', error);
+    logger.error('Error adding manual data', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/manual-data',
+      method: 'POST',
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

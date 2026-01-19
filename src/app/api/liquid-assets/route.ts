@@ -1,11 +1,14 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-import { LIQUID_ASSET_TYPES } from '@/lib/finance'; // Assuming LIQUID_ASSET_TYPES is exported from finance.ts
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// Liquid asset types definition
+const LIQUID_ASSET_TYPES = ['checking', 'savings', 'cash', 'money_market'];
 
 /**
  *
@@ -19,7 +22,11 @@ async function getUserIdFromSession(): Promise<string | null> {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true /** checkRevoked */);
     return decodedClaims.uid;
   } catch (error) {
-    console.error('Error verifying session cookie in liquid-assets API:', error);
+    logger.error('Error verifying session cookie', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/liquid-assets',
+      operation: 'getUserIdFromSession',
+    });
     return null;
   }
 }
@@ -59,7 +66,11 @@ export async function GET() {
 
     return NextResponse.json(dropdownAssets, { status: 200 });
   } catch (error) {
-    console.error('Error fetching liquid assets:', error);
+    logger.error('Error fetching liquid assets', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/liquid-assets',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

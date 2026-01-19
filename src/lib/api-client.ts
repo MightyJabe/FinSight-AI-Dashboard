@@ -3,6 +3,7 @@
  */
 
 import { auth } from './firebase';
+import logger from './logger';
 
 export class ApiError extends Error {
   constructor(
@@ -26,7 +27,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
       return { Authorization: `Bearer ${token}` };
     }
   } catch (error) {
-    console.error('Failed to get auth token:', error);
+    logger.error('Failed to get Firebase auth token', {
+      error: error instanceof Error ? error.message : String(error),
+      operation: 'getAuthHeaders',
+    });
   }
   return {};
 }

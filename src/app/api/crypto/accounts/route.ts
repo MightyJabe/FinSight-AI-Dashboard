@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, accounts });
   } catch (error) {
-    console.error('Error fetching crypto accounts:', error);
+    logger.error('Error fetching crypto accounts', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/crypto/accounts',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: 500 });
   }
 }

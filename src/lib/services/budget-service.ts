@@ -1,4 +1,5 @@
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 export interface Budget {
   id: string;
@@ -40,7 +41,12 @@ export async function getUserBudgets(userId: string): Promise<{ [category: strin
 
     return budgets;
   } catch (error) {
-    console.error('Error fetching user budgets:', error);
+    logger.error('Error fetching user budgets', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      service: 'BudgetService',
+      operation: 'getUserBudgets',
+    });
     // Return default budgets on error
     return {
       'Food and Drink': 500,
@@ -73,7 +79,14 @@ export async function setBudget(
       { merge: true }
     );
   } catch (error) {
-    console.error('Error setting budget:', error);
+    logger.error('Error setting budget', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      category,
+      amount,
+      service: 'BudgetService',
+      operation: 'setBudget',
+    });
     throw error;
   }
 }
@@ -100,7 +113,13 @@ export async function getBudgetForCategory(
 
     return null;
   } catch (error) {
-    console.error('Error fetching budget for category:', error);
+    logger.error('Error fetching budget for category', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      category,
+      service: 'BudgetService',
+      operation: 'getBudgetForCategory',
+    });
     return null;
   }
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 
 const goalSchema = z.object({
   name: z.string().min(1),
@@ -43,7 +44,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, goals });
   } catch (error) {
-    console.error('Error fetching goals:', error);
+    logger.error('Error fetching goals', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/goals',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
   }
 }
@@ -77,7 +82,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, goal: { id: docRef.id, ...goalData } });
   } catch (error) {
-    console.error('Error creating goal:', error);
+    logger.error('Error creating goal', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/goals',
+      method: 'POST',
+    });
     return NextResponse.json({ error: 'Failed to create goal' }, { status: 500 });
   }
 }

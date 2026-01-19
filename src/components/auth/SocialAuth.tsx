@@ -4,6 +4,7 @@ import { GithubAuthProvider, GoogleAuthProvider, signInWithRedirect } from 'fire
 import toast from 'react-hot-toast';
 
 import { auth } from '@/lib/firebase';
+import logger from '@/lib/logger';
 
 /**
  *
@@ -11,7 +12,10 @@ import { auth } from '@/lib/firebase';
 export function SocialAuth() {
   const handleGoogleSignIn = async () => {
     if (!auth) {
-      console.error('Firebase auth is not initialized');
+      logger.error('Firebase auth not initialized for Google sign-in', {
+        component: 'SocialAuth',
+        operation: 'handleGoogleSignIn',
+      });
       return;
     }
 
@@ -19,14 +23,21 @@ export function SocialAuth() {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
     } catch (error) {
-      console.error('Google sign in error:', error);
+      logger.error('Google sign-in failed', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'SocialAuth',
+        operation: 'handleGoogleSignIn',
+      });
       toast.error('Failed to sign in with Google');
     }
   };
 
   const handleGithubSignIn = async () => {
     if (!auth) {
-      console.error('Firebase auth is not initialized');
+      logger.error('Firebase auth not initialized for GitHub sign-in', {
+        component: 'SocialAuth',
+        operation: 'handleGithubSignIn',
+      });
       return;
     }
 
@@ -34,7 +45,11 @@ export function SocialAuth() {
       const provider = new GithubAuthProvider();
       await signInWithRedirect(auth, provider);
     } catch (error) {
-      console.error('GitHub sign in error:', error);
+      logger.error('GitHub sign-in failed', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'SocialAuth',
+        operation: 'handleGithubSignIn',
+      });
       toast.error('Failed to sign in with GitHub');
     }
   };

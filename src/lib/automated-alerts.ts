@@ -1,4 +1,5 @@
 import { adminDb as db } from './firebase-admin';
+import logger from './logger';
 
 export interface Alert {
   id?: string;
@@ -192,7 +193,12 @@ export async function getUserAlerts(userId: string, unreadOnly = false): Promise
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 20);
   } catch (error) {
-    console.error('Error fetching alerts:', error);
+    logger.error('Error fetching user alerts', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      unreadOnly,
+      operation: 'getUserAlerts',
+    });
     return [];
   }
 }

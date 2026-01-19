@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { validateAuthToken } from '@/lib/auth-server';
 import { adminDb as db } from '@/lib/firebase-admin';
+import logger from '@/lib/logger';
 import { getAccountBalances } from '@/lib/plaid';
 import { getPlaidAccessToken } from '@/lib/plaid-token-helper';
 
@@ -72,7 +73,11 @@ export async function GET(request: Request) {
       performance,
     });
   } catch (error) {
-    console.error('Error fetching investment accounts:', error);
+    logger.error('Error fetching investment accounts', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: '/api/investment-accounts',
+      method: 'GET',
+    });
     return NextResponse.json(
       {
         error: 'Failed to fetch investment accounts',
