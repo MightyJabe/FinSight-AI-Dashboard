@@ -4,7 +4,7 @@ import type { Chart as ChartJS, ChartType, TooltipItem } from 'chart.js';
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 
-import type { Transaction } from '@/lib/finance';
+import type { Transaction } from '@/types/finance';
 import { getCategoryColor } from '@/utils/category-color';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 

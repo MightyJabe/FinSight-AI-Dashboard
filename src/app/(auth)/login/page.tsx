@@ -23,8 +23,9 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Signed in successfully!');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to sign in';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -10,7 +10,7 @@ import {
 import { memo, useMemo } from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
-import { Overview } from '@/lib/finance';
+import { Overview } from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
 
 interface OverviewCardsProps {

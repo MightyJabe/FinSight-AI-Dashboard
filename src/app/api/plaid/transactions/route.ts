@@ -137,7 +137,7 @@ export async function GET(request: Request) {
         }));
 
         allTransactions.push(...transformedTransactions);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error fetching transactions for Plaid item', {
           error: error instanceof Error ? error.message : String(error),
           endpoint: '/api/plaid/transactions',
@@ -146,12 +146,14 @@ export async function GET(request: Request) {
         });
 
         // Check if it's an ITEM_LOGIN_REQUIRED error
-        if (error?.response?.data?.error_code === 'ITEM_LOGIN_REQUIRED') {
+        const errorCode = (error as { response?: { data?: { error_code?: string } } })?.response?.data?.error_code;
+        if (errorCode === 'ITEM_LOGIN_REQUIRED') {
+          const apiError = error as { response?: { data?: { error_code?: string; error_message?: string } } };
           logger.warn('Plaid item requires re-authentication', {
             itemId: plaidItemDoc.id,
             institutionName: plaidItemData.institutionName,
             userId,
-            errorCode: error.response.data.error_code,
+            errorCode: apiError.response?.data?.error_code,
           });
 
           // Mark this item as needing re-authentication
@@ -163,8 +165,8 @@ export async function GET(request: Request) {
             .update({
               status: 'ITEM_LOGIN_REQUIRED',
               lastError: {
-                code: error.response.data.error_code,
-                message: error.response.data.error_message,
+                code: apiError.response?.data?.error_code || 'UNKNOWN',
+                message: apiError.response?.data?.error_message || 'Unknown error',
                 timestamp: new Date(),
               },
             });

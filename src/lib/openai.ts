@@ -131,18 +131,19 @@ export async function generateChatCompletion(
     let completion;
     try {
       completion = await openai.chat.completions.create(completionParams);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to GPT-4o if GPT-5.1 is not available or has parameter issues
+      const apiError = error as { status?: number; code?: string; message?: string };
       if (
-        error?.status === 404 ||
-        error?.code === 'model_not_found' ||
-        error?.message?.includes('max_tokens')
+        apiError?.status === 404 ||
+        apiError?.code === 'model_not_found' ||
+        apiError?.message?.includes('max_tokens')
       ) {
         logger.warn('GPT-5.1 not available or parameter issue, falling back to GPT-4o', {
           operation: 'generateChatCompletion',
           model: completionParams.model,
-          errorStatus: error?.status,
-          errorCode: error?.code,
+          errorStatus: apiError?.status,
+          errorCode: apiError?.code,
         });
         const fallbackParams = {
           ...completionParams,
