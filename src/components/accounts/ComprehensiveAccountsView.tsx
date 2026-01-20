@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  AlertTriangle,
   Banknote,
   BarChart3,
   Building2,
@@ -233,6 +234,20 @@ export function ComprehensiveAccountsView() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  /**
+   * Check if an account is stale (not synced in 24+ hours)
+   * Implements P5.5 from financial-os-upgrade-comprehensive-plan.md
+   */
+  const isAccountStale = (account: any): boolean => {
+    if (!account.lastSyncAt && !account.updatedAt) return false;
+
+    const lastSync = account.lastSyncAt || account.updatedAt;
+    const lastSyncDate = lastSync instanceof Date ? lastSync : new Date(lastSync);
+    const hoursSinceSync = (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60);
+
+    return hoursSinceSync >= 24;
   };
 
   if (loading) {
@@ -548,15 +563,33 @@ export function ComprehensiveAccountsView() {
                     <CardContent>
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{account.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900">{account.name}</h4>
+                            {isAccountStale(account) && (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200"
+                                title="Account hasn't synced in 24+ hours"
+                              >
+                                <AlertTriangle className="w-3 h-3" />
+                                Stale
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500">
                             {account.institutionName} • {account.type}
                           </p>
-                          {account.source === 'israel' && (
-                            <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                              🇮🇱 Israeli Bank
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            {account.source === 'israel' && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                🇮🇱 Israeli Bank
+                              </span>
+                            )}
+                            {(account.lastSyncAt || account.updatedAt) && (
+                              <span className="text-xs text-gray-400">
+                                Last sync: {new Date(account.lastSyncAt || account.updatedAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-bold">{formatCurrency(account.balance, account.currency)}</p>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
+import { CurrencySelector, getCurrencyDisplayString } from '@/components/settings/CurrencySelector';
 import { Button } from '@/components/ui';
 import { useUserSettings } from '@/hooks/use-user-settings';
 import { auth as firebaseAuth } from '@/lib/firebase';
@@ -16,8 +17,9 @@ export default function SettingsPage() {
   const { user } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { settings } = useUserSettings(Boolean(user));
+  const { settings, refresh } = useUserSettings(Boolean(user));
   const [billingLoading, setBillingLoading] = useState<'upgrade' | 'portal' | null>(null);
+  const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -108,7 +110,12 @@ export default function SettingsPage() {
       icon: Palette,
       items: [
         { label: 'Theme', value: 'Light', action: 'Change' },
-        { label: 'Currency', value: 'USD ($)', action: 'Change' },
+        {
+          label: 'Currency',
+          value: getCurrencyDisplayString(settings.baseCurrency),
+          action: 'Change',
+          onClick: () => setCurrencyModalOpen(true),
+        },
         { label: 'Date Format', value: 'MM/DD/YYYY', action: 'Change' },
       ],
     },
@@ -206,6 +213,7 @@ export default function SettingsPage() {
                       </div>
                       {'action' in item && item.action && (
                         <button
+                          onClick={'onClick' in item && typeof item.onClick === 'function' ? item.onClick : undefined}
                           className={`text-sm font-medium px-3 py-1 rounded-md transition-colors ${
                             'danger' in item && item.danger
                               ? 'text-red-600 hover:bg-red-50'
@@ -242,6 +250,16 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Currency Selector Modal */}
+      <CurrencySelector
+        isOpen={currencyModalOpen}
+        onClose={() => setCurrencyModalOpen(false)}
+        currentCurrency={settings.baseCurrency}
+        onCurrencyChange={() => {
+          refresh();
+        }}
+      />
     </div>
   );
 }

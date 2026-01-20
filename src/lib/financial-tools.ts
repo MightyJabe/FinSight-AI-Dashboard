@@ -189,19 +189,27 @@ export const financialTools = [
 // Function implementations
 export async function getNetWorth(
   userId: string
-): Promise<{ netWorth: number; assets: number; liabilities: number }> {
+): Promise<{ netWorth: number; assets: number; liabilities: number; sourceAccounts: string[] }> {
   try {
+    const sourceAccountIds: string[] = []; // Track account IDs for citations
+
     // Get manual assets
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
     const manualAssets = assetsSnapshot.docs.reduce(
-      (sum: any, doc: any) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => {
+        sourceAccountIds.push(doc.id); // Track manual asset IDs
+        return sum + (doc.data().amount || 0);
+      },
       0
     );
 
     // Get manual liabilities
     const liabilitiesSnapshot = await db.collection(`users/${userId}/manualLiabilities`).get();
     const manualLiabilities = liabilitiesSnapshot.docs.reduce(
-      (sum: any, doc: any) => sum + (doc.data().amount || 0),
+      (sum: any, doc: any) => {
+        sourceAccountIds.push(doc.id); // Track manual liability IDs
+        return sum + (doc.data().amount || 0);
+      },
       0
     );
 
@@ -216,7 +224,10 @@ export async function getNetWorth(
         try {
           const balances = await getAccountBalances(accessToken);
           plaidAssets += balances.reduce(
-            (sum, account) => sum + (account.balances.current || 0),
+            (sum, account) => {
+              sourceAccountIds.push(account.account_id); // Track Plaid account IDs
+              return sum + (account.balances.current || 0);
+            },
             0
           );
         } catch (error) {
@@ -228,7 +239,12 @@ export async function getNetWorth(
     const totalAssets = manualAssets + plaidAssets;
     const netWorth = totalAssets - manualLiabilities;
 
-    return { netWorth, assets: totalAssets, liabilities: manualLiabilities };
+    return {
+      netWorth,
+      assets: totalAssets,
+      liabilities: manualLiabilities,
+      sourceAccounts: sourceAccountIds, // Include source account IDs for citations
+    };
   } catch (error) {
     logger.error('Error calculating net worth', { userId, error });
     throw error;
@@ -237,15 +253,16 @@ export async function getNetWorth(
 
 export async function getAccountBalancesData(
   userId: string
-): Promise<Array<{ name: string; balance: number; type: string }>> {
+): Promise<{ accounts: Array<{ name: string; balance: number; type: string; id: string }>; sourceAccounts: string[] }> {
   try {
-    const accounts: Array<{ name: string; balance: number; type: string }> = [];
+    const accounts: Array<{ name: string; balance: number; type: string; id: string }> = [];
 
     // Get manual accounts
     const assetsSnapshot = await db.collection(`users/${userId}/manualAssets`).get();
     assetsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       accounts.push({
+        id: doc.id,
         name: data.name,
         balance: data.amount || 0,
         type: data.type || 'Manual',
@@ -267,6 +284,7 @@ export async function getAccountBalancesData(
           const balances = await getAccountBalances(accessToken);
           balances.forEach(account => {
             accounts.push({
+              id: account.account_id,
               name: account.name || 'Plaid Account',
               balance: account.balances.current || 0,
               type: account.type || 'Bank',
@@ -278,7 +296,10 @@ export async function getAccountBalancesData(
       }
     }
 
-    return accounts;
+    return {
+      accounts,
+      sourceAccounts: accounts.map(a => a.id), // Include source account IDs for citations
+    };
   } catch (error) {
     logger.error('Error getting account balances', { userId, error });
     throw error;
@@ -289,7 +310,7 @@ export async function getSpendingByCategory(
   userId: string,
   period: string,
   category?: string
-): Promise<Array<{ category: string; amount: number }>> {
+): Promise<{ categories: Array<{ category: string; amount: number }>; sourceTransactions: string[] }> {
   try {
     // Calculate date range based on period
     const now = new Date();
@@ -322,6 +343,7 @@ export async function getSpendingByCategory(
       .get();
 
     const allTransactions: Array<{ category: string; amount: number }> = [];
+    const sourceTransactionIds: string[] = []; // Track transaction IDs for citations
 
     if (accessTokenDoc.exists) {
       const accessToken = accessTokenDoc.data()?.accessToken;
@@ -342,6 +364,7 @@ export async function getSpendingByCategory(
                   category: txnCategory,
                   amount: Math.abs(txn.amount),
                 });
+                sourceTransactionIds.push(txn.transaction_id); // Add transaction ID
               }
             }
           });
@@ -360,10 +383,15 @@ export async function getSpendingByCategory(
       spendingByCategory[txn.category] = (spendingByCategory[txn.category] || 0) + txn.amount;
     });
 
-    return Object.entries(spendingByCategory).map(([category, amount]) => ({
+    const categories = Object.entries(spendingByCategory).map(([category, amount]) => ({
       category,
       amount,
     }));
+
+    return {
+      categories,
+      sourceTransactions: sourceTransactionIds, // Include source data for citations
+    };
   } catch (error) {
     logger.error('Error getting spending by category', { userId, error });
     throw error;
@@ -376,7 +404,7 @@ export async function getRecentTransactions(
   category?: string,
   amountMin?: number,
   amountMax?: number
-): Promise<Array<{ name: string; amount: number; date: string; category: string }>> {
+): Promise<{ transactions: Array<{ name: string; amount: number; date: string; category: string; id: string }>; sourceTransactions: string[] }> {
   try {
     const accessTokenDoc = await db
       .collection('users')
@@ -385,7 +413,7 @@ export async function getRecentTransactions(
       .doc('access_token')
       .get();
 
-    const allTransactions: Array<{ name: string; amount: number; date: string; category: string }> =
+    const allTransactions: Array<{ name: string; amount: number; date: string; category: string; id: string }> =
       [];
 
     if (accessTokenDoc.exists) {
@@ -414,6 +442,7 @@ export async function getRecentTransactions(
             }
 
             allTransactions.push({
+              id: txn.transaction_id,
               name: txn.name,
               amount: txn.amount,
               date: txn.date,
@@ -427,9 +456,14 @@ export async function getRecentTransactions(
     }
 
     // Sort by date and limit
-    return allTransactions
+    const limited = allTransactions
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, limit);
+
+    return {
+      transactions: limited,
+      sourceTransactions: limited.map(t => t.id), // Include source transaction IDs for citations
+    };
   } catch (error) {
     logger.error('Error getting recent transactions', { userId, error });
     throw error;
@@ -569,25 +603,26 @@ export async function analyzeCashFlow(userId: string, _months = 6, _projectionMo
 export async function analyzeSpendingPatterns(userId: string, _analysisPeriod = '3_months') {
   // TODO: Implement analysis for different time periods (3_months, 6_months, 1_year) specified by _analysisPeriod
   // Simplified spending pattern analysis using monthly data only
-  const spending = await getSpendingByCategory(userId, 'month');
+  const spendingData = await getSpendingByCategory(userId, 'month');
   return {
-    topCategories: spending.slice(0, 5),
-    totalSpending: spending.reduce((sum, cat) => sum + cat.amount, 0),
+    topCategories: spendingData.categories.slice(0, 5),
+    totalSpending: spendingData.categories.reduce((sum: number, cat: { amount: number }) => sum + cat.amount, 0),
     recommendation: 'Review your top spending categories for optimization opportunities.',
+    sourceTransactions: spendingData.sourceTransactions, // Include source data
   };
 }
 
 export async function calculateEmergencyFundStatus(userId: string, targetMonths = 6) {
   // Simplified emergency fund calculation
-  const accounts = await getAccountBalancesData(userId);
+  const accountsData = await getAccountBalancesData(userId);
   const summary = await getMonthlySummary(userId);
 
-  const liquidAssets = accounts
+  const liquidAssets = accountsData.accounts
     .filter(
-      acc =>
+      (acc: { type: string }) =>
         acc.type.toLowerCase().includes('savings') || acc.type.toLowerCase().includes('checking')
     )
-    .reduce((sum, acc) => sum + acc.balance, 0);
+    .reduce((sum: number, acc: { balance: number }) => sum + acc.balance, 0);
 
   const monthsCovered = summary.expenses > 0 ? liquidAssets / summary.expenses : 0;
 
@@ -600,6 +635,7 @@ export async function calculateEmergencyFundStatus(userId: string, targetMonths 
       monthsCovered >= targetMonths
         ? 'Great! Your emergency fund is adequate.'
         : `Build your emergency fund to ${targetMonths} months of expenses.`,
+    sourceAccounts: accountsData.sourceAccounts, // Include source account IDs
   };
 }
 

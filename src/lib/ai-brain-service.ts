@@ -39,6 +39,8 @@ export interface AIResponse {
   suggestions?: string[];
   context?: string;
   conversationId?: string;
+  sourceTransactions?: string[];
+  sourceAccounts?: string[];
 }
 
 export interface ContextInfo {
@@ -257,6 +259,9 @@ SPECIAL FOCUS AREAS:
 - ${context.pageName === 'Transactions' ? 'Spending analysis and budget optimization' : ''}
 - ${context.pageName === 'Insights' ? 'Deep financial analysis and predictive insights' : ''}
 
+IMPORTANT DISCLAIMER:
+You are providing informational insights, not professional financial advice. When discussing investments, taxes, retirement planning, or major financial decisions, always remind users to consult qualified financial advisors, tax professionals, or legal counsel. For projections and forecasts, use phrases like "based on current trends," "this estimate assumes," or "if patterns continue." Never recommend specific stocks, funds, real estate investments, or financial products by name. Your role is to help users understand their data and explore possibilities, not to make binding financial recommendations.
+
 Remember: You have access to the user's complete financial picture. Use this data to provide insights that go far beyond generic financial advice.`;
   }
 
@@ -319,6 +324,10 @@ Remember: You have access to the user's complete financial picture. Use this dat
 
       let finalResponse = responseMessage.content || "I couldn't process your request.";
 
+      // Accumulate source data from all tool calls
+      const allSourceTransactions: string[] = [];
+      const allSourceAccounts: string[] = [];
+
       // Handle tool calls
       if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
         const toolResults = [];
@@ -329,6 +338,17 @@ Remember: You have access to the user's complete financial picture. Use this dat
 
           try {
             const result = await executeFinancialTool(functionName, this.userId, functionArgs);
+
+            // Extract source data from tool result
+            if (result && typeof result === 'object') {
+              if (Array.isArray(result.sourceTransactions)) {
+                allSourceTransactions.push(...result.sourceTransactions);
+              }
+              if (Array.isArray(result.sourceAccounts)) {
+                allSourceAccounts.push(...result.sourceAccounts);
+              }
+            }
+
             toolResults.push({
               tool_call_id: toolCall.id,
               role: 'tool' as const,
@@ -383,11 +403,25 @@ Remember: You have access to the user's complete financial picture. Use this dat
         }
       }
 
-      return {
+      // Deduplicate source IDs
+      const uniqueSourceTransactions = [...new Set(allSourceTransactions)];
+      const uniqueSourceAccounts = [...new Set(allSourceAccounts)];
+
+      const response: AIResponse = {
         answer: finalResponse,
         confidence: 0.9,
         type: 'financial_analysis',
       };
+
+      // Only add source data if present (for exactOptionalPropertyTypes)
+      if (uniqueSourceTransactions.length > 0) {
+        response.sourceTransactions = uniqueSourceTransactions;
+      }
+      if (uniqueSourceAccounts.length > 0) {
+        response.sourceAccounts = uniqueSourceAccounts;
+      }
+
+      return response;
     } catch (error) {
       logger.error('Error using OpenAI with tools', { error, userId: this.userId });
       throw error;

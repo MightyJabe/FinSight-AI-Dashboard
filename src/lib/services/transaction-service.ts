@@ -31,6 +31,7 @@ export function getTransactionService(userId: string): TransactionService {
             const data = doc.data();
             return {
               id: doc.id,
+              providerTxId: data.providerTxId || doc.id, // Fallback to doc.id for legacy transactions
               amount: data.amount || 0,
               type: data.type || 'expense',
               category: data.category || 'Other',
@@ -70,6 +71,7 @@ export function getTransactionService(userId: string): TransactionService {
             const data = doc.data();
             return {
               id: doc.id,
+              providerTxId: data.providerTxId || doc.id, // Fallback to doc.id for legacy transactions
               amount: data.amount || 0,
               type: data.type || 'expense',
               category: data.category || 'Other',

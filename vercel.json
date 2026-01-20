@@ -4,6 +4,16 @@
     "regions": [
         "fra1"
     ],
+    "crons": [
+        {
+            "path": "/api/cron/daily-snapshot",
+            "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/sync-accounts",
+            "schedule": "0 */6 * * *"
+        }
+    ],
     "git": {
         "deploymentEnabled": {
             "master": true,

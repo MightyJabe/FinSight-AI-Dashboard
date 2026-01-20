@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 // Extended transaction interface with AI categorization data
 interface EnhancedTransaction {
   id: string;
+  providerTxId: string;
   type: 'income' | 'expense';
   amount: number;
   category: string;
@@ -162,6 +163,7 @@ export default function TransactionsPage() {
 
         return {
           id: t.transaction_id,
+          providerTxId: t.transaction_id, // Plaid transaction_id is unique
           date: t.date,
           description: t.name,
           amount: -t.amount, // Invert Plaid amounts
@@ -179,6 +181,7 @@ export default function TransactionsPage() {
       // Map manual transactions to our internal format
       const manualTransactions = manualData.map((t: ManualTransaction) => ({
         id: t.id,
+        providerTxId: t.id, // Manual transactions use their ID as providerTxId
         date: t.date,
         description: t.description,
         amount: t.amount,
@@ -191,8 +194,9 @@ export default function TransactionsPage() {
       }));
 
       // Map Israeli bank transactions to our internal format
-      const israeliTransactions = (israeliData.transactions || []).map((t: { id: string; date: string; description: string; name: string; amount: number; originalAmount: number; category: string; account_name: string; account_id: string; originalCurrency: string }) => ({
+      const israeliTransactions = (israeliData.transactions || []).map((t: { id: string; providerTxId?: string; date: string; description: string; name: string; amount: number; originalAmount: number; category: string; account_name: string; account_id: string; originalCurrency: string }) => ({
         id: t.id,
+        providerTxId: t.providerTxId || t.id, // Use providerTxId from API, fallback to id
         date: t.date,
         description: t.description || t.name,
         amount: t.amount || t.originalAmount,
@@ -238,6 +242,7 @@ export default function TransactionsPage() {
         const demoTransactions: EnhancedTransaction[] = [
           {
             id: 'demo-tx-1',
+            providerTxId: 'demo-tx-1',
             date: now.toISOString().slice(0, 10),
             description: 'Paycheck - Company Inc.',
             amount: 4200,
@@ -250,6 +255,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-2',
+            providerTxId: 'demo-tx-2',
             date: new Date(now.getTime() - 86400000).toISOString().slice(0, 10),
             description: 'Whole Foods Market',
             amount: -127.45,
@@ -262,6 +268,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-3',
+            providerTxId: 'demo-tx-3',
             date: new Date(now.getTime() - 86400000 * 2).toISOString().slice(0, 10),
             description: 'Monthly Rent Payment',
             amount: -1850,
@@ -274,6 +281,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-4',
+            providerTxId: 'demo-tx-4',
             date: new Date(now.getTime() - 86400000 * 3).toISOString().slice(0, 10),
             description: 'Netflix Subscription',
             amount: -15.99,
@@ -286,6 +294,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-5',
+            providerTxId: 'demo-tx-5',
             date: new Date(now.getTime() - 86400000 * 4).toISOString().slice(0, 10),
             description: 'Gas Station',
             amount: -52.30,
@@ -298,6 +307,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-6',
+            providerTxId: 'demo-tx-6',
             date: new Date(now.getTime() - 86400000 * 5).toISOString().slice(0, 10),
             description: 'Dividend Payment',
             amount: 125.50,
@@ -310,6 +320,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-7',
+            providerTxId: 'demo-tx-7',
             date: new Date(now.getTime() - 86400000 * 6).toISOString().slice(0, 10),
             description: 'Starbucks Coffee',
             amount: -6.45,
@@ -322,6 +333,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-8',
+            providerTxId: 'demo-tx-8',
             date: new Date(now.getTime() - 86400000 * 7).toISOString().slice(0, 10),
             description: 'Electric Bill',
             amount: -95.20,
@@ -334,6 +346,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-9',
+            providerTxId: 'demo-tx-9',
             date: new Date(now.getTime() - 86400000 * 10).toISOString().slice(0, 10),
             description: 'Gym Membership',
             amount: -49.99,
@@ -346,6 +359,7 @@ export default function TransactionsPage() {
           },
           {
             id: 'demo-tx-10',
+            providerTxId: 'demo-tx-10',
             date: new Date(now.getTime() - 86400000 * 12).toISOString().slice(0, 10),
             description: 'Amazon Purchase',
             amount: -89.99,

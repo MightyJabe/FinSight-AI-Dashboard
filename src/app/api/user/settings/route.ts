@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
+import { SUPPORTED_CURRENCIES } from '@/lib/fx';
 
 const settingsSchema = z.object({
   onboardingComplete: z.boolean().optional(),
@@ -16,6 +17,7 @@ const settingsSchema = z.object({
     .optional(),
   proTrialRequested: z.boolean().optional(),
   aiProactive: z.boolean().optional(),
+  baseCurrency: z.enum(SUPPORTED_CURRENCIES).optional(),
 });
 
 async function getUserIdFromRequest(request: Request): Promise<string | null> {
@@ -60,6 +62,7 @@ export async function GET(request: Request) {
     goalTarget: data.goalTarget ?? null,
     proTrialRequested: Boolean(data.proTrialRequested),
     aiProactive: data.aiProactive !== undefined ? Boolean(data.aiProactive) : true,
+    baseCurrency: data.baseCurrency || 'USD',
     plan: data.plan || 'free',
     proActive: Boolean(data.proActive),
     proExpiresAt: data.proExpiresAt || null,

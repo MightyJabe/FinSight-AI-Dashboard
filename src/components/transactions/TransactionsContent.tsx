@@ -23,6 +23,7 @@ import { TransactionsList } from './TransactionsList';
 // Enhanced transaction interface
 interface EnhancedTransaction {
   id: string;
+  providerTxId: string;
   type: 'income' | 'expense';
   amount: number;
   category: string;
