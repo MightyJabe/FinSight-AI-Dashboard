@@ -74,8 +74,7 @@ describe('FX Rate Utility', () => {
       const rate = await getRate('USD', 'ILS');
       expect(rate).toBe(3.72);
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://v6.exchangerate-api.com/v6/test-key/latest/USD',
-        expect.any(Object)
+        'https://v6.exchangerate-api.com/v6/test-key/latest/USD'
       );
     });
 

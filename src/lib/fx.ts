@@ -43,8 +43,7 @@ async function fetchRateFromAPI(from: string, to: string): Promise<number> {
 
   try {
     const response = await fetch(
-      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${from}`,
-      { next: { revalidate: 3600 } } // Next.js fetch cache
+      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${from}`
     );
 
     if (!response.ok) {
