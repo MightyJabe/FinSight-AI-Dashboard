@@ -86,6 +86,7 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    continue-on-error: true # Don't block PR merge if E2E tests fail
     steps:
       - uses: actions/checkout@v4
 

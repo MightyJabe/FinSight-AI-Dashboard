@@ -35,22 +35,28 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        storageState: 'tests/e2e/.auth/user.json',
-      },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        storageState: 'tests/e2e/.auth/user.json',
-      },
-      dependencies: ['setup'],
-    },
+    // Firefox and WebKit disabled in CI to stay under 20min timeout
+    // Re-enable locally: remove CI check or run `npx playwright test --project=firefox`
+    ...(process.env.CI
+      ? []
+      : [
+          {
+            name: 'firefox',
+            use: {
+              ...devices['Desktop Firefox'],
+              storageState: 'tests/e2e/.auth/user.json',
+            },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'webkit',
+            use: {
+              ...devices['Desktop Safari'],
+              storageState: 'tests/e2e/.auth/user.json',
+            },
+            dependencies: ['setup'],
+          },
+        ]),
   ],
   webServer: {
     command: 'npm run dev',
