@@ -2,6 +2,7 @@
 
 export interface Transaction {
   id: string;
+  providerTxId: string; // Unique ID from provider (for deduplication)
   type: 'income' | 'expense';
   amount: number;
   category: string;
@@ -21,6 +22,9 @@ export interface Account {
   balance: number;
   institution: string;
   currency?: string;
+  lastSyncAt?: string; // ISO timestamp of last successful sync
+  syncStatus?: 'active' | 'syncing' | 'error' | 'stale'; // Current sync status
+  syncError?: string; // Error message if sync failed
 }
 
 export interface ManualAsset {

@@ -5,7 +5,43 @@ All notable changes to the FinSight AI Dashboard project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2025-11-28
+## [Unreleased]
+
+### Added
+
+- Type-safe Firestore wrapper functions in `src/types/firestore.ts`
+  - `queryDocToData<T>()` - Convert QueryDocumentSnapshot to typed data
+  - `firestoreDocToData<T>()` - Convert DocumentSnapshot to typed data
+  - `batchToData<T>()` - Convert query batches to typed arrays
+  - `getDocData<T>()` - Safely get document data with existence check
+- Generic `ApiResponse<T>` interface for type-safe API responses
+- Structured error logging with metadata across all services
+
+### Changed
+
+- **Type Safety Improvements**: Reduced `any` types from 69 to ~20 instances
+  - Updated logger interface to use `Record<string, unknown>` instead of `any`
+  - Improved AI response types with proper generics and type guards
+  - Fixed catch block error types across the codebase
+  - Updated 20+ files to use new Firestore helpers
+- **Logging Migration**: Migrated 61 files from `console.*` to centralized `logger` service
+  - Standardized error logging with structured metadata
+  - Kept `console.log` only for CI environment checks and WebVitals monitoring
+- Fixed GitHub Actions workflow warning for missing test-results artifact
+
+### Removed
+
+- Empty JSDoc blocks across multiple files
+- Vague TODO comments replaced with explicit descriptions
+
+### Repository Cleanup Phases Completed (January 2026)
+
+- ✅ Phase 1: Removed empty JSDoc blocks and commented code
+- ✅ Phase 2: Migrated 61 files to centralized logger service
+- ✅ Phase 3.1: Fixed logger metadata and catch block types (Quick Wins)
+- ✅ Phase 3.2: Improved AI response types, Firestore wrappers, API response types (Medium Complexity)
+
+## [2.0.0] - 2024-11-28
 
 ### Added
 

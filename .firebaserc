@@ -1,5 +1,9 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "finsight-ai-test",
+    "test": "finsight-ai-test",
+    "production": "finsight-ai-dashboard-2281a"
+  },
   "targets": {},
   "etags": {}
 }

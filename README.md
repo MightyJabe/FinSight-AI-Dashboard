@@ -70,7 +70,7 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 
 ## Testing
 
-Comprehensive testing infrastructure with unit tests, integration tests, and E2E tests.
+Comprehensive testing infrastructure with unit tests and integration tests using Jest.
 
 ### Test Commands
 
@@ -80,22 +80,13 @@ npm run test              # Run all tests
 npm run test:watch        # Watch mode for development
 npm run test:coverage     # Run with coverage report
 npm run test:ci           # CI-optimized (runs in band)
-
-# E2E Tests (Playwright)
-npx playwright test              # Run all E2E tests
-npx playwright test --ui         # Run with UI mode
-npx playwright test --debug      # Run in debug mode
-npx playwright show-report       # View last test report
-
-# Full Test Suite
-npm run test:all          # Run unit + E2E tests
+npm run test:all          # Run all tests
 ```
 
 ### Test Coverage
 
 Current test coverage:
 - **167 Unit Tests** across utilities, validators, API routes, and components
-- **40+ E2E Tests** covering authentication and dashboard flows
 - **Coverage Targets**: 80% global, 90% for financial calculations
 
 #### Coverage by Area
@@ -110,14 +101,6 @@ Current test coverage:
 
 ```
 tests/
-├── e2e/                          # Playwright E2E tests
-│   ├── .auth/                    # Authenticated session storage
-│   ├── pages/                    # Page Object Models
-│   │   ├── LoginPage.ts          # Login page POM
-│   │   └── DashboardPage.ts      # Dashboard page POM
-│   ├── auth.setup.ts             # Auth setup fixture
-│   ├── auth.spec.ts              # Authentication flow tests
-│   └── dashboard.spec.ts         # Dashboard flow tests
 ├── factories/                    # Test data factories
 │   ├── user.factory.ts           # User test data
 │   ├── transaction.factory.ts   # Transaction test data
@@ -172,41 +155,12 @@ describe('AuthGuard', () => {
 });
 ```
 
-#### E2E Test Example
-```typescript
-import { test, expect } from '@playwright/test';
-import { LoginPage } from './pages/LoginPage';
-
-test('should login successfully', async ({ page }) => {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.login('test@example.com', 'password');
-  await expect(page).toHaveURL('/dashboard');
-});
-```
-
-### Test Environment
-
-E2E tests require test credentials:
-
-```bash
-# .env.test
-E2E_TEST_EMAIL=test@example.com
-E2E_TEST_PASSWORD=testpassword123
-
-# Firebase test project credentials
-NEXT_PUBLIC_FIREBASE_API_KEY=your-test-key
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-test-project
-# ... other Firebase config
-```
-
 ### CI/CD Integration
 
 Tests run automatically on every push and PR via GitHub Actions:
 
 - ✅ **Lint & Type Check** - ESLint + TypeScript validation
 - ✅ **Unit Tests** - Jest with coverage reporting to Codecov
-- ✅ **E2E Tests** - Playwright across Chromium, Firefox, WebKit
 - ✅ **Build Validation** - Production build verification
 
 Coverage reports are uploaded to [Codecov](https://codecov.io) for tracking over time.
@@ -221,9 +175,6 @@ npm run dev
 
 # Terminal 2: Watch tests
 npm run test:watch
-
-# Terminal 3: E2E tests (when needed)
-npx playwright test --ui
 ```
 
 ### Best Practices
@@ -231,10 +182,8 @@ npx playwright test --ui
 1. **Test First**: Write tests for new features before implementation
 2. **Coverage Targets**: Maintain 80% global coverage, 90% for financial code
 3. **Data Factories**: Use test factories for consistent test data
-4. **Page Object Models**: Use POMs for E2E tests to reduce duplication
-5. **Mock External APIs**: Always mock Plaid, OpenAI, and Firebase in unit tests
-6. **Test Edge Cases**: Cover loading, error, and empty states
-7. **Accessibility**: Include a11y checks in E2E tests
+4. **Mock External APIs**: Always mock Plaid, OpenAI, and Firebase in unit tests
+5. **Test Edge Cases**: Cover loading, error, and empty states
 
 ## Documentation
 

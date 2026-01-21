@@ -143,6 +143,13 @@ export async function POST(req: NextRequest) {
                 return id.replace(/[\/\\\.]/g, '_').substring(0, 100);
             };
 
+            // Generate providerTxId for deduplication
+            const generateProviderTxId = (tx: any, provider: string): string => {
+                // For Israeli banking, use combination of date, amount, description
+                const key = `${provider}_${tx.date}_${tx.originalAmount}_${tx.description}`.toLowerCase();
+                return sanitizeDocId(key);
+            };
+
             // Save accounts to Firestore
             const accountsBatch = adminDb.batch();
             for (const account of scrapedAccounts) {
@@ -156,30 +163,36 @@ export async function POST(req: NextRequest) {
                     ...account,
                     connectionId: connectionRef.id,
                     userId,
+                    lastSyncAt: new Date(),
+                    syncStatus: 'active',
                     updatedAt: new Date()
                 });
             }
             await accountsBatch.commit();
             logger.info(`[Connect] Saved ${scrapedAccounts.length} accounts to Firestore`);
 
-            // Save transactions to Firestore
+            // Save transactions to Firestore with deduplication
             const txBatch = adminDb.batch();
             for (const tx of scrapedTransactions) {
-                const docId = sanitizeDocId(String(tx.id));
+                // Generate providerTxId for deduplication
+                const providerTxId = generateProviderTxId(tx, 'israel');
+
                 const txRef = adminDb
                     .collection('users')
                     .doc(userId)
                     .collection('transactions')
-                    .doc(docId);
+                    .doc(providerTxId); // Use providerTxId as document ID
+
                 txBatch.set(txRef, {
                     ...tx,
+                    providerTxId, // Store providerTxId in the document
                     connectionId: connectionRef.id,
                     userId,
                     updatedAt: new Date()
-                });
+                }, { merge: true }); // Enable upsert behavior
             }
             await txBatch.commit();
-            logger.info(`[Connect] Saved ${scrapedTransactions.length} transactions to Firestore`);
+            logger.info(`[Connect] Saved/updated ${scrapedTransactions.length} transactions to Firestore`);
 
             return NextResponse.json({
                 success: true,

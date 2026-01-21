@@ -1,5 +1,7 @@
 import useSWR from 'swr';
 
+import type { SupportedCurrency } from '@/lib/fx';
+
 export interface UserSettings {
   onboardingComplete: boolean;
   useDemoData: boolean;
@@ -7,6 +9,7 @@ export interface UserSettings {
   goalTarget: number | null;
   proTrialRequested: boolean;
   aiProactive: boolean;
+  baseCurrency: SupportedCurrency;
   plan: 'free' | 'pro' | 'elite';
   proActive: boolean;
   proExpiresAt: string | null;
@@ -21,6 +24,7 @@ const defaultSettings: UserSettings = {
   goalTarget: null,
   proTrialRequested: false,
   aiProactive: true,
+  baseCurrency: 'USD',
   plan: 'free',
   proActive: false,
   proExpiresAt: null,

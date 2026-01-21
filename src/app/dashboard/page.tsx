@@ -13,13 +13,19 @@ import { RealTimeIndicator } from '@/components/common/RealTimeIndicator';
 import { ConnectBankCTA } from '@/components/dashboard/ConnectBankCTA';
 import { NetWorthBreakdown } from '@/components/dashboard/NetWorthBreakdown';
 import { NetWorthHero } from '@/components/dashboard/NetWorthHero';
+import { NetWorthHistoryChart } from '@/components/dashboard/NetWorthHistoryChart';
 import { ProactiveInsightsCard } from '@/components/dashboard/ProactiveInsightsCard';
+import { useSession } from '@/components/providers/SessionProvider';
 import { DashboardSkeleton } from '@/components/ui';
 import { useNetWorth } from '@/hooks/use-net-worth';
 import { useRealtimeDashboard } from '@/hooks/use-realtime-dashboard';
+import { useUserSettings } from '@/hooks/use-user-settings';
 import { formatCurrency } from '@/lib/utils';
 
 function DashboardPage() {
+  const { user } = useSession();
+  const { settings } = useUserSettings(Boolean(user));
+
   // Real-time net worth with 10-second polling
   const {
     data: netWorthData,
@@ -50,8 +56,8 @@ function DashboardPage() {
   const totalAssets = netWorthData?.totalAssets ?? overview?.totalAssets ?? 0;
   const totalLiabilities = netWorthData?.totalLiabilities ?? overview?.totalLiabilities ?? 0;
 
-  // Determine primary currency from accounts (most common or first available)
-  const primaryCurrency = (() => {
+  // Use user's preferred currency from settings, fallback to account-derived currency
+  const primaryCurrency = settings.baseCurrency || (() => {
     const accountsWithCurrency = accounts.filter((acc: { currency?: string }) => acc.currency);
     if (accountsWithCurrency.length === 0) return 'USD';
     // Count occurrences of each currency
@@ -174,6 +180,13 @@ function DashboardPage() {
             liabilitiesByType={liabilitiesByType}
             currency={primaryCurrency}
           />
+        </section>
+      )}
+
+      {/* Net Worth History Chart */}
+      {accounts.length > 0 && (
+        <section className="mb-6 sm:mb-8 lg:mb-10 animate-in delay-250">
+          <NetWorthHistoryChart />
         </section>
       )}
 

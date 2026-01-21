@@ -18,7 +18,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:all": "jest --passWithNoTests",
-    "test:ci": "jest --passWithNoTests --runInBand"
+    "test:ci": "jest --passWithNoTests --runInBand",
+    "backfill": "ts-node -r dotenv/config scripts/backfill-snapshots.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -62,7 +63,6 @@
   "devDependencies": {
     "@faker-js/faker": "^10.2.0",
     "@next/bundle-analyzer": "^14.2.30",
-    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",

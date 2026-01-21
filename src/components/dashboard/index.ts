@@ -18,6 +18,7 @@ export { InvestmentAdvisor } from './InvestmentAdvisor';
 export { default as InvestmentOverview } from './InvestmentOverview';
 export { LiabilitiesSection } from './LiabilitiesSection';
 export { NetWorthDisplay } from './NetWorthDisplay';
+export { NetWorthHistoryChart } from './NetWorthHistoryChart';
 export { OverviewCards } from './OverviewCards';
 export { RecentTransactions } from './RecentTransactions';
 export { UndoToast } from './UndoToast';

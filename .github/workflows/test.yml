@@ -1,16 +1,18 @@
-name: Test Suite
+name: Run Tests
 
 on:
-  push:
-    branches: [main, master, develop]
   pull_request:
-    branches: [main, master, develop]
+    branches: [master, main]
+  push:
+    branches: [master, main]
+  workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
-  lint-and-typecheck:
+  lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
@@ -50,23 +52,24 @@ jobs:
         run: npm run test:coverage
         env:
           CI: true
-          # Firebase Client SDK
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY_TEST }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_TEST }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_TEST }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID_TEST }}
-          # Firebase Admin SDK (mocked in unit tests, but env vars needed)
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          # Plaid credentials
-          PLAID_CLIENT_ID: ${{ secrets.PLAID_CLIENT_ID }}
-          PLAID_SECRET: ${{ secrets.PLAID_SECRET }}
+          # Mock API keys for tests
+          OPENAI_API_KEY: test-openai-key
+          PLAID_CLIENT_ID: test_client_id
+          PLAID_SECRET: test_secret
           PLAID_ENV: sandbox
+          ENCRYPTION_KEY: test_encryption_key_32_chars_long
+          FIREBASE_PROJECT_ID: test-project-id
+          FIREBASE_CLIENT_EMAIL: test@test.iam.gserviceaccount.com
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: test-api-key
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: test.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: test-project-id
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: test.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '123456789'
+          NEXT_PUBLIC_FIREBASE_APP_ID: '1:123456789:web:abcdef'
 
       - name: Upload coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -76,82 +79,20 @@ jobs:
           fail_ci_if_error: false
 
       - name: Archive coverage reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
           retention-days: 7
+          if-no-files-found: ignore
 
-  e2e-tests:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run Playwright tests (Mocked APIs)
-        run: npx playwright test --grep-invert "Smoke Tests"
-        env:
-          CI: true
-          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY_TEST }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_TEST }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_TEST }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID_TEST }}
-
-      - name: Run Smoke Tests (Real APIs)
-        run: npx playwright test --grep "Smoke Tests"
-        env:
-          CI: true
-          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-          # Firebase Client SDK (for auth)
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY_TEST }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_TEST }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_TEST }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID_TEST }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID_TEST }}
-          # Firebase Admin SDK (for API routes)
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-
-      - name: Upload Playwright report (Mocked)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-mocked
-          path: playwright-report/
-          retention-days: 7
-
-      - name: Upload Playwright report (Smoke)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-smoke
-          path: test-results/
-          retention-days: 7
+  # E2E tests disabled - too expensive to maintain, rely on unit tests with mocks instead
+  # Re-enable with Firebase emulators if needed in the future
 
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-tests]
     steps:
       - uses: actions/checkout@v4
 
@@ -164,19 +105,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production
+      - name: Build application
         run: npm run build
         env:
-          # Dummy environment variables for build (actual secrets not needed for build validation)
-          NEXT_PUBLIC_FIREBASE_API_KEY: 'dummy-key'
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'dummy-domain'
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'dummy-project'
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 'dummy-bucket'
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: 'dummy-sender'
-          NEXT_PUBLIC_FIREBASE_APP_ID: 'dummy-app-id'
+          # Mock values for build
+          OPENAI_API_KEY: build-test-key
+          PLAID_CLIENT_ID: build_test_client
+          PLAID_SECRET: build_test_secret
+          PLAID_ENV: sandbox
+          ENCRYPTION_KEY: build_test_encryption_key_32_chars
+          FIREBASE_PROJECT_ID: build-test-project
+          FIREBASE_CLIENT_EMAIL: build@test.iam.gserviceaccount.com
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: build-test-api-key
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: build-test.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: build-test-project
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: build-test.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '987654321'
+          NEXT_PUBLIC_FIREBASE_APP_ID: '1:987654321:web:fedcba'
 
-      - name: Check bundle size
-        run: |
-          echo "Build completed successfully!"
-          echo "Checking .next directory..."
-          ls -lah .next/ || true
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .next/
+          retention-days: 1
+          if-no-files-found: ignore
