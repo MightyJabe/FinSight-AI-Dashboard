@@ -54,9 +54,6 @@ npm run type-check
 
 # Linting
 npm run lint:fix
-
-# E2E tests (if applicable)
-npm run test:e2e
 ```
 
 **Step 5: Commit**
@@ -353,7 +350,6 @@ When reviewing code (yours or others):
 ### Testing
 - [ ] Unit tests for utilities
 - [ ] Component tests for complex logic
-- [ ] E2E tests for critical flows
 
 ### Performance
 - [ ] No unnecessary re-renders

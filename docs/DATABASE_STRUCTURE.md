@@ -1,17 +1,16 @@
 # FinSight AI - Firestore Database Structure
 
-Complete documentation of the Firestore database schema for production and test environments.
+Complete documentation of the Firestore database schema for the production environment.
 
 ## Database Overview
 
-Both **production** (`finsight-ai-dashboard-2281a`) and **test** (`finsight-ai-test`) projects use identical database structures.
+Production Firebase project: `finsight-ai-dashboard-2281a`
 
-### Firebase Projects
+### Firebase Project
 
 | Environment | Project ID | Location | Status |
 |-------------|------------|----------|--------|
 | **Production** | `finsight-ai-dashboard-2281a` | nam5 | ✅ Active |
-| **Test** | `finsight-ai-test` | nam5 | ✅ Active |
 
 ---
 
@@ -589,12 +588,8 @@ Required composite indexes for efficient queries:
 To replicate production data structure to test:
 
 ```bash
-# 1. Export production data
+# Export production data
 firebase firestore:export gs://finsight-ai-dashboard-2281a-backup --project finsight-ai-dashboard-2281a
-
-# 2. Import to test (optional - for testing with real data)
-# WARNING: Use anonymized data only!
-firebase firestore:import gs://finsight-ai-dashboard-2281a-backup --project finsight-ai-test
 ```
 
 ### Backup Strategy
@@ -646,7 +641,6 @@ users/{testUserId} {
 ## References
 
 - **Production Project**: https://console.firebase.google.com/project/finsight-ai-dashboard-2281a
-- **Test Project**: https://console.firebase.google.com/project/finsight-ai-test
 - **Security Rules**: `firestore.rules`
 - **Indexes Config**: `firestore.indexes.json`
 

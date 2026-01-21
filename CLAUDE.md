@@ -41,7 +41,6 @@ npm run lint && npm run type-check && npm run test:all && npm run build
 |-------|-------|-------------|
 | `frontend-design` | `/frontend-design` | Creating/modifying UI components, styling, responsive layouts |
 | `feature-dev` | `/feature-dev` | Guided feature development with architecture focus |
-| `playwright` | Browser tools | E2E testing, browser automation |
 | `figma` | `implement-design` | Converting Figma designs to code |
 
 ### Custom Agents
@@ -132,7 +131,7 @@ src/
 - Define props with TypeScript interfaces
 - Handle loading, error, and empty states
 - Use composition over prop drilling
-- Use `data-testid` attributes for E2E testing
+- Use `data-testid` attributes for testing
 
 ### Tailwind CSS
 - Use utility classes, avoid custom CSS
@@ -206,7 +205,6 @@ export async function POST(req: Request) {
 
 ### Test Locations
 - **Unit/Integration**: `src/lib/__tests__/`, component co-location
-- **E2E**: `tests/e2e/` (Playwright)
 
 ### Commands
 ```bash
@@ -218,7 +216,7 @@ npm run test:ci           # CI optimized (--runInBand)
 
 ### Mock Requirements
 - Mock Firebase Admin SDK, Plaid API, and OpenAI in tests
-- Use `data-testid` attributes for E2E selectors
+- Use `data-testid` attributes for test selectors
 - Coverage target: 80% minimum, 90% for financial calculations
 
 ---
