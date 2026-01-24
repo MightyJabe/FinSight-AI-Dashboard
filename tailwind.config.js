@@ -53,6 +53,39 @@ module.exports = {
         display: ['var(--font-display)', 'Georgia', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
+      // Fluid typography using clamp() for smooth scaling from 375px to 2560px
+      fontSize: {
+        // Base sizes (mobile-first)
+        xs: ['0.75rem', { lineHeight: '1rem' }],
+        sm: ['0.875rem', { lineHeight: '1.25rem' }],
+        base: ['1rem', { lineHeight: '1.5rem' }],
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],
+        xl: ['1.25rem', { lineHeight: '1.75rem' }],
+
+        // Fluid typography scales
+        // Formula: clamp(min, preferred (min + viewport-based growth), max)
+        // Viewport units scale between 375px (mobile) and 2560px (ultra-wide)
+        'fluid-xs': ['clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)', { lineHeight: '1.5' }],
+        'fluid-sm': ['clamp(0.875rem, 0.825rem + 0.25vw, 1rem)', { lineHeight: '1.5' }],
+        'fluid-base': ['clamp(1rem, 0.95rem + 0.25vw, 1.125rem)', { lineHeight: '1.5' }],
+        'fluid-lg': ['clamp(1.125rem, 1.05rem + 0.375vw, 1.375rem)', { lineHeight: '1.5' }],
+        'fluid-xl': ['clamp(1.25rem, 1.15rem + 0.5vw, 1.625rem)', { lineHeight: '1.4' }],
+        'fluid-2xl': ['clamp(1.5rem, 1.35rem + 0.75vw, 2rem)', { lineHeight: '1.3' }],
+        'fluid-3xl': ['clamp(1.875rem, 1.65rem + 1.125vw, 2.625rem)', { lineHeight: '1.2' }],
+        'fluid-4xl': ['clamp(2.25rem, 1.95rem + 1.5vw, 3.5rem)', { lineHeight: '1.1' }],
+        'fluid-5xl': ['clamp(3rem, 2.5rem + 2.5vw, 5rem)', { lineHeight: '1' }],
+        'fluid-6xl': ['clamp(3.75rem, 3rem + 3.75vw, 6.5rem)', { lineHeight: '1' }],
+
+        // Maintain original 2xl-9xl for backwards compatibility
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        '5xl': ['3rem', { lineHeight: '1' }],
+        '6xl': ['3.75rem', { lineHeight: '1' }],
+        '7xl': ['4.5rem', { lineHeight: '1' }],
+        '8xl': ['6rem', { lineHeight: '1' }],
+        '9xl': ['8rem', { lineHeight: '1' }],
+      },
       // Semantic spacing
       spacing: {
         18: '4.5rem',

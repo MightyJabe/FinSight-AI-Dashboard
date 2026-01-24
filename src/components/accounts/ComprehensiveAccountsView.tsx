@@ -559,49 +559,51 @@ export function ComprehensiveAccountsView() {
                 />
               ) : (
                 data.bankAccounts.map(account => (
-                  <Card key={account.id} variant="elevated" hover>
-                    <CardContent>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-gray-900">{account.name}</h4>
-                            {isAccountStale(account) && (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200"
-                                title="Account hasn't synced in 24+ hours"
-                              >
-                                <AlertTriangle className="w-3 h-3" />
-                                Stale
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500">
-                            {account.institutionName} • {account.type}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {account.source === 'israel' && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                🇮🇱 Israeli Bank
-                              </span>
-                            )}
-                            {(account.lastSyncAt || account.updatedAt) && (
-                              <span className="text-xs text-gray-400">
-                                Last sync: {new Date(account.lastSyncAt || account.updatedAt).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold">{formatCurrency(account.balance, account.currency)}</p>
-                          {account.availableBalance && (
-                            <p className="text-sm text-gray-500">
-                              Available: {formatCurrency(account.availableBalance, account.currency)}
+                  <div key={account.id} className="@container">
+                    <Card variant="elevated" hover>
+                      <CardContent>
+                        <div className="flex flex-col @md:flex-row justify-between @md:items-start gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-semibold text-foreground">{account.name}</h4>
+                              {isAccountStale(account) && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                                  title="Account hasn't synced in 24+ hours"
+                                >
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Stale
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {account.institutionName} • {account.type}
                             </p>
-                          )}
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              {account.source === 'israel' && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                  🇮🇱 Israeli Bank
+                                </span>
+                              )}
+                              {(account.lastSyncAt || account.updatedAt) && (
+                                <span className="text-xs text-muted-foreground">
+                                  Last sync: {new Date(account.lastSyncAt || account.updatedAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-left @md:text-right">
+                            <p className="text-xl @lg:text-2xl font-bold text-foreground">{formatCurrency(account.balance, account.currency)}</p>
+                            {account.availableBalance && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Available: {formatCurrency(account.availableBalance, account.currency)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 ))
               )}
             </div>

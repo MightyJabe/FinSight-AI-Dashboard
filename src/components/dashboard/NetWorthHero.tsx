@@ -82,28 +82,30 @@ function useAnimatedValue(value: number, duration: number = 1000) {
 
 function NetWorthHeroSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 lg:p-14">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px]" />
-      </div>
+    <div className="@container">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px]" />
+        </div>
 
-      <div className="relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
-          <div className="flex-1">
-            <Skeleton className="h-4 w-36 mb-4 bg-neutral-700/50" />
-            <Skeleton className="h-20 lg:h-28 w-80 lg:w-96 mb-6 bg-neutral-700/50" />
-            <Skeleton className="h-5 w-48 bg-neutral-700/50" />
-          </div>
-          <div className="flex items-end gap-1.5 h-24 opacity-30">
-            {Array.from({ length: 14 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="w-4 lg:w-5 rounded-t-sm bg-neutral-700/50"
-                style={{ height: `${Math.random() * 60 + 30}%` }}
-              />
-            ))}
+        <div className="relative z-10">
+          <div className="flex flex-col @lg:flex-row @lg:items-end @lg:justify-between gap-10">
+            <div className="flex-1">
+              <Skeleton className="h-4 w-36 mb-4 bg-neutral-700/50" />
+              <Skeleton className="h-20 @lg:h-28 w-80 @lg:w-96 mb-6 bg-neutral-700/50" />
+              <Skeleton className="h-5 w-48 bg-neutral-700/50" />
+            </div>
+            <div className="flex items-end gap-1.5 h-24 opacity-30">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className="w-4 @lg:w-5 rounded-t-sm bg-neutral-700/50"
+                  style={{ height: `${Math.random() * 60 + 30}%` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -113,33 +115,35 @@ function NetWorthHeroSkeleton() {
 
 function EmptyState({ onConnect }: { onConnect?: () => void }) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 lg:p-14">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-neutral-500/10 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="relative z-10 text-center py-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-700/30 mb-6">
-          <Sparkles className="w-8 h-8 text-neutral-400" />
+    <div className="@container">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-neutral-500/10 rounded-full blur-[100px]" />
         </div>
-        <p className="text-neutral-400 text-sm font-medium uppercase tracking-[0.2em] mb-4">
-          Total Net Worth
-        </p>
-        <h2 className="text-4xl lg:text-5xl font-display text-neutral-500 tracking-tight mb-5">
-          No Data Available
-        </h2>
-        <p className="text-neutral-500 text-base max-w-md mx-auto mb-8 leading-relaxed">
-          Connect your bank accounts to see your total net worth and financial overview.
-        </p>
-        {onConnect && (
-          <button
-            onClick={onConnect}
-            className="px-8 py-3.5 bg-white text-neutral-900 rounded-full text-sm font-semibold hover:bg-neutral-100 hover:scale-105 active:scale-100 transition-all duration-200 shadow-lg shadow-white/10"
-          >
-            Connect Bank Account
-          </button>
-        )}
+
+        <div className="relative z-10 text-center py-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-700/30 mb-6">
+            <Sparkles className="w-8 h-8 text-neutral-400" />
+          </div>
+          <p className="text-neutral-400 text-sm font-medium uppercase tracking-[0.2em] mb-4">
+            Total Net Worth
+          </p>
+          <h2 className="text-4xl @lg:text-5xl font-display text-neutral-500 tracking-tight mb-5">
+            No Data Available
+          </h2>
+          <p className="text-neutral-500 text-base max-w-md mx-auto mb-8 leading-relaxed">
+            Connect your bank accounts to see your total net worth and financial overview.
+          </p>
+          {onConnect && (
+            <button
+              onClick={onConnect}
+              className="px-8 py-3.5 bg-white text-neutral-900 rounded-full text-sm font-semibold hover:bg-neutral-100 hover:scale-105 active:scale-100 transition-all duration-200 shadow-lg shadow-white/10"
+            >
+              Connect Bank Account
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -182,51 +186,52 @@ function NetWorthHeroComponent({
     : [40, 55, 45, 60, 52, 70, 65, 80, 75, 90, 85, 95, 88, 92];
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 lg:p-14">
-      {/* Premium background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Main glow based on performance */}
-        <div
-          className={cn(
-            'absolute -top-1/2 -right-1/4 w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-1000',
-            isPositive ? 'bg-emerald-500/25' : 'bg-rose-500/20'
-          )}
-        />
-        {/* Secondary accent glow */}
-        <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px]" />
-        {/* Tertiary subtle glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[80px]" />
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-        {/* Radial gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-      </div>
-
-      <div className="relative z-10">
-        {/* Real-time status badge */}
-        <div className="absolute top-0 right-0">
-          <RealTimeBadge isValidating={isValidating || isRefreshing} isStale={isStale} />
+    <div className="@container">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+        {/* Premium background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Main glow based on performance */}
+          <div
+            className={cn(
+              'absolute -top-1/2 -right-1/4 w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-1000',
+              isPositive ? 'bg-emerald-500/25' : 'bg-rose-500/20'
+            )}
+          />
+          {/* Secondary accent glow */}
+          <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px]" />
+          {/* Tertiary subtle glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[80px]" />
+          {/* Grid pattern overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+          {/* Radial gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
 
-        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-10 xl:gap-16">
-          <div className="flex-1">
-            {/* Label with live indicator */}
-            <div className="flex items-center gap-3 mb-5">
-              <p className="text-neutral-400 text-sm font-semibold uppercase tracking-[0.2em]">
-                Total Net Worth
-              </p>
-              <LiveDot isLive={!isStale} isStale={isStale} />
-            </div>
+        <div className="relative z-10">
+          {/* Real-time status badge */}
+          <div className="absolute top-0 right-0">
+            <RealTimeBadge isValidating={isValidating || isRefreshing} isStale={isStale} />
+          </div>
 
-            {/* Main value - THE BIG NUMBER */}
-            <h2
-              className={cn(
-                'font-display text-6xl sm:text-7xl lg:text-8xl xl:text-[6.5rem] text-white tracking-tight tabular-nums leading-none transition-opacity duration-300',
-                isValidating && 'opacity-70'
-              )}
-            >
-              {formatCurrency(Math.round(animatedNetWorth), currency)}
-            </h2>
+          <div className="flex flex-col @3xl:flex-row @3xl:items-end @3xl:justify-between gap-10 @3xl:gap-16">
+            <div className="flex-1">
+              {/* Label with live indicator */}
+              <div className="flex items-center gap-3 mb-5">
+                <p className="text-neutral-400 text-sm font-semibold uppercase tracking-[0.2em]">
+                  Total Net Worth
+                </p>
+                <LiveDot isLive={!isStale} isStale={isStale} />
+              </div>
+
+              {/* Main value - THE BIG NUMBER */}
+              <h2
+                className={cn(
+                  'font-display text-6xl sm:text-7xl @lg:text-8xl @3xl:text-[6.5rem] text-white tracking-tight tabular-nums leading-none transition-opacity duration-300',
+                  isValidating && 'opacity-70'
+                )}
+              >
+                {formatCurrency(Math.round(animatedNetWorth), currency)}
+              </h2>
 
             {/* Change indicator - prominent and clear */}
             {change !== null && (
@@ -291,12 +296,12 @@ function NetWorthHeroComponent({
           </div>
 
           {/* Mini Chart - visual trend */}
-          <div className="flex items-end gap-1.5 h-24 lg:h-28">
+          <div className="flex items-end gap-1.5 h-24 @lg:h-28">
             {chartData.map((h, i) => (
               <div
                 key={i}
                 className={cn(
-                  'w-4 lg:w-5 rounded-t transition-all duration-500 ease-out',
+                  'w-4 @lg:w-5 rounded-t transition-all duration-500 ease-out',
                   isPositive
                     ? 'bg-gradient-to-t from-emerald-600/60 to-emerald-400'
                     : 'bg-gradient-to-t from-rose-600/60 to-rose-400'
@@ -311,6 +316,7 @@ function NetWorthHeroComponent({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

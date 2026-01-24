@@ -47,20 +47,21 @@ export const cardVariants = cva(
 );
 
 /**
- * Heading component variants
- * Used for all heading levels (h1-h6) with consistent sizing and styling
+ * Heading component variants with fluid typography
+ * Uses clamp() for smooth responsive scaling from 375px to 2560px
+ * Headings automatically scale without breakpoints for optimal readability
  */
 export const headingVariants = cva(
-  'font-semibold tracking-tight',
+  'font-display tracking-tight',
   {
     variants: {
       size: {
-        h1: 'text-4xl md:text-5xl lg:text-6xl',
-        h2: 'text-3xl md:text-4xl',
-        h3: 'text-2xl md:text-3xl',
-        h4: 'text-xl md:text-2xl',
-        h5: 'text-lg md:text-xl',
-        h6: 'text-base md:text-lg',
+        h1: 'text-fluid-6xl',
+        h2: 'text-fluid-5xl',
+        h3: 'text-fluid-4xl',
+        h4: 'text-fluid-3xl',
+        h5: 'text-fluid-2xl',
+        h6: 'text-fluid-xl',
       },
       color: {
         default: 'text-foreground',
@@ -78,14 +79,14 @@ export const headingVariants = cva(
     defaultVariants: {
       size: 'h2',
       color: 'default',
-      weight: 'semibold',
+      weight: 'bold',
     },
   }
 );
 
 /**
- * Text component variants
- * Used for body text, captions, and inline text elements
+ * Text component variants with fluid and fixed sizing options
+ * Includes both fluid (clamp-based) and fixed sizes for flexibility
  */
 export const textVariants = cva(
   '',
@@ -98,6 +99,12 @@ export const textVariants = cva(
         lg: 'text-lg',
         xl: 'text-xl',
         '2xl': 'text-2xl',
+        // Fluid sizes for dynamic scaling
+        'fluid-xs': 'text-fluid-xs',
+        'fluid-sm': 'text-fluid-sm',
+        'fluid-base': 'text-fluid-base',
+        'fluid-lg': 'text-fluid-lg',
+        'fluid-xl': 'text-fluid-xl',
       },
       color: {
         default: 'text-foreground',

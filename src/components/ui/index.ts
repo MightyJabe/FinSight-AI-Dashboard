@@ -7,3 +7,5 @@ export { EmptyState } from './EmptyState';
 export type { InputProps } from './Input';
 export { Input, inputVariants } from './Input';
 export { Modal } from './Modal';
+export type { PresetGridProps, ResponsiveGridProps } from './ResponsiveGrid';
+export { gridPresets, PresetGrid, ResponsiveGrid } from './ResponsiveGrid';
