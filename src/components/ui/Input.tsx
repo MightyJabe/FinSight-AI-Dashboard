@@ -1,21 +1,21 @@
+import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import React from 'react';
 
 import { cn } from '@/lib/utils';
 
 const inputVariants = cva(
-  'flex w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
   {
     variants: {
       variant: {
-        default: 'border-gray-300 focus-visible:ring-blue-600',
-        error: 'border-red-500 focus-visible:ring-red-600',
-        success: 'border-green-500 focus-visible:ring-green-600',
+        default: 'border-input',
+        error: 'border-destructive focus-visible:ring-destructive',
+        success: 'border-green-500 focus-visible:ring-green-500 dark:border-green-600',
       },
       inputSize: {
-        sm: 'h-9 text-sm',
-        md: 'h-10 text-base',
-        lg: 'h-12 text-lg',
+        sm: 'h-8 text-xs',
+        md: 'h-9 text-sm',
+        lg: 'h-11 text-base',
       },
     },
     defaultVariants: {
@@ -26,7 +26,8 @@ const inputVariants = cva(
 );
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>, VariantProps<typeof inputVariants> {
+  extends React.InputHTMLAttributes<HTMLInputElement>,
+    VariantProps<typeof inputVariants> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -36,7 +37,7 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { className, variant, inputSize, label, error, helperText, leftIcon, rightIcon, ...props },
+    { className, variant, inputSize, label, error, helperText, leftIcon, rightIcon, type, ...props },
     ref
   ) => {
     const inputVariant = error ? 'error' : variant;
@@ -44,18 +45,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             {label}
-            {props.required && <span className="ml-1 text-red-500">*</span>}
+            {props.required && <span className="ml-1 text-destructive">*</span>}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
               {leftIcon}
             </div>
           )}
           <input
+            type={type}
             className={cn(
               inputVariants({ variant: inputVariant, inputSize }),
               leftIcon && 'pl-10',
@@ -66,13 +68,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
               {rightIcon}
             </div>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+        {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+        {helperText && !error && <p className="mt-1 text-sm text-muted-foreground">{helperText}</p>}
       </div>
     );
   }
