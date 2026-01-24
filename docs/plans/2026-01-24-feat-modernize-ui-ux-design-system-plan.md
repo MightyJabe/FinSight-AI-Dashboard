@@ -435,7 +435,7 @@ None - This is a frontend-only initiative with no blocking dependencies.
 - `C:\GIT_Projects\finsight-ai-dashboard\tailwind.config.js`
 
 **Success Criteria:**
-- [ ] `npx shadcn@latest add button` works successfully
+- [x] `npx shadcn@latest add button` works successfully
 - [ ] Fonts load from local files, Lighthouse score improves
 - [ ] Centralized variants import successfully in test component
 - [ ] OKLCH colors render correctly in light/dark mode
