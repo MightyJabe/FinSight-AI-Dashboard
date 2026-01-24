@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion';
+
+import { staggeredContainer, staggeredItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
@@ -20,29 +23,43 @@ export function Skeleton({ className, ...props }: SkeletonProps & React.HTMLAttr
 }
 
 /**
- * Card skeleton for dashboard cards
+ * Card skeleton for dashboard cards with staggered animation
  */
 export function CardSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn('bg-card rounded-xl shadow-sm border border-border p-6', className)}>
+    <motion.div
+      variants={staggeredItem}
+      initial="hidden"
+      animate="visible"
+      className={cn('bg-card rounded-xl shadow-sm border border-border p-6', className)}
+    >
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-5 w-5 rounded-full" />
       </div>
       <Skeleton className="h-8 w-24 mb-2" />
       <Skeleton className="h-4 w-16" />
-    </div>
+    </motion.div>
   );
 }
 
 /**
- * Transaction list skeleton
+ * Transaction list skeleton with staggered animation
  */
 export function TransactionSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="space-y-3">
+    <motion.div
+      variants={staggeredContainer}
+      initial="hidden"
+      animate="visible"
+      className="space-y-3"
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
+        <motion.div
+          key={i}
+          variants={staggeredItem}
+          className="flex items-center justify-between p-4 bg-card rounded-lg border border-border"
+        >
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="space-y-2">
@@ -54,9 +71,9 @@ export function TransactionSkeleton({ count = 5 }: { count?: number }) {
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-3 w-12" />
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
