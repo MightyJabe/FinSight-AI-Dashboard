@@ -43,6 +43,17 @@
     /* Logo gradient */
     --logoGradientStart: 59 130 246;
     --logoGradientEnd: 147 51 234;
+
+    /* OKLCH color space variants for better dark mode */
+    --background-oklch: oklch(98% 0.01 80);
+    --foreground-oklch: oklch(15% 0.02 40);
+    --card-oklch: oklch(100% 0 0);
+    --primary-oklch: oklch(15% 0.02 40);
+    --secondary-oklch: oklch(96% 0.01 80);
+    --muted-oklch: oklch(96% 0.01 80);
+    --accent-oklch: oklch(96% 0.01 80);
+    --destructive-oklch: oklch(50% 0.22 25);
+    --border-oklch: oklch(92% 0.01 80);
   }
 
   .dark {
@@ -69,6 +80,17 @@
     --gain: 34 197 94;
     --loss: 248 113 113;
     --gold: 250 204 21;
+
+    /* OKLCH color space variants for dark mode */
+    --background-oklch: oklch(10% 0 0);
+    --foreground-oklch: oklch(98% 0 0);
+    --card-oklch: oklch(15% 0 0);
+    --primary-oklch: oklch(98% 0 0);
+    --secondary-oklch: oklch(20% 0 0);
+    --muted-oklch: oklch(20% 0 0);
+    --accent-oklch: oklch(20% 0 0);
+    --destructive-oklch: oklch(58% 0.20 25);
+    --border-oklch: oklch(20% 0 0);
   }
 
   * {
