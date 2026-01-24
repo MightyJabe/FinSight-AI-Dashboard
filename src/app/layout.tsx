@@ -1,17 +1,36 @@
 import '@/app/globals.css';
 
-import { Inter } from 'next/font/google';
+import { Inter, Outfit, DM_Serif_Display } from 'next/font/google';
 
 import PerformanceMonitor from '@/components/common/PerformanceMonitor';
 import { WebVitals } from '@/components/common/WebVitals';
 import { ClientWrapper } from '@/components/layout/ClientWrapper';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
+});
+
+const dmSerif = DM_Serif_Display({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+});
 
 /** Root layout component that wraps the entire application */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${outfit.variable} ${dmSerif.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <title>FinSight AI Dashboard</title>
         <meta name="description" content="Track your net worth, manage finances, and get AI-powered insights - the #1 personal finance app for Israeli users" />
@@ -53,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${inter.className} overflow-x-hidden`}>
+      <body className={`${outfit.className} overflow-x-hidden`}>
         <ClientWrapper>{children}</ClientWrapper>
         <PerformanceMonitor />
         <WebVitals />
