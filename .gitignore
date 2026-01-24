@@ -68,6 +68,7 @@ Thumbs.db
 
 # AI assistant files
 .amazonq/
+.claude/
 
 # Scraper service
 services/scraper/node_modules/
