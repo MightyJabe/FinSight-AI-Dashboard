@@ -99,6 +99,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* WCAG 2.2 Focus Not Obscured (2.4.11) - offset for sticky header */
+    scroll-padding-top: 5rem; /* 80px - accounts for sticky header height */
   }
 
   body {
@@ -138,9 +140,23 @@
     @apply bg-muted-foreground/50;
   }
 
-  /* Focus styles */
+  /* Focus styles - Enhanced for WCAG 2.2 compliance */
   *:focus-visible {
-    @apply outline-none ring-2 ring-ring/50 ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Stronger focus for buttons and interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Input focus - distinct from button focus */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2;
   }
 
   /* Links - more subtle */
