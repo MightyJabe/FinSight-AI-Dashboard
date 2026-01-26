@@ -118,7 +118,7 @@ describe('Button Accessibility', () => {
     // Check for disabled styling
     expect(button?.className).toContain('disabled:pointer-events-none');
     expect(button?.className).toContain('disabled:opacity-50');
-    expect(button).toBeDisabled();
+    expect(button?.disabled).toBe(true);
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();

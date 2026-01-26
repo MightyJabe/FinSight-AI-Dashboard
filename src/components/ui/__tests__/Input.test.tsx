@@ -118,7 +118,7 @@ describe('Input Accessibility', () => {
     // Check for disabled styling
     expect(input?.className).toContain('disabled:cursor-not-allowed');
     expect(input?.className).toContain('disabled:opacity-50');
-    expect(input).toBeDisabled();
+    expect(input?.disabled).toBe(true);
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
@@ -130,28 +130,30 @@ describe('Input Accessibility', () => {
     const input = container.querySelector('input');
 
     // Label should be present
-    expect(label).toBeInTheDocument();
-    expect(label).toHaveTextContent('Full Name');
+    expect(label).toBeTruthy();
+    expect(label?.textContent).toContain('Full Name');
+    expect(label?.getAttribute('for')).toBe('fullName');
 
-    // Input should exist
-    expect(input).toBeInTheDocument();
+    // Input should exist and have matching ID
+    expect(input).toBeTruthy();
+    expect(input?.id).toBe('fullName');
   });
 
   it('should show required indicator when required', () => {
     const { container } = render(<Input label="Required field" required />);
     const requiredIndicator = container.querySelector('.text-destructive');
 
-    expect(requiredIndicator).toBeInTheDocument();
-    expect(requiredIndicator).toHaveTextContent('*');
+    expect(requiredIndicator).toBeTruthy();
+    expect(requiredIndicator?.textContent).toBe('*');
   });
 
   it('should display error message with proper styling', async () => {
     const errorMessage = 'This field is required';
     const { container } = render(<Input label="Field" error={errorMessage} />);
 
-    const errorText = container.querySelector('.text-destructive');
-    expect(errorText).toBeInTheDocument();
-    expect(errorText).toHaveTextContent(errorMessage);
+    const errorText = container.querySelector('p.text-destructive');
+    expect(errorText).toBeTruthy();
+    expect(errorText?.textContent).toBe(errorMessage);
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
@@ -161,9 +163,9 @@ describe('Input Accessibility', () => {
     const helperText = 'Enter your email address';
     const { container } = render(<Input label="Email" helperText={helperText} />);
 
-    const helper = container.querySelector('.text-muted-foreground');
-    expect(helper).toBeInTheDocument();
-    expect(helper).toHaveTextContent(helperText);
+    const helper = container.querySelector('p.text-muted-foreground');
+    expect(helper).toBeTruthy();
+    expect(helper?.textContent).toBe(helperText);
   });
 
   it('should prioritize error over helper text', () => {
