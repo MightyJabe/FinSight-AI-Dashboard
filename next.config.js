@@ -239,6 +239,18 @@ const nextConfig = {
           },
         },
       };
+
+      // Performance budgets - warn if bundles exceed these sizes
+      config.performance = {
+        ...config.performance,
+        maxAssetSize: 400000, // 400 KB per asset
+        maxEntrypointSize: 600000, // 600 KB for initial load
+        hints: 'warning', // Show warnings, don't fail build
+        assetFilter: (assetFilename) => {
+          // Only check JavaScript and CSS
+          return /\.(js|css)$/.test(assetFilename);
+        },
+      };
     }
 
     return config;

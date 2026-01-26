@@ -4,6 +4,10 @@ import '@testing-library/jest-dom';
 import 'openai/shims/node';
 // Import Plaid mock
 import '@/__mocks__/plaid';
+// Add jest-axe for accessibility testing
+import { toHaveNoViolations } from 'jest-axe';
+
+expect.extend(toHaveNoViolations);
 
 import { TextDecoder, TextEncoder } from 'util';
 
