@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,19 +55,46 @@ export default function InsightCard({ insight, index }: InsightCardProps) {
   };
 
   return (
-    <div
-      className={`rounded-2xl shadow-xl overflow-hidden border-l-4 ${styles.border} ${styles.bg} transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]`}
+    <motion.div
+      className={`rounded-2xl shadow-xl overflow-hidden border-l-4 ${styles.border} ${styles.bg}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        type: 'spring',
+        stiffness: 260,
+        damping: 20,
+        delay: index * 0.1,
+      }}
+      whileHover={{
+        y: -6,
+        scale: 1.02,
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        transition: {
+          type: 'spring',
+          stiffness: 400,
+          damping: 25,
+        },
+      }}
+      whileTap={{ scale: 0.98 }}
     >
-      <div className={`p-5`}>
+      <motion.div
+        className={`p-5`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: index * 0.1 + 0.2 }}
+      >
         <div className="flex justify-between items-start gap-3">
           <h3 className={`text-xl font-semibold ${styles.text}`}>{insight.title}</h3>
-          <span
+          <motion.span
             className={`px-2.5 py-1 text-xs font-semibold rounded-full ${styles.badgeBg} ${styles.badgeText} shadow-sm flex-shrink-0`}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: index * 0.1 + 0.3, type: 'spring', stiffness: 400 }}
           >
             {insight.priority.toUpperCase()} PRIORITY
-          </span>
+          </motion.span>
         </div>
-      </div>
+      </motion.div>
       <div className="p-5 glass-card border-t border-white/10">
         <p className="text-foreground mb-3 text-sm leading-relaxed">{insight.description}</p>
         {insight.actionItems && insight.actionItems.length > 0 && (
@@ -78,23 +106,39 @@ export default function InsightCard({ insight, index }: InsightCardProps) {
               aria-controls={`action-items-${index}`}
             >
               <span className="text-sm">Actionable Steps</span>
-              <ChevronDown
-                className={`h-5 w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {isExpanded && (
-              <ul
-                id={`action-items-${index}`}
-                className="list-disc pl-6 mt-2 space-y-1 text-sm text-muted-foreground"
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
               >
-                {insight.actionItems.map((item, itemIndex) => (
-                  <li key={itemIndex}>{item}</li>
-                ))}
-              </ul>
-            )}
+                <ChevronDown className="h-5 w-5" />
+              </motion.div>
+            </button>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.ul
+                  id={`action-items-${index}`}
+                  className="list-disc pl-6 mt-2 space-y-1 text-sm text-muted-foreground"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {insight.actionItems.map((item, itemIndex) => (
+                    <motion.li
+                      key={itemIndex}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: itemIndex * 0.05 }}
+                    >
+                      {item}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

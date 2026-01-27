@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
+import { Card, CardGroup } from '@/components/ui/Card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { Overview } from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
@@ -141,13 +142,16 @@ export const OverviewCards = memo(function OverviewCards({
 
   return (
     <TooltipProvider>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <CardGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" stagger={0.08}>
         {cards.map(card => (
-          <div
+          <Card
             key={card.label}
-            className={`rounded-2xl glass-card p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ${
-              card.clickable ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''
-            }`}
+            variant="elevated"
+            padding="md"
+            interactive={card.clickable}
+            animate
+            depth
+            className="group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
             tabIndex={0}
             onClick={() => card.clickable && onCardClick?.(card.id)}
             onKeyDown={e => {
@@ -185,9 +189,9 @@ export const OverviewCards = memo(function OverviewCards({
               </h3>
               <div className="flex items-center justify-between">{card.badge}</div>
             </div>
-          </div>
+          </Card>
         ))}
-      </div>
+      </CardGroup>
     </TooltipProvider>
   );
 });
