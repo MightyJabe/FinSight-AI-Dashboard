@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { CommandPaletteProvider } from '@/components/common/CommandPalette';
 import { Header } from '@/components/common/Header';
 import { Navigation } from '@/components/common/Navigation';
+import { PageTransition } from '@/components/layout/PageTransition';
 import { useSession } from '@/components/providers/SessionProvider';
 import QuickCashEntry from '@/components/transactions/QuickCashEntry';
 
@@ -49,7 +50,9 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
     return (
       <div className="min-h-screen bg-white">
         <Header />
-        <main className="container mx-auto px-6 py-8">{children}</main>
+        <main className="container mx-auto px-6 py-8">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <Toaster position="top-right" />
       </div>
     );
@@ -67,9 +70,7 @@ export function RootLayoutContent({ children }: RootLayoutContentProps) {
           </div>
           <main className="flex-1 overflow-y-auto">
             <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
-              <div className="animate-in">
-                {children}
-              </div>
+              <PageTransition>{children}</PageTransition>
             </div>
           </main>
         </div>
