@@ -6,27 +6,35 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-        primary: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        default:
+          'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient',
+        primary:
+          'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient',
+        gradient:
+          '!bg-gradient-to-r !from-blue-500 !via-purple-500 !to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-lg',
+        glass:
+          'glass-card text-foreground border-white/20 hover:border-white/30 hover:bg-white/80 dark:hover:bg-slate-800/70 hover:scale-[1.02] active:scale-[0.98]',
+        destructive:
+          'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]',
         outline:
-          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border-2 border-blue-600 dark:border-blue-400 bg-transparent text-foreground hover:bg-blue-500/10 hover:border-blue-700 dark:hover:border-blue-300 hover:scale-[1.02] active:scale-[0.98]',
+        secondary:
+          'bg-secondary/80 backdrop-blur-sm text-secondary-foreground border border-white/10 shadow-md hover:bg-secondary hover:scale-[1.02] active:scale-[0.98]',
+        ghost: 'hover:bg-accent/50 hover:text-accent-foreground hover:backdrop-blur-sm',
+        link: 'text-blue-600 dark:text-blue-400 underline-offset-4 hover:underline hover:text-purple-600 dark:hover:text-purple-400',
         success:
-          'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 shadow',
+          'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]',
       },
       size: {
-        default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        md: 'h-9 px-4 py-2',
-        lg: 'h-10 rounded-md px-8',
-        icon: 'h-9 w-9',
+        default: 'h-10 px-5 py-2.5',
+        sm: 'h-8 rounded-lg px-3 text-xs',
+        md: 'h-10 px-5 py-2.5',
+        lg: 'h-12 rounded-xl px-8 text-base',
+        icon: 'h-10 w-10',
       },
     },
     defaultVariants: {
@@ -47,15 +55,32 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, asChild = false, loading, leftIcon, rightIcon, children, disabled, ...props },
+    { className, variant, size, asChild = false, loading, leftIcon, rightIcon, children, disabled, style, ...props },
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+
+    // Combine refs
+    React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
+
+    // Apply gradient with !important to override CSS
+    React.useEffect(() => {
+      if (variant === 'gradient' && buttonRef.current) {
+        buttonRef.current.style.setProperty(
+          'background-image',
+          'linear-gradient(to right, rgb(59, 130, 246), rgb(168, 85, 247), rgb(236, 72, 153))',
+          'important'
+        );
+      }
+    }, [variant]);
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
+        ref={buttonRef}
         disabled={disabled || loading}
+        style={style}
         {...props}
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}

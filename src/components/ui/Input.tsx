@@ -4,18 +4,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const inputVariants = cva(
-  'flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+  'flex h-9 w-full rounded-xl border glass-card px-3 py-1 text-base shadow-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
   {
     variants: {
       variant: {
-        default: 'border-input',
-        error: 'border-destructive focus-visible:ring-destructive',
-        success: 'border-green-500 focus-visible:ring-green-500 dark:border-green-600',
+        default: 'border-input hover:border-primary/50',
+        error: 'border-red-500/50 focus-visible:ring-destructive bg-destructive/5',
+        success: 'border-emerald-500/50 focus-visible:ring-emerald-500 bg-emerald-500/5',
       },
       inputSize: {
-        sm: 'h-8 text-xs',
-        md: 'h-9 text-sm',
-        lg: 'h-11 text-base',
+        sm: 'h-8 text-xs rounded-lg',
+        md: 'h-9 text-sm rounded-xl',
+        lg: 'h-11 text-base rounded-xl',
       },
     },
     defaultVariants: {

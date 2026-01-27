@@ -278,18 +278,19 @@ export default function InvestmentsPage() {
         {
           data,
           backgroundColor: [
-            '#3B82F6',
-            '#10B981',
-            '#F59E0B',
-            '#EF4444',
-            '#8B5CF6',
-            '#EC4899',
-            '#14B8A6',
-            '#F97316',
-            '#6366F1',
-            '#84CC16',
+            '#3B82F6', // Blue-500
+            '#8B5CF6', // Purple-500
+            '#EC4899', // Pink-500
+            '#6366F1', // Indigo-500
+            '#A78BFA', // Violet-400
+            '#F472B6', // Pink-400
+            '#60A5FA', // Blue-400
+            '#C084FC', // Purple-400
+            '#818CF8', // Indigo-400
+            '#93C5FD', // Blue-300
           ],
           borderWidth: 0,
+          hoverOffset: 8,
         },
       ],
     };
@@ -309,7 +310,15 @@ export default function InvestmentsPage() {
           label: 'Net Profit/Loss',
           data: sortedPlatforms.map(platform => platform.netProfit),
           backgroundColor: sortedPlatforms.map(platform =>
-            platform.netProfit >= 0 ? '#10B981' : '#EF4444'
+            platform.netProfit >= 0
+              ? 'rgba(59, 130, 246, 0.8)' // Blue-500 for gains
+              : 'rgba(236, 72, 153, 0.8)'  // Pink-500 for losses
+          ),
+          borderRadius: 8,
+          hoverBackgroundColor: sortedPlatforms.map(platform =>
+            platform.netProfit >= 0
+              ? 'rgba(96, 165, 250, 1)' // Blue-400 hover
+              : 'rgba(244, 114, 182, 1)' // Pink-400 hover
           ),
         },
       ],
@@ -340,28 +349,25 @@ export default function InvestmentsPage() {
           <header className="mb-10 animate-in">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-muted-foreground text-sm font-medium mb-1">Wealth Management</p>
-                <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight">
+                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-[0.2em] mb-2">Wealth Management</p>
+                <h1 className="text-4xl lg:text-5xl font-display tracking-tight gradient-text mb-3">
                   Investment Platforms
                 </h1>
-                <p className="mt-2 text-muted-foreground">
+                <p className="text-muted-foreground text-base">
                   Track your deposits, withdrawals, and profits across all investment platforms
                 </p>
               </div>
-              <button
+              <Button
                 onClick={() => {
                   setEditingPlatform(undefined);
                   setShowPlatformForm(true);
                 }}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full',
-                  'bg-foreground text-background text-sm font-medium',
-                  'hover:opacity-90 transition-opacity'
-                )}
+                variant="gradient"
+                size="lg"
+                leftIcon={<Plus className="w-5 h-5" />}
               >
-                <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Add Platform</span>
-              </button>
+              </Button>
             </div>
           </header>
 
@@ -374,22 +380,25 @@ export default function InvestmentsPage() {
           {/* Portfolio Summary Hero */}
           {summary && (
             <section className="mb-8 animate-in delay-75">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-6 lg:p-8">
+              <div className="relative overflow-hidden rounded-[2rem] glass-card-strong p-8 lg:p-10">
                 {/* Background decoration */}
                 <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -top-1/2 -right-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl" />
-                  <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                  <div className={cn(
+                    "absolute -top-1/2 -right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] transition-colors duration-1000",
+                    isPositive ? 'bg-blue-500/20' : 'bg-rose-500/15'
+                  )} />
+                  <div className="absolute -bottom-1/2 -left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem]" />
                 </div>
 
                 <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-white" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 flex items-center justify-center backdrop-blur-sm">
+                      <DollarSign className="w-7 h-7 text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Total Balance</p>
-                      <p className="text-2xl font-semibold text-white tabular-nums">
+                      <p className="text-muted-foreground text-xs uppercase tracking-[0.15em] font-semibold mb-1">Total Balance</p>
+                      <p className="text-2xl lg:text-3xl font-bold gradient-text tabular-nums">
                         {formatCurrency(summary.totalBalance)}
                       </p>
                     </div>
@@ -397,20 +406,22 @@ export default function InvestmentsPage() {
 
                   <div className="flex items-center gap-4">
                     <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
-                      isPositive ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                      'w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm border',
+                      isPositive
+                        ? 'bg-blue-500/20 border-blue-400/30'
+                        : 'bg-rose-500/20 border-rose-400/30'
                     )}>
                       {isPositive ? (
-                        <TrendingUp className="w-6 h-6 text-emerald-400" />
+                        <TrendingUp className="w-7 h-7 text-blue-400" />
                       ) : (
-                        <TrendingDown className="w-6 h-6 text-rose-400" />
+                        <TrendingDown className="w-7 h-7 text-rose-400" />
                       )}
                     </div>
                     <div>
-                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Profit/Loss</p>
+                      <p className="text-muted-foreground text-xs uppercase tracking-[0.15em] font-semibold mb-1">Profit/Loss</p>
                       <p className={cn(
-                        'text-2xl font-semibold tabular-nums',
-                        isPositive ? 'text-emerald-400' : 'text-rose-400'
+                        'text-2xl lg:text-3xl font-bold tabular-nums',
+                        isPositive ? 'text-blue-400' : 'text-rose-400'
                       )}>
                         {isPositive ? '+' : ''}{formatCurrency(summary.totalProfit)}
                       </p>
@@ -418,22 +429,22 @@ export default function InvestmentsPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                      <PieChart className="w-6 h-6 text-violet-400" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-500/30 flex items-center justify-center backdrop-blur-sm">
+                      <PieChart className="w-7 h-7 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Platforms</p>
-                      <p className="text-2xl font-semibold text-white tabular-nums">{summary.platformCount}</p>
+                      <p className="text-muted-foreground text-xs uppercase tracking-[0.15em] font-semibold mb-1">Platforms</p>
+                      <p className="text-2xl lg:text-3xl font-bold gradient-text tabular-nums">{summary.platformCount}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                      <Activity className="w-6 h-6 text-amber-400" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/20 to-amber-500/20 border border-pink-500/30 flex items-center justify-center backdrop-blur-sm">
+                      <Activity className="w-7 h-7 text-pink-400" />
                     </div>
                     <div>
-                      <p className="text-neutral-400 text-sm uppercase tracking-wider">Net Invested</p>
-                      <p className="text-2xl font-semibold text-white tabular-nums">
+                      <p className="text-muted-foreground text-xs uppercase tracking-[0.15em] font-semibold mb-1">Net Invested</p>
+                      <p className="text-2xl lg:text-3xl font-bold gradient-text tabular-nums">
                         {formatCurrency(summary.totalDeposited - summary.totalWithdrawn)}
                       </p>
                     </div>
@@ -446,8 +457,8 @@ export default function InvestmentsPage() {
           {/* Charts */}
           {summary && summary.platforms.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-in delay-150">
-              <div className="rounded-2xl bg-card border border-border p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+              <div className="rounded-2xl glass-card-strong p-6">
+                <h2 className="text-lg font-bold gradient-text mb-6">
                   Platform Allocation
                 </h2>
                 <div className="h-64">
@@ -461,21 +472,25 @@ export default function InvestmentsPage() {
                           legend: {
                             position: 'bottom',
                             labels: {
-                              padding: 10,
+                              padding: 12,
                               usePointStyle: true,
+                              font: {
+                                size: 12,
+                                weight: '500',
+                              },
                             },
                           },
                         },
                       }}
                     />
                   ) : (
-                    <div className="h-full w-full rounded-xl bg-secondary animate-pulse" />
+                    <div className="h-full w-full rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 animate-pulse" />
                   )}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-card border border-border p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+              <div className="rounded-2xl glass-card-strong p-6">
+                <h2 className="text-lg font-bold gradient-text mb-6">
                   Platform Performance
                 </h2>
                 <div className="h-64">
@@ -496,49 +511,52 @@ export default function InvestmentsPage() {
                           },
                           y: {
                             beginAtZero: true,
+                            grid: {
+                              color: 'rgba(255, 255, 255, 0.05)',
+                            },
                           },
                         },
                       }}
                     />
                   ) : (
-                    <div className="h-full w-full rounded-xl bg-secondary animate-pulse" />
+                    <div className="h-full w-full rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 animate-pulse" />
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          <div className="rounded-2xl bg-card border border-border p-6 mb-8 animate-in delay-200">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Connect Your Accounts</h3>
+          <div className="rounded-2xl glass-card-strong p-6 mb-8 animate-in delay-200">
+            <h3 className="text-lg font-bold gradient-text mb-6">Connect Your Accounts</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
-                variant="outline"
+                variant="glass"
                 size="lg"
                 onClick={() => plaidReady && openPlaid()}
                 disabled={!plaidReady}
                 leftIcon={<DollarSign className="w-5 h-5" />}
-                className="w-full rounded-xl"
+                className="w-full"
               >
                 Connect Broker
               </Button>
               <Button
-                variant="outline"
+                variant="glass"
                 size="lg"
                 onClick={() => setShowCryptoConnect(true)}
                 leftIcon={<TrendingUp className="w-5 h-5" />}
-                className="w-full rounded-xl"
+                className="w-full"
               >
                 Connect Crypto
               </Button>
               <Button
-                variant="primary"
+                variant="gradient"
                 size="lg"
                 onClick={() => {
                   setEditingPlatform(undefined);
                   setShowPlatformForm(true);
                 }}
                 leftIcon={<Plus className="w-5 h-5" />}
-                className="w-full rounded-xl"
+                className="w-full"
               >
                 Add Manually
               </Button>
@@ -560,9 +578,9 @@ export default function InvestmentsPage() {
 
             {/* Platform Form Modal */}
             {showPlatformForm && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl animate-in">
-                  <h2 className="text-xl font-semibold text-foreground mb-4">
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                <div className="glass-card-strong rounded-[2rem] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in">
+                  <h2 className="text-2xl font-bold gradient-text mb-6">
                     {editingPlatform ? 'Edit Platform' : 'Add New Platform'}
                   </h2>
                   <PlatformForm
@@ -579,8 +597,8 @@ export default function InvestmentsPage() {
 
             {/* Transaction Form Modal */}
             {showTransactionForm && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                <div className="glass-card-strong rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in">
                   <TransactionForm
                     platformId={selectedPlatformId}
                     platformName={selectedPlatformName}
@@ -599,67 +617,68 @@ export default function InvestmentsPage() {
 
             {/* Crypto Connect Modal */}
             {showCryptoConnect && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                <div className="glass-card-strong rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in">
                   {!selectedExchange ? (
                     <>
-                      <h3 className="text-lg font-semibold text-foreground mb-4">
+                      <h3 className="text-xl font-bold gradient-text mb-3">
                         Connect Crypto Exchange
                       </h3>
-                      <p className="text-muted-foreground mb-4">
+                      <p className="text-muted-foreground mb-6 leading-relaxed">
                         Choose your crypto exchange to connect:
                       </p>
                       <div className="space-y-3 mb-6">
                         <button
                           onClick={() => setSelectedExchange('coinbase')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          className="w-full flex items-center justify-between px-5 py-4 glass-card rounded-xl hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                          <span className="font-medium text-foreground">
+                          <span className="font-bold text-foreground">
                             Coinbase
                           </span>
-                          <span className="text-sm text-muted-foreground">API Key Required</span>
+                          <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('binance')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          className="w-full flex items-center justify-between px-5 py-4 glass-card rounded-xl hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                          <span className="font-medium text-foreground">Binance</span>
-                          <span className="text-sm text-muted-foreground">API Key Required</span>
+                          <span className="font-bold text-foreground">Binance</span>
+                          <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('kraken')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          className="w-full flex items-center justify-between px-5 py-4 glass-card rounded-xl hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                          <span className="font-medium text-foreground">Kraken</span>
-                          <span className="text-sm text-muted-foreground">API Key Required</span>
+                          <span className="font-bold text-foreground">Kraken</span>
+                          <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">API Key Required</span>
                         </button>
                         <button
                           onClick={() => setSelectedExchange('wallet')}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          className="w-full flex items-center justify-between px-5 py-4 glass-card rounded-xl hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                          <span className="font-medium text-foreground">
+                          <span className="font-bold text-foreground">
                             Manual Wallet
                           </span>
-                          <span className="text-sm text-muted-foreground">Address-based</span>
+                          <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Address-based</span>
                         </button>
                       </div>
                       <div className="flex justify-end">
-                        <button
+                        <Button
                           onClick={() => setShowCryptoConnect(false)}
-                          className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          variant="glass"
+                          size="lg"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg font-semibold text-foreground mb-4">
+                      <h3 className="text-xl font-bold gradient-text mb-3">
                         {selectedExchange === 'wallet'
                           ? 'Add Wallet Address'
                           : `Connect ${selectedExchange.charAt(0).toUpperCase() + selectedExchange.slice(1)}`}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                         {selectedExchange === 'wallet'
                           ? 'Enter your wallet address to track your crypto holdings.'
                           : `Enter your API credentials from ${selectedExchange}. Make sure to enable read-only permissions.`}
@@ -725,18 +744,19 @@ export default function InvestmentsPage() {
                           </>
                         )}
                       </div>
-                      <div className="flex justify-end space-x-3">
-                        <button
+                      <div className="flex justify-end gap-3">
+                        <Button
                           onClick={() => {
                             setSelectedExchange(null);
                             setApiKey('');
                             setApiSecret('');
                           }}
-                          className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                          variant="glass"
+                          size="lg"
                         >
                           Back
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={async () => {
                             if (!firebaseUser) {
                               toast.error('Please log in first');
@@ -780,10 +800,11 @@ export default function InvestmentsPage() {
                             }
                           }}
                           disabled={!apiKey || !apiSecret}
-                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          variant="gradient"
+                          size="lg"
                         >
                           Connect
-                        </button>
+                        </Button>
                       </div>
                     </>
                   )}
@@ -793,28 +814,30 @@ export default function InvestmentsPage() {
 
             {/* Delete Confirmation Modal */}
             {deleteConfirm && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl animate-in">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                <div className="glass-card-strong rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in">
+                  <h3 className="text-xl font-bold gradient-text mb-4">
                     Confirm Delete
                   </h3>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
                     Are you sure you want to delete this platform and all its transactions? This
                     action cannot be undone.
                   </p>
-                  <div className="flex justify-end space-x-3">
-                    <button
+                  <div className="flex justify-end gap-3">
+                    <Button
                       onClick={() => setDeleteConfirm(null)}
-                      className="px-4 py-2 text-muted-foreground bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
+                      variant="glass"
+                      size="lg"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => handleDeletePlatform(deleteConfirm)}
-                      className="px-4 py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors"
+                      variant="destructive"
+                      size="lg"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -823,21 +846,24 @@ export default function InvestmentsPage() {
             {/* Platforms List */}
             <TabsContent value="all">
               {summary && summary.platforms.length === 0 ? (
-                <div className="rounded-2xl bg-card border border-border p-12 text-center">
-                  <PieChart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">
+                <div className="rounded-[2rem] glass-card-strong p-16 text-center">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 backdrop-blur-sm mb-6">
+                    <PieChart className="w-10 h-10 text-blue-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold gradient-text mb-3">
                     No platforms yet
                   </h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-muted-foreground mb-8 max-w-md mx-auto text-base leading-relaxed">
                     Start tracking your investments by adding your first platform.
                   </p>
-                  <button
+                  <Button
                     onClick={() => setShowPlatformForm(true)}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                    variant="gradient"
+                    size="lg"
+                    leftIcon={<Plus className="w-5 h-5" />}
                   >
-                    <Plus className="w-5 h-5" />
-                    <span>Add Your First Platform</span>
-                  </button>
+                    Add Your First Platform
+                  </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -981,18 +1007,21 @@ export default function InvestmentsPage() {
                 )}
                 {summary?.platforms.filter(p => p.type === type).length === 0 &&
                 cryptoAccounts.length === 0 ? (
-                  <div className="rounded-2xl bg-card border border-border p-12 text-center">
-                    <PieChart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">
+                  <div className="rounded-[2rem] glass-card-strong p-16 text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 backdrop-blur-sm mb-6">
+                      <PieChart className="w-10 h-10 text-blue-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold gradient-text mb-3">
                       No {type.replace('_', ' ')} platforms yet
                     </h3>
-                    <button
+                    <Button
                       onClick={() => setShowPlatformForm(true)}
-                      className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                      variant="gradient"
+                      size="lg"
+                      leftIcon={<Plus className="w-5 h-5" />}
                     >
-                      <Plus className="w-5 h-5" />
-                      <span>Add Platform</span>
-                    </button>
+                      Add Platform
+                    </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

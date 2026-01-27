@@ -91,22 +91,22 @@ export function ComprehensiveCryptoPortfolio({
 
   if (!hasData) {
     return (
-      <div className={`rounded-lg border border-gray-200 bg-gray-50 p-8 text-center ${className}`}>
-        <Bitcoin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Crypto Holdings</h3>
-        <p className="text-gray-600 mb-4">
+      <div className={`glass-card-strong rounded-2xl p-8 text-center ${className}`}>
+        <Bitcoin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-bold gradient-text mb-2">No Crypto Holdings</h3>
+        <p className="text-muted-foreground mb-6">
           Connect your crypto exchanges or add manual holdings to start tracking your portfolio.
         </p>
-        <div className="space-x-3">
+        <div className="flex items-center justify-center gap-3">
           <a
             href="/investments"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-5 py-2.5 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 glow-gradient"
           >
             Add Crypto Platform
           </a>
           <a
             href="/accounts"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center px-5 py-2.5 glass-card text-foreground rounded-xl font-medium border-white/20 hover:border-white/30 hover:bg-white/80 dark:hover:bg-slate-800/70 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             Connect Exchange
           </a>

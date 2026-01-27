@@ -10,8 +10,8 @@ const emptyStateVariants = cva('flex flex-col items-center justify-center py-12 
   variants: {
     variant: {
       default: '',
-      card: 'rounded-lg',
-      bordered: 'rounded-lg border-2 border-dashed border-border',
+      card: 'rounded-2xl glass-card-strong',
+      bordered: 'rounded-2xl border-2 border-dashed border-blue-500/30 glass-card',
     },
     size: {
       sm: 'py-8',
@@ -51,11 +51,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div className={cn(emptyStateVariants({ variant, size }), className)}>
       {illustration && <div className="mb-6">{illustration}</div>}
       {icon && !illustration && (
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 text-blue-600 dark:text-blue-400 backdrop-blur-sm">
           {icon}
         </div>
       )}
-      <h3 className="mb-2 text-lg font-semibold text-foreground">{title}</h3>
+      <h3 className="mb-2 text-lg font-bold gradient-text">{title}</h3>
       {description && <p className="mb-6 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && (
         <Button onClick={action.onClick} variant="default">

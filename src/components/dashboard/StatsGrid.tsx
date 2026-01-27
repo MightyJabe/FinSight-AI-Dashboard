@@ -29,18 +29,15 @@ function StatCard({ title, value, change, icon: Icon }: Omit<StatCardProps, 'ind
       variants={staggeredItem}
       initial="hidden"
       animate="visible"
-      whileHover={{ y: -4, scale: 1.01 }}
+      whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-      className="@container group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-md cursor-pointer"
-      style={{
-        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-      }}
+      transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+      className="@container group relative overflow-hidden rounded-2xl glass-card-strong p-6 cursor-pointer card-hover"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="mt-2 text-3xl @lg:text-4xl font-bold text-foreground tabular-nums">{value}</h3>
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
+          <h3 className="mt-3 text-3xl @lg:text-4xl font-bold gradient-text tabular-nums">{value}</h3>
 
           <div className="mt-3 flex items-center gap-1 flex-wrap">
             <motion.div
@@ -65,21 +62,24 @@ function StatCard({ title, value, change, icon: Icon }: Omit<StatCardProps, 'ind
         </div>
 
         <motion.div
-          className="rounded-xl bg-primary/10 p-3"
-          whileHover={{ scale: 1.1, rotate: 5 }}
+          className="rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-600/10 p-3 border border-blue-500/20"
+          whileHover={{ scale: 1.15, rotate: 10 }}
           transition={{ type: 'spring', stiffness: 400, damping: 10 }}
         >
-          <Icon className="h-7 w-7 text-primary" />
+          <Icon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
         </motion.div>
       </div>
 
       <motion.div
-        className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-pink-500"
+        className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 glow-md"
         initial={{ scaleX: 0, opacity: 0 }}
         whileHover={{ scaleX: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
         style={{ transformOrigin: 'left' }}
       />
+
+      {/* Subtle particle effect on hover */}
+      <div className="absolute inset-0 particles-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </motion.div>
   );
 }

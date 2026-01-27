@@ -174,10 +174,10 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
   // Loading state
   if (isLoading) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 ${className}`}>
+      <div className={`glass-card-strong rounded-2xl p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4" />
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-6 bg-neutral-700/50 rounded w-1/3 mb-4" />
+          <div className="h-64 bg-neutral-700/50 rounded" />
         </div>
       </div>
     );
@@ -186,11 +186,11 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
   // Error state
   if (error || !data?.success) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 ${className}`}>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <div className={`glass-card-strong rounded-2xl p-6 ${className}`}>
+        <h2 className="text-lg font-bold gradient-text mb-4">
           Net Worth History
         </h2>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-muted-foreground">
           <p>No historical data available yet.</p>
           <p className="text-sm mt-2">Snapshots will be created daily.</p>
         </div>
@@ -201,11 +201,11 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
   // Empty state
   if (!data.data?.points.length) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 ${className}`}>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <div className={`glass-card-strong rounded-2xl p-6 ${className}`}>
+        <h2 className="text-lg font-bold gradient-text mb-4">
           Net Worth History
         </h2>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-muted-foreground">
           <p>No snapshots found for this period.</p>
           <p className="text-sm mt-2">Try selecting a different time range.</p>
         </div>
@@ -216,12 +216,12 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
   return (
     <TooltipProvider>
       <div
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 ${className}`}
+        className={`glass-card-strong rounded-2xl p-6 ${className}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-lg font-bold gradient-text">
               Net Worth History
             </h2>
             <UITooltip>
@@ -241,10 +241,10 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
                   period === p
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-md'
+                    : 'glass-card text-foreground hover:bg-white/80 dark:hover:bg-slate-800/70'
                 }`}
               >
                 {p}
@@ -257,26 +257,26 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
         {trend && (
           <div className="flex items-center gap-2 mb-4">
             {trend.change > 0 ? (
-              <TrendingUp className="h-5 w-5 text-green-500" />
+              <TrendingUp className="h-5 w-5 text-blue-500" />
             ) : trend.change < 0 ? (
               <TrendingDown className="h-5 w-5 text-rose-500" />
             ) : (
-              <Minus className="h-5 w-5 text-gray-400" />
+              <Minus className="h-5 w-5 text-muted-foreground" />
             )}
             <span
-              className={`text-sm font-medium ${
+              className={`text-sm font-semibold ${
                 trend.change > 0
-                  ? 'text-green-600 dark:text-green-400'
+                  ? 'text-blue-600 dark:text-blue-400'
                   : trend.change < 0
                     ? 'text-rose-600 dark:text-rose-400'
-                    : 'text-gray-500'
+                    : 'text-muted-foreground'
               }`}
             >
               {trend.change >= 0 ? '+' : ''}
               {formatCurrency(trend.change)} ({trend.percentChange >= 0 ? '+' : ''}
               {trend.percentChange.toFixed(1)}%)
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               over {periodLabels[period].toLowerCase()}
             </span>
           </div>
@@ -289,33 +289,33 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
 
         {/* Selected point details */}
         {selectedPoint && (
-          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <div className="mt-4 p-3 glass-card rounded-xl">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-semibold text-foreground">
                 {formatDate(selectedPoint.date)}
               </span>
               <button
                 onClick={() => setSelectedPoint(null)}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 Clear
               </button>
             </div>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Net Worth</span>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                <span className="text-muted-foreground">Net Worth</span>
+                <p className="font-bold gradient-text">
                   {formatCurrency(selectedPoint.netWorth)}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Assets</span>
-                <p className="font-semibold text-green-600 dark:text-green-400">
+                <span className="text-muted-foreground">Assets</span>
+                <p className="font-semibold text-blue-600 dark:text-blue-400">
                   {formatCurrency(selectedPoint.totalAssets)}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Liabilities</span>
+                <span className="text-muted-foreground">Liabilities</span>
                 <p className="font-semibold text-rose-600 dark:text-rose-400">
                   {formatCurrency(selectedPoint.totalLiabilities)}
                 </p>

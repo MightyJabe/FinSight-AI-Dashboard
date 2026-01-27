@@ -139,8 +139,8 @@ export default function OnboardingPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-        <div className="flex items-center gap-3 text-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+        <div className="flex items-center gap-3 text-neutral-300">
           <Sparkles className="h-5 w-5 animate-spin" />
           <span>Preparing your onboarding...</span>
         </div>
@@ -151,18 +151,18 @@ export default function OnboardingPage() {
   if (!step) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background/95 py-8 sm:py-12 px-4">
+    <div className="min-h-screen bg-neutral-950 py-8 sm:py-12 px-4">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 animate-in">
           <div>
-            <p className="text-xs sm:text-sm uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400 font-semibold mb-2">
+            <p className="text-xs sm:text-sm uppercase tracking-[0.15em] text-emerald-400 font-semibold mb-2">
               Guided Onboarding
             </p>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display text-white tracking-tight">
               Get set up in minutes
             </h1>
-            <p className="text-muted-foreground mt-3 text-sm sm:text-base leading-relaxed max-w-2xl">
+            <p className="text-neutral-400 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl">
               Follow the steps to connect data, set a goal, and personalize AI insights.
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Progress Bar */}
-        <div className="h-2 w-full rounded-full bg-secondary/60 shadow-inner overflow-hidden animate-in delay-75">
+        <div className="h-2 w-full rounded-full bg-neutral-800/50 shadow-inner overflow-hidden animate-in delay-75">
           <div
             className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out shadow-lg"
             style={{ width: `${progressPercent}%` }}
@@ -187,17 +187,17 @@ export default function OnboardingPage() {
         {/* Main Content Grid */}
         <div className="grid gap-5 sm:gap-6 md:grid-cols-[1.2fr,0.8fr] items-start animate-in delay-150">
           {/* Main Content Card */}
-          <Card className="shadow-xl border border-border bg-card/80 backdrop-blur-sm hover:shadow-2xl transition-shadow duration-300">
+          <Card className="glass-card shadow-xl border border-neutral-800/50 hover:border-neutral-700/50 hover:shadow-2xl transition-all duration-300">
             <CardHeader>
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                   <step.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-xl sm:text-2xl font-display tracking-tight mb-2">
+                  <CardTitle className="text-xl sm:text-2xl font-display tracking-tight text-white mb-2">
                     {step.title}
                   </CardTitle>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-neutral-400 text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -233,8 +233,8 @@ export default function OnboardingPage() {
 
               {step.id === 'connect' && (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-dashed border-blue-200 bg-white/60 p-4">
-                    <p className="text-sm text-gray-700 mb-3">
+                  <div className="rounded-xl border border-dashed border-blue-500/30 bg-blue-500/10 p-4">
+                    <p className="text-sm text-neutral-300 mb-3">
                       Connect your Israeli bank accounts via Salt Edge or use Plaid for international banks.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -242,7 +242,7 @@ export default function OnboardingPage() {
                         Connect Bank Accounts
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-neutral-500 mt-2">
                       We support Israeli banks (Hapoalim, Leumi, Discount, Mizrahi-Tefahot) and international banks via Plaid.
                     </p>
                   </div>
@@ -251,12 +251,12 @@ export default function OnboardingPage() {
 
               {step.id === 'goals' && (
                 <div className="space-y-4">
-                  <p className="text-gray-700">
+                  <p className="text-neutral-300">
                     Setting one clear goal helps the AI prioritize recommendations.
                   </p>
                   <div className="space-y-3">
                     <label className="space-y-1 block">
-                      <span className="text-sm text-gray-600">Primary goal</span>
+                      <span className="text-sm text-neutral-400">Primary goal</span>
                       <Input
                         value={goalName}
                         onChange={e => setGoalName(e.target.value)}
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
                       />
                     </label>
                     <label className="space-y-1 block">
-                      <span className="text-sm text-gray-600">Target amount (optional)</span>
+                      <span className="text-sm text-neutral-400">Target amount (optional)</span>
                       <Input
                         value={goalTarget}
                         onChange={e => setGoalTarget(e.target.value)}
@@ -274,8 +274,8 @@ export default function OnboardingPage() {
                       />
                     </label>
                   </div>
-                  <div className="rounded-lg bg-green-50 border border-green-100 p-3 text-sm text-green-800">
-                    Tip: We’ll use this to power savings recommendations and alerts when you drift
+                  <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-400">
+                    Tip: We'll use this to power savings recommendations and alerts when you drift
                     off track.
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function OnboardingPage() {
 
               {step.id === 'ai' && (
                 <div className="space-y-4">
-                  <p className="text-gray-700">
+                  <p className="text-neutral-300">
                     Control how proactive the assistant should be. You can change this later in
                     Settings.
                   </p>
@@ -301,8 +301,8 @@ export default function OnboardingPage() {
                       onChange={setProTrial}
                     />
                   </div>
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
-                    Pro trial won’t start billing automatically in this build—use it to validate the
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-400">
+                    Pro trial won't start billing automatically in this build—use it to validate the
                     flow with early users.
                   </div>
                 </div>
@@ -310,11 +310,11 @@ export default function OnboardingPage() {
 
               {step.id === 'finish' && (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-green-100 bg-green-50 p-4 flex items-start gap-3">
-                    <CheckCircle2 className="h-6 w-6 text-green-600 mt-0.5" />
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 flex items-start gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-400 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-green-800">You&apos;re all set</p>
-                      <p className="text-sm text-green-700">
+                      <p className="font-semibold text-emerald-300">You&apos;re all set</p>
+                      <p className="text-sm text-emerald-400/80">
                         Your next step is to connect your bank accounts to start tracking your net worth.
                       </p>
                     </div>
@@ -337,7 +337,7 @@ export default function OnboardingPage() {
                       Connect accounts
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-neutral-500">
                     You can rerun onboarding anytime from Settings → Onboarding.
                   </p>
                 </div>
@@ -346,10 +346,10 @@ export default function OnboardingPage() {
           </Card>
 
           {/* Progress Sidebar */}
-          <Card className="border border-border bg-card/80 backdrop-blur-sm shadow-lg sticky top-4">
+          <Card className="glass-card border border-neutral-800/50 shadow-lg sticky top-4">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Progress</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <CardTitle className="text-lg font-semibold text-white">Progress</CardTitle>
+              <p className="text-sm text-neutral-400">
                 Step {currentStep + 1} of {steps.length}
               </p>
             </CardHeader>
@@ -364,24 +364,24 @@ export default function OnboardingPage() {
                       key={s.id}
                       className={`flex items-start gap-3 rounded-xl border p-3 transition-all duration-300 ${
                         isActive
-                          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm'
+                          ? 'border-emerald-500/30 bg-emerald-500/10 shadow-sm'
                           : isDone
-                            ? 'border-emerald-100 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20'
-                            : 'border-transparent bg-secondary/40'
+                            ? 'border-emerald-500/20 bg-emerald-500/5'
+                            : 'border-transparent bg-neutral-800/30'
                       }`}
                     >
                       <div className={`flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center ${
-                        isDone ? 'bg-emerald-600' : isActive ? 'bg-emerald-500' : 'bg-secondary'
+                        isDone ? 'bg-emerald-600' : isActive ? 'bg-emerald-500' : 'bg-neutral-700'
                       }`}>
                         {isDone ? (
                           <CheckCircle2 className="h-4 w-4 text-white" />
                         ) : (
-                          <s.icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
+                          <s.icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-neutral-400'}`} />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm leading-tight">{s.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{s.description}</p>
+                        <p className="font-medium text-white text-sm leading-tight">{s.title}</p>
+                        <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">{s.description}</p>
                       </div>
                     </div>
                   );
@@ -426,14 +426,14 @@ function FeatureTile({
   description: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/70 bg-white/80 p-4 shadow-sm">
+    <div className="rounded-lg border border-neutral-700/50 bg-neutral-800/30 backdrop-blur-sm p-4 shadow-sm hover:border-neutral-600/50 transition-colors">
       <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/20">
           {icon}
         </div>
-        <p className="font-semibold text-gray-900">{title}</p>
+        <p className="font-semibold text-white">{title}</p>
       </div>
-      <p className="text-sm text-gray-600 mt-2">{description}</p>
+      <p className="text-sm text-neutral-400 mt-2">{description}</p>
     </div>
   );
 }
@@ -450,16 +450,16 @@ function ToggleRow({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white/70 p-3 cursor-pointer">
+    <label className="flex items-start gap-3 rounded-lg border border-neutral-700/50 bg-neutral-800/30 backdrop-blur-sm p-3 cursor-pointer hover:border-neutral-600/50 transition-colors">
       <input
         type="checkbox"
         checked={checked}
         onChange={e => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        className="mt-1 h-4 w-4 rounded border-neutral-600 bg-neutral-700 text-blue-600 focus:ring-blue-500"
       />
       <div>
-        <p className="font-medium text-gray-900">{label}</p>
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="font-medium text-white">{label}</p>
+        <p className="text-sm text-neutral-400">{description}</p>
       </div>
     </label>
   );

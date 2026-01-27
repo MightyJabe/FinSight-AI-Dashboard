@@ -5,15 +5,15 @@ import { cva } from 'class-variance-authority';
  * Used for cards, panels, and container elements throughout the application
  */
 export const cardVariants = cva(
-  'rounded-lg border bg-card text-card-foreground transition-all',
+  'rounded-2xl text-card-foreground transition-all',
   {
     variants: {
       variant: {
-        default: 'border-border shadow-sm',
-        glass: 'bg-card/80 backdrop-blur-xl border-border/50',
-        elevated: 'shadow-lg hover:shadow-xl border-border/50',
-        outline: 'border-2 border-border',
-        flat: 'border-0 shadow-none',
+        default: 'glass-card',
+        glass: 'glass-card-strong',
+        elevated: 'glass-card-strong shadow-lg hover:shadow-xl card-hover',
+        outline: 'glass-card border-2 border-blue-500/30',
+        flat: 'bg-card/50 backdrop-blur-sm border-0 shadow-none',
       },
       padding: {
         none: 'p-0',

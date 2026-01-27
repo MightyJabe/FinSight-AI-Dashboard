@@ -83,7 +83,7 @@ function useAnimatedValue(value: number, duration: number = 1000) {
 function NetWorthHeroSkeleton() {
   return (
     <div className="@container">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+      <div className="relative overflow-hidden rounded-[2rem] glass-card-strong p-10 @lg:p-14">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px]" />
@@ -116,7 +116,7 @@ function NetWorthHeroSkeleton() {
 function EmptyState({ onConnect }: { onConnect?: () => void }) {
   return (
     <div className="@container">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+      <div className="relative overflow-hidden rounded-[2rem] glass-card-strong p-10 @lg:p-14">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-neutral-500/10 rounded-full blur-[100px]" />
@@ -187,14 +187,14 @@ function NetWorthHeroComponent({
 
   return (
     <div className="@container">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-900 dark:to-black p-10 @lg:p-14">
+      <div className="relative overflow-hidden rounded-[2rem] glass-card-strong p-10 @lg:p-14">
         {/* Premium background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Main glow based on performance */}
           <div
             className={cn(
               'absolute -top-1/2 -right-1/4 w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-1000',
-              isPositive ? 'bg-emerald-500/25' : 'bg-rose-500/20'
+              isPositive ? 'bg-blue-500/25' : 'bg-rose-500/20'
             )}
           />
           {/* Secondary accent glow */}
@@ -226,7 +226,7 @@ function NetWorthHeroComponent({
               {/* Main value - THE BIG NUMBER */}
               <h2
                 className={cn(
-                  'font-display text-6xl sm:text-7xl @lg:text-8xl @3xl:text-[6.5rem] text-white tracking-tight tabular-nums leading-none transition-opacity duration-300',
+                  'font-display text-6xl sm:text-7xl @lg:text-8xl @3xl:text-[6.5rem] text-foreground tracking-tight tabular-nums leading-none transition-opacity duration-300',
                   isValidating && 'opacity-70'
                 )}
               >
@@ -240,7 +240,7 @@ function NetWorthHeroComponent({
                   className={cn(
                     'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold',
                     isPositive
-                      ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
+                      ? 'bg-blue-500/25 text-blue-300 ring-1 ring-blue-400/30'
                       : 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/30'
                   )}
                 >
@@ -303,7 +303,7 @@ function NetWorthHeroComponent({
                 className={cn(
                   'w-4 @lg:w-5 rounded-t transition-all duration-500 ease-out',
                   isPositive
-                    ? 'bg-gradient-to-t from-emerald-600/60 to-emerald-400'
+                    ? 'bg-gradient-to-t from-blue-600/70 via-purple-500/60 to-blue-400'
                     : 'bg-gradient-to-t from-rose-600/60 to-rose-400'
                 )}
                 style={{
@@ -340,7 +340,7 @@ function TrendBadge({
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 hover:scale-105',
         isPositive
-          ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+          ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/25'
           : 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25'
       )}
     >

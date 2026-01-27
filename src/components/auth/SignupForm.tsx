@@ -50,7 +50,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           suppressHydrationWarning
           {...register('email')}
         />
-        {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium mb-1">
@@ -80,7 +80,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
             )}
           </button>
         </div>
-        {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
+        {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
       </div>
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
@@ -96,12 +96,12 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           {...register('confirmPassword')}
         />
         {errors.confirmPassword && (
-          <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
+          <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>
         )}
       </div>
       <button
         type="submit"
-        className="w-full rounded-md bg-primary text-primary-foreground py-2 font-semibold hover:bg-primary/90 transition disabled:opacity-60"
+        className="w-full rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white py-2.5 font-semibold hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 glow-gradient"
         disabled={isSubmitting}
       >
         {isSubmitting ? 'Signing up...' : 'Sign Up'}
