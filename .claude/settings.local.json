@@ -64,7 +64,8 @@
       "mcp__plugin_compound-engineering_pw__browser_console_messages",
       "mcp__plugin_compound-engineering_pw__browser_run_code",
       "mcp__plugin_playwright_playwright__browser_run_code",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

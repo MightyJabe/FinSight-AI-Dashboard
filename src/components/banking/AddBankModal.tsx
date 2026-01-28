@@ -288,7 +288,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                                     </label>
                                     <Select
                                         value={israelBank}
-                                        onChange={(e) => handleBankChange(e.target.value)}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleBankChange(e.target.value)}
                                         disabled={isProcessing}
                                     >
                                         {Object.entries(BANK_CONFIGS).map(([key, config]) => (
@@ -308,7 +308,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                                             type={field.type || 'text'}
                                             placeholder={field.placeholder}
                                             value={credentials[field.key] || ''}
-                                            onChange={(e) => setCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
                                             required
                                             disabled={isProcessing}
                                             className="w-full"

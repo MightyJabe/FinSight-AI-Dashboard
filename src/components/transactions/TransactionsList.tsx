@@ -249,7 +249,7 @@ export function TransactionsList({
             type="text"
             placeholder="Search transactions..."
             value={searchQuery}
-            onChange={e => handleFilterChange(setSearchQuery, e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(setSearchQuery, e.target.value)}
             leftIcon={<Search className="w-4 h-4" />}
             className="bg-card border-border"
             data-testid="transaction-search-input"

@@ -153,7 +153,7 @@ export const OverviewCards = memo(function OverviewCards({
             className="group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
             tabIndex={0}
             onClick={() => card.clickable && onCardClick?.(card.id)}
-            onKeyDown={e => {
+            onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
               if ((e.key === 'Enter' || e.key === ' ') && card.clickable) {
                 e.preventDefault();
                 onCardClick?.(card.id);

@@ -317,7 +317,7 @@ export default function SpendingTrends() {
               <label className="block text-sm font-medium mb-2">Timeframe</label>
               <Select
                 value={timeframe}
-                onChange={e => setTimeframe(e.target.value as TrendTimeframe)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTimeframe(e.target.value as TrendTimeframe)}
               >
                 <option value="3months">Last 3 Months</option>
                 <option value="6months">Last 6 Months</option>
@@ -330,7 +330,7 @@ export default function SpendingTrends() {
               <label className="block text-sm font-medium mb-2">Analysis Type</label>
               <Select
                 value={analysisType}
-                onChange={e => setAnalysisType(e.target.value as TrendAnalysisType)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAnalysisType(e.target.value as TrendAnalysisType)}
               >
                 <option value="category">By Category</option>
                 <option value="monthly">Monthly Trends</option>
