@@ -14,6 +14,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 
 import type { NetWorthHistoryPoint,NetWorthHistoryResponse } from '@/app/api/net-worth/history/route';
+import { NoDataIllustration } from '@/components/illustrations/EmptyStateIllustrations';
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -205,9 +206,10 @@ export const NetWorthHistoryChart = memo(function NetWorthHistoryChart({
         <h2 className="text-lg font-bold gradient-text mb-4">
           Net Worth History
         </h2>
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No snapshots found for this period.</p>
-          <p className="text-sm mt-2">Try selecting a different time range.</p>
+        <div className="flex flex-col items-center justify-center py-8">
+          <NoDataIllustration width={180} height={180} />
+          <p className="text-muted-foreground mt-4">No snapshots found for this period.</p>
+          <p className="text-sm text-muted-foreground mt-2">Try selecting a different time range.</p>
         </div>
       </div>
     );

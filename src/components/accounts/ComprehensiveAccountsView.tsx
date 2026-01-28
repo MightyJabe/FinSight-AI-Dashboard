@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { AddBankModal } from '@/components/banking/AddBankModal';
+import { NoAccountsIllustration } from '@/components/illustrations/EmptyStateIllustrations';
 import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { useSession } from '@/components/providers/SessionProvider';
 import {
@@ -559,7 +560,8 @@ export function ComprehensiveAccountsView() {
 
               {data.bankAccounts.length === 0 ? (
                 <EmptyState
-                  icon={<Building2 className="w-8 h-8" />}
+                  variant="card"
+                  illustration={<NoAccountsIllustration width={180} height={180} />}
                   title="No bank accounts connected"
                   description="Connect your bank accounts via Plaid or Israeli bank connector to track your finances"
                 />

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { NoGoalsIllustration } from '@/components/illustrations/EmptyStateIllustrations';
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button, EmptyState } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -149,7 +150,7 @@ export default function GoalsPage() {
             <div className="max-w-md mx-auto mt-20">
               <EmptyState
                 variant="card"
-                icon={<Target className="w-16 h-16" />}
+                illustration={<NoGoalsIllustration width={180} height={180} />}
                 title="No goals yet"
                 description="Start by creating your first financial goal and track your progress toward financial milestones"
                 action={{
