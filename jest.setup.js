@@ -4,12 +4,12 @@ import '@testing-library/jest-dom';
 import 'openai/shims/node';
 // Import Plaid mock
 import '@/__mocks__/plaid';
+
 // Add jest-axe for accessibility testing
 import { toHaveNoViolations } from 'jest-axe';
+import { TextDecoder, TextEncoder } from 'util';
 
 expect.extend(toHaveNoViolations);
-
-import { TextDecoder, TextEncoder } from 'util';
 
 // Mock fetch globally
 global.fetch = jest.fn();

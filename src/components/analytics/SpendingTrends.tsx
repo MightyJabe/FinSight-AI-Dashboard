@@ -15,12 +15,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select } from '@/components/ui/Select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/use-spending-trends';
+import { SPENDING_CHART_COLORS } from '@/lib/constants';
 
 const CHART_COLORS = [
   '#8884d8',
@@ -77,7 +78,7 @@ export default function SpendingTrends() {
         label: 'Amount',
         data: data.map(d => d.amount),
         borderColor: '#8884d8',
-        backgroundColor: 'rgba(136,132,216,0.2)',
+        backgroundColor: SPENDING_CHART_COLORS.netSavings.background,
         tension: 0.3,
         pointRadius: 4,
         pointHoverRadius: 5,
@@ -91,7 +92,7 @@ export default function SpendingTrends() {
       {
         label: 'Amount',
         data: data.map(d => d.amount),
-        backgroundColor: 'rgba(136,132,216,0.5)',
+        backgroundColor: SPENDING_CHART_COLORS.netSavings.border,
         borderColor: '#8884d8',
         borderWidth: 1,
       },

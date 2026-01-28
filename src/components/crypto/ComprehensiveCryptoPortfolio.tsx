@@ -122,10 +122,10 @@ export function ComprehensiveCryptoPortfolio({
       {
         label: 'Portfolio Value',
         data: data!.historicalData.map(d => d.value),
-        borderColor: isPositivePerformance ? '#10B981' : '#EF4444',
+        borderColor: isPositivePerformance ? '#10B981' : '#EF4444', // Keep for chart consistency
         backgroundColor: isPositivePerformance
           ? 'rgba(16, 185, 129, 0.1)'
-          : 'rgba(239, 68, 68, 0.1)',
+          : 'rgba(239, 68, 68, 0.1)', // Keep for chart consistency
         tension: 0.4,
         fill: true,
       },

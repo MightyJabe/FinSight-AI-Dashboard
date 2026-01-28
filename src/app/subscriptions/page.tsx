@@ -89,7 +89,7 @@ function SubscriptionHero({
         <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-fuchsia-500/20 rounded-full blur-[100px]" />
         <div className="absolute top-0 left-1/2 w-[300px] h-[300px] bg-pink-500/10 rounded-full blur-[80px]" />
         {/* Subtle grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
       </div>
 
       <div className="relative z-10">

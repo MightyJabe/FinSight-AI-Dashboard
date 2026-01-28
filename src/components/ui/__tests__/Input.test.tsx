@@ -104,7 +104,7 @@ describe('Input Accessibility', () => {
 
     // Check for focus-visible styles
     expect(input?.className).toContain('focus-visible:outline-none');
-    expect(input?.className).toContain('focus-visible:ring-1');
+    expect(input?.className).toContain('focus-visible:ring-2');
     expect(input?.className).toContain('focus-visible:ring-ring');
 
     const results = await axe(container);

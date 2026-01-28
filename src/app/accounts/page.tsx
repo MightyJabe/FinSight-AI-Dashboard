@@ -48,7 +48,7 @@ export default function AccountsPage() {
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute -top-1/2 -right-1/4 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl" />
               <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
             </div>
 
             <div className="relative z-10 flex flex-wrap items-center gap-8">

@@ -25,6 +25,10 @@ if (process.env.CI === 'true' && process.env.NODE_ENV === 'production') {
   console.log('Skipping Plaid configuration validation in CI build environment');
   // Create dummy client for CI
   plaidClient = {} as PlaidApi;
+} else if (process.env.NODE_ENV === 'test' && (!PLAID_CLIENT_ID || !PLAID_SECRET)) {
+  // In test mode without credentials, create dummy client (will be mocked by jest.mock)
+  console.log('Test mode without Plaid credentials - using mock client (provide TEST_PLAID_CLIENT_ID and TEST_PLAID_SECRET to test real integration)');
+  plaidClient = {} as PlaidApi;
 } else if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   throw new Error('PLAID_CLIENT_ID and PLAID_SECRET must be set in environment variables.');
 } else {

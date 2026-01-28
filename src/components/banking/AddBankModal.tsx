@@ -5,10 +5,10 @@ import React, { useCallback,useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePlaidLink } from 'react-plaid-link';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth';
 
 // Bank-specific login field configurations from israeli-bank-scrapers

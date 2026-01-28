@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/Tooltip';
+} from '@/components/ui/tooltip';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { getCssVarColor } from '@/utils/get-css-var-color';
 import { toRgba } from '@/utils/to-rgba';

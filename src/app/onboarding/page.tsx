@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                     </label>
                   </div>
                   <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-400">
-                    Tip: We'll use this to power savings recommendations and alerts when you drift
+                    Tip: We&apos;ll use this to power savings recommendations and alerts when you drift
                     off track.
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-400">
-                    Pro trial won't start billing automatically in this build—use it to validate the
+                    Pro trial won&apos;t start billing automatically in this build—use it to validate the
                     flow with early users.
                   </div>
                 </div>

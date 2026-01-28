@@ -1,6 +1,6 @@
-import * as React from 'react';
 import { type VariantProps } from 'class-variance-authority';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 import { cardVariants } from '@/lib/variants';
@@ -48,51 +48,52 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     };
 
     if (useAnimation) {
-      return (
-        <motion.div
-          ref={ref}
-          className={cn(
-            cardVariants({ variant, padding, interactive: isInteractive }),
-            className
-          )}
-          style={
-            depth
-              ? {
-                  rotateX,
-                  rotateY,
-                  transformStyle: 'preserve-3d',
-                }
-              : undefined
-          }
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          whileHover={{
-            y: -4,
-            scale: 1.01,
-            transition: {
-              type: 'spring',
-              stiffness: 400,
-              damping: 25,
-            },
-          }}
-          whileTap={{
-            scale: 0.98,
-            transition: {
-              type: 'spring',
-              stiffness: 400,
-              damping: 25,
-            },
-          }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
+      // Build motion props without type conflicts
+      const motionProps: any = {
+        ref,
+        className: cn(
+          cardVariants({ variant, padding, interactive: isInteractive }),
+          className
+        ),
+        onMouseMove: handleMouseMove,
+        onMouseLeave: handleMouseLeave,
+        whileHover: {
+          y: -4,
+          scale: 1.01,
+          transition: {
             type: 'spring',
-            stiffness: 260,
-            damping: 20,
-          }}
-          {...props}
-        />
-      );
+            stiffness: 400,
+            damping: 25,
+          },
+        },
+        whileTap: {
+          scale: 0.98,
+          transition: {
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
+          },
+        },
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        transition: {
+          type: 'spring',
+          stiffness: 260,
+          damping: 20,
+        },
+        ...props,
+      };
+
+      // Add depth style if needed
+      if (depth) {
+        motionProps.style = {
+          rotateX,
+          rotateY,
+          transformStyle: 'preserve-3d',
+        };
+      }
+
+      return <motion.div {...motionProps} />;
     }
 
     return (
@@ -159,26 +160,28 @@ interface CardGroupProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const CardGroup = React.forwardRef<HTMLDivElement, CardGroupProps>(
-  ({ className, stagger = 0.1, children, ...props }, ref) => (
-    <motion.div
-      ref={ref}
-      className={className}
-      initial="hidden"
-      animate="visible"
-      variants={{
-        visible: {
-          transition: {
-            staggerChildren: stagger,
+  ({ className, stagger = 0.1, children, ...props }, ref) => {
+    return (
+      <motion.div
+        ref={ref}
+        className={className}
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: {
+            transition: {
+              staggerChildren: stagger,
+            },
           },
-        },
-        hidden: {},
-      }}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  )
+          hidden: {},
+        }}
+        {...(props as Record<string, unknown>)}
+      >
+        {children}
+      </motion.div>
+    );
+  }
 );
 CardGroup.displayName = 'CardGroup';
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, CardGroup };
+export { Card, CardContent, CardDescription, CardFooter, CardGroup,CardHeader, CardTitle };

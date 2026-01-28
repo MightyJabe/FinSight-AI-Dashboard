@@ -2,7 +2,7 @@
 
 import { Building2, Plus } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 interface ConnectBankCTAProps {
   accountCount: number;

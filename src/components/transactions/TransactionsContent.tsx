@@ -13,7 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn , formatCurrency } from '@/lib/utils';
 
 import { CategoryBreakdown } from './CategoryBreakdown';

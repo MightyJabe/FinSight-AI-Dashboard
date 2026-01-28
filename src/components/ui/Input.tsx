@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -37,15 +37,21 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { className, variant, inputSize, label, error, helperText, leftIcon, rightIcon, type, ...props },
+    { className, variant, inputSize, label, error, helperText, leftIcon, rightIcon, type, id, ...props },
     ref
   ) => {
     const inputVariant = error ? 'error' : variant;
+    // Generate unique IDs for accessibility - must be called unconditionally
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+    const errorId = error ? `${inputId}-error` : undefined;
+    const helperId = helperText && !error ? `${inputId}-helper` : undefined;
+    const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
 
     return (
       <div className="w-full">
         {label && (
-          <label className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-foreground">
             {label}
             {props.required && <span className="ml-1 text-destructive">*</span>}
           </label>
@@ -57,6 +63,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
           <input
+            id={inputId}
             type={type}
             className={cn(
               inputVariants({ variant: inputVariant, inputSize }),
@@ -65,6 +72,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className
             )}
             ref={ref}
+            aria-invalid={error ? 'true' : 'false'}
+            aria-describedby={describedBy}
             {...props}
           />
           {rightIcon && (
@@ -73,8 +82,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
-        {helperText && !error && <p className="mt-1 text-sm text-muted-foreground">{helperText}</p>}
+        {error && (
+          <p id={errorId} className="mt-1 text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
+        {helperText && !error && (
+          <p id={helperId} className="mt-1 text-sm text-muted-foreground">
+            {helperText}
+          </p>
+        )}
       </div>
     );
   }

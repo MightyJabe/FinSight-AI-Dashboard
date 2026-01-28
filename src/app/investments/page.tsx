@@ -19,7 +19,8 @@ import PlatformForm from '@/components/platforms/PlatformForm';
 import TransactionForm from '@/components/platforms/TransactionForm';
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button } from '@/components/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CHART_COLORS, INVESTMENT_CHART_COLORS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type {
   CreatePlatformInput,
@@ -277,18 +278,7 @@ export default function InvestmentsPage() {
       datasets: [
         {
           data,
-          backgroundColor: [
-            '#3B82F6', // Blue-500
-            '#8B5CF6', // Purple-500
-            '#EC4899', // Pink-500
-            '#6366F1', // Indigo-500
-            '#A78BFA', // Violet-400
-            '#F472B6', // Pink-400
-            '#60A5FA', // Blue-400
-            '#C084FC', // Purple-400
-            '#818CF8', // Indigo-400
-            '#93C5FD', // Blue-300
-          ],
+          backgroundColor: CHART_COLORS.primary,
           borderWidth: 0,
           hoverOffset: 8,
         },
@@ -311,14 +301,14 @@ export default function InvestmentsPage() {
           data: sortedPlatforms.map(platform => platform.netProfit),
           backgroundColor: sortedPlatforms.map(platform =>
             platform.netProfit >= 0
-              ? 'rgba(59, 130, 246, 0.8)' // Blue-500 for gains
-              : 'rgba(236, 72, 153, 0.8)'  // Pink-500 for losses
+              ? INVESTMENT_CHART_COLORS.performance.gain.bar
+              : INVESTMENT_CHART_COLORS.performance.loss.bar
           ),
           borderRadius: 8,
           hoverBackgroundColor: sortedPlatforms.map(platform =>
             platform.netProfit >= 0
-              ? 'rgba(96, 165, 250, 1)' // Blue-400 hover
-              : 'rgba(244, 114, 182, 1)' // Pink-400 hover
+              ? INVESTMENT_CHART_COLORS.performance.gain.hover
+              : INVESTMENT_CHART_COLORS.performance.loss.hover
           ),
         },
       ],
@@ -388,7 +378,8 @@ export default function InvestmentsPage() {
                     isPositive ? 'bg-blue-500/20' : 'bg-rose-500/15'
                   )} />
                   <div className="absolute -bottom-1/2 -left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+                  {/* Grid pattern */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--border))_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-20" />
                 </div>
 
                 <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -476,7 +467,7 @@ export default function InvestmentsPage() {
                               usePointStyle: true,
                               font: {
                                 size: 12,
-                                weight: '500',
+                                weight: 500,
                               },
                             },
                           },
@@ -512,7 +503,7 @@ export default function InvestmentsPage() {
                           y: {
                             beginAtZero: true,
                             grid: {
-                              color: 'rgba(255, 255, 255, 0.05)',
+                              color: 'rgb(var(--border) / 0.3)',
                             },
                           },
                         },

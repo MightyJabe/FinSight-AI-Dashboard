@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, Plus, Target, Trash2, X } from 'lucide-react';
+import { Edit2, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 

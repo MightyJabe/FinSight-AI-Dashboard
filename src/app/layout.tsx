@@ -1,6 +1,6 @@
 import '@/app/globals.css';
 
-import { Inter, Outfit, DM_Serif_Display } from 'next/font/google';
+import { DM_Serif_Display,Inter, Outfit } from 'next/font/google';
 
 import PerformanceMonitor from '@/components/common/PerformanceMonitor';
 import { WebVitals } from '@/components/common/WebVitals';
@@ -35,7 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>FinSight AI Dashboard</title>
         <meta name="description" content="Track your net worth, manage finances, and get AI-powered insights - the #1 personal finance app for Israeli users" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#3b82f6" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
 
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
@@ -65,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               // Update theme-color meta tag
               const metaThemeColor = document.querySelector('meta[name="theme-color"]');
               if (metaThemeColor) {
-                metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#1f2937' : '#ffffff');
+                metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#09090b' : '#ffffff');
               }
             })();
           `,

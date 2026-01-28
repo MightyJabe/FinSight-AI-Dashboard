@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-import { Card, CardGroup } from '@/components/ui/Card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
+import { Card, CardGroup } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Overview } from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
 

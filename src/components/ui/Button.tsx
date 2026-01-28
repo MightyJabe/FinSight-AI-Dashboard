@@ -1,7 +1,7 @@
-import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -69,7 +69,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       if (variant === 'gradient' && buttonRef.current) {
         buttonRef.current.style.setProperty(
           'background-image',
-          'linear-gradient(to right, rgb(59, 130, 246), rgb(168, 85, 247), rgb(236, 72, 153))',
+          'linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--secondary)))',
           'important'
         );
       }

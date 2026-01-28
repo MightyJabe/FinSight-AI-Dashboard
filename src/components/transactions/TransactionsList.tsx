@@ -8,7 +8,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Filter,
-  Receipt,
   Search,
   X,
 } from 'lucide-react';

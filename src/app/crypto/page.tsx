@@ -118,7 +118,7 @@ export default function CryptoPage() {
                     isPositive ? 'bg-emerald-500/20' : 'bg-rose-500/20'
                   )} />
                   <div className="absolute -bottom-1/2 -left-1/4 w-72 h-72 bg-orange-500/10 rounded-full blur-3xl" />
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
                 </div>
 
                 {/* Real-time badge */}

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 import { Button } from './button';
-import { Card } from './Card';
+import { Card } from './card';
 
 const emptyStateVariants = cva('flex flex-col items-center justify-center py-12 text-center', {
   variants: {

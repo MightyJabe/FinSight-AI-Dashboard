@@ -104,7 +104,7 @@ describe('Button Accessibility', () => {
 
     // Check for focus-visible styles
     expect(button?.className).toContain('focus-visible:outline-none');
-    expect(button?.className).toContain('focus-visible:ring-1');
+    expect(button?.className).toContain('focus-visible:ring-2');
     expect(button?.className).toContain('focus-visible:ring-ring');
 
     const results = await axe(container);
