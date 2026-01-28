@@ -142,15 +142,15 @@ export default function QuickCashEntry() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-2xl z-50 p-4 w-80">
+    <div className="fixed bottom-6 right-6 glass-card-strong border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl z-50 p-4 w-80 animate-in fade-in-0 zoom-in-95 duration-200">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-gray-900">Quick Cash Entry</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">Quick Cash Entry</h3>
         <button
           onClick={() => {
             setIsOpen(false);
             setIsExpanded(false);
           }}
-          className="text-gray-400 hover:text-gray-600"
+          className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all hover:scale-105 active:scale-95"
         >
           ✕
         </button>
@@ -178,11 +178,11 @@ export default function QuickCashEntry() {
             key={cat.name}
             onClick={() => handleQuickEntry(cat.name, cat.amount || 0)}
             disabled={loading || !selectedAccount}
-            className="flex flex-col items-center p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all disabled:opacity-50"
+            className="flex flex-col items-center p-3 glass-card border border-white/20 dark:border-white/10 rounded-xl hover:bg-white/80 dark:hover:bg-slate-800/70 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="text-2xl mb-1">{cat.icon}</span>
-            <span className="text-xs font-medium text-gray-700">{cat.name}</span>
-            {cat.amount > 0 && <span className="text-xs text-gray-500">${cat.amount}</span>}
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{cat.name}</span>
+            {cat.amount > 0 && <span className="text-xs text-gray-500 dark:text-gray-400">${cat.amount}</span>}
           </button>
         ))}
       </div>
@@ -190,7 +190,7 @@ export default function QuickCashEntry() {
       {!isExpanded ? (
         <button
           onClick={() => setIsExpanded(true)}
-          className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="w-full text-sm gradient-text hover:opacity-80 font-medium transition-opacity"
         >
           Custom Amount
         </button>
@@ -230,7 +230,7 @@ export default function QuickCashEntry() {
           <button
             onClick={handleCustomEntry}
             disabled={loading || !selectedAccount}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium disabled:opacity-50"
+            className="w-full bg-gradient-to-br from-blue-500 to-purple-600 text-white py-2 rounded-xl text-sm font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add Transaction
           </button>

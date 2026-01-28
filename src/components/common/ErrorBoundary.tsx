@@ -94,42 +94,42 @@ export class ErrorBoundary extends React.Component<Props, State> {
       }
 
       // Determine container classes based on fullScreen prop
-      const containerClasses = fullScreen 
-        ? "min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900"
+      const containerClasses = fullScreen
+        ? "min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/20"
         : "min-h-[200px] flex items-center justify-center p-4";
 
       return (
         <div className={containerClasses}>
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800 shadow-lg">
+          <div className="max-w-md w-full glass-card rounded-2xl border border-red-500/30 shadow-2xl">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex-shrink-0">
-                  <AlertTriangle className="h-8 w-8 text-red-500" />
+                  <AlertTriangle className="h-8 w-8 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Something went wrong
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     We&apos;re sorry, but something unexpected happened.
                   </p>
                 </div>
               </div>
 
               {showErrorDetails && error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                  <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                <div className="mb-4 p-3 glass-card bg-destructive/10 border border-red-500/30 rounded-xl">
+                  <h4 className="text-sm font-medium text-destructive-foreground mb-2">
                     Error Details:
                   </h4>
-                  <p className="text-xs text-red-700 dark:text-red-300 font-mono break-all">
+                  <p className="text-xs text-destructive-foreground font-mono break-all">
                     {error.message}
                   </p>
                   {process.env.NODE_ENV === 'development' && errorInfo && (
                     <details className="mt-2">
-                      <summary className="text-xs text-red-600 dark:text-red-400 cursor-pointer">
+                      <summary className="text-xs text-destructive-foreground cursor-pointer hover:text-destructive">
                         Stack Trace
                       </summary>
-                      <pre className="text-xs text-red-600 dark:text-red-400 mt-1 whitespace-pre-wrap">
+                      <pre className="text-xs text-destructive-foreground mt-1 whitespace-pre-wrap">
                         {errorInfo.componentStack}
                       </pre>
                     </details>
@@ -141,7 +141,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 {retryCount < maxRetries && (
                   <button
                     onClick={this.handleRetry}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 text-sm font-medium glow-gradient"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Try Again ({maxRetries - retryCount} left)
@@ -149,15 +149,15 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 )}
                 <button
                   onClick={this.handleReload}
-                  className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                  className="flex items-center justify-center gap-2 px-4 py-2 glass-card border border-white/20 text-foreground rounded-xl hover:bg-white/80 dark:hover:bg-slate-800/70 hover:scale-105 active:scale-95 transition-all duration-300 text-sm font-medium"
                 >
                   Reload Page
                 </button>
               </div>
 
               {retryCount >= maxRetries && (
-                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                <div className="mt-4 p-3 glass-card bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                  <p className="text-sm text-amber-900 dark:text-amber-100">
                     Multiple retry attempts failed. Please refresh the page or contact support if the problem persists.
                   </p>
                 </div>

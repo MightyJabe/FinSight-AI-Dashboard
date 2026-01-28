@@ -101,28 +101,28 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'increasing':
-        return <TrendingUp className="h-5 w-5 text-green-600" />;
+        return <TrendingUp className="h-5 w-5 text-success" />;
       case 'decreasing':
-        return <TrendingDown className="h-5 w-5 text-red-600" />;
+        return <TrendingDown className="h-5 w-5 text-error" />;
       default:
-        return <BarChart3 className="h-5 w-5 text-blue-600" />;
+        return <BarChart3 className="h-5 w-5 text-primary" />;
     }
   };
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
       case 'increasing':
-        return 'text-green-600 bg-green-50';
+        return 'text-success bg-success/10';
       case 'decreasing':
-        return 'text-red-600 bg-red-50';
+        return 'text-error bg-error/10';
       default:
-        return 'text-blue-600 bg-blue-50';
+        return 'text-primary bg-primary/10';
     }
   };
 
   if (loading) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`bg-surface-elevated/50 backdrop-blur-md rounded-xl shadow-elevated border border-border p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner />
         </div>
@@ -132,14 +132,14 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
   if (error) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`bg-surface-elevated/50 backdrop-blur-md rounded-xl shadow-elevated border border-border p-6 ${className}`}>
         <div className="text-center py-8">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Forecast Unavailable</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <AlertTriangle className="h-12 w-12 text-error mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Forecast Unavailable</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={() => fetchForecast(selectedMonths)}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Retry
           </button>
@@ -150,11 +150,11 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
   if (!forecast) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`bg-surface-elevated/50 backdrop-blur-md rounded-xl shadow-elevated border border-border p-6 ${className}`}>
         <div className="text-center py-8">
-          <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Forecast Data</h3>
-          <p className="text-gray-600">
+          <BarChart3 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No Forecast Data</h3>
+          <p className="text-muted-foreground">
             Unable to generate forecast. Please ensure you have transaction history.
           </p>
         </div>
@@ -167,17 +167,17 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
   const highestBalance = Math.max(...forecast.predictions.map(p => p.predictedBalance));
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+    <div className={`bg-surface-elevated/50 backdrop-blur-md rounded-xl shadow-elevated border border-border ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <BarChart3 className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Cash Flow Forecast</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h3>
+              <p className="text-sm text-muted-foreground">
                 Predicted financial trends based on your history
               </p>
             </div>
@@ -185,14 +185,14 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
           {/* Time Period Selector */}
           <div className="flex items-center gap-2">
-            <label htmlFor="months-select" className="text-sm text-gray-600">
+            <label htmlFor="months-select" className="text-sm text-muted-foreground">
               Forecast:
             </label>
             <select
               id="months-select"
               value={selectedMonths}
               onChange={e => setSelectedMonths(parseInt(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="px-3 py-1 border border-border bg-surface rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
             >
               <option value={3}>3 months</option>
               <option value={6}>6 months</option>
@@ -205,40 +205,40 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
       <div className="p-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-surface/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-gray-700">Current Balance</span>
+              <DollarSign className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-foreground-secondary">Current Balance</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {formatCurrency(forecast.currentBalance)}
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-surface/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Avg Monthly Income</span>
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-foreground-secondary">Avg Monthly Income</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {formatCurrency(forecast.insights.avgMonthlyIncome)}
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-surface/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-medium text-gray-700">Avg Monthly Expenses</span>
+              <TrendingDown className="h-4 w-4 text-error" />
+              <span className="text-sm font-medium text-foreground-secondary">Avg Monthly Expenses</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {formatCurrency(forecast.insights.avgMonthlyExpenses)}
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-surface/50 backdrop-blur-sm rounded-lg p-4 border border-border/50">
             <div className="flex items-center gap-2 mb-2">
               {getTrendIcon(balanceTrend)}
-              <span className="text-sm font-medium text-gray-700">Trend</span>
+              <span className="text-sm font-medium text-foreground-secondary">Trend</span>
             </div>
             <p
               className={`text-xl font-bold capitalize ${getTrendColor(balanceTrend).split(' ')[0]}`}
@@ -250,42 +250,42 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
         {/* Forecast Chart/Table */}
         <div className="mb-6">
-          <h4 className="text-md font-semibold text-gray-900 mb-4">Monthly Predictions</h4>
+          <h4 className="text-md font-semibold text-foreground mb-4">Monthly Predictions</h4>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Month</th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">Income</th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 text-sm font-medium text-foreground-secondary">Month</th>
+                  <th className="text-right py-2 px-3 text-sm font-medium text-foreground-secondary">Income</th>
+                  <th className="text-right py-2 px-3 text-sm font-medium text-foreground-secondary">
                     Expenses
                   </th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                  <th className="text-right py-2 px-3 text-sm font-medium text-foreground-secondary">
                     Balance
                   </th>
-                  <th className="text-right py-2 px-3 text-sm font-medium text-gray-700">
+                  <th className="text-right py-2 px-3 text-sm font-medium text-foreground-secondary">
                     Confidence
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {forecast.predictions.map((prediction, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-3 text-sm text-gray-900">
+                  <tr key={index} className="border-b border-border/50 hover:bg-surface/50 transition-colors">
+                    <td className="py-3 px-3 text-sm text-foreground">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         {formatDate(prediction.date)}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-sm text-right text-green-600 font-medium">
+                    <td className="py-3 px-3 text-sm text-right text-success font-medium">
                       {formatCurrency(prediction.predictedIncome)}
                     </td>
-                    <td className="py-3 px-3 text-sm text-right text-red-600 font-medium">
+                    <td className="py-3 px-3 text-sm text-right text-error font-medium">
                       {formatCurrency(prediction.predictedExpenses)}
                     </td>
                     <td
                       className={`py-3 px-3 text-sm text-right font-medium ${
-                        prediction.predictedBalance >= 0 ? 'text-green-600' : 'text-red-600'
+                        prediction.predictedBalance >= 0 ? 'text-success' : 'text-error'
                       }`}
                     >
                       {formatCurrency(prediction.predictedBalance)}
@@ -294,10 +294,10 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           prediction.confidence >= 0.7
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-success/10 text-success'
                             : prediction.confidence >= 0.5
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-warning/10 text-warning'
+                              : 'bg-error/10 text-error'
                         }`}
                       >
                         {Math.round(prediction.confidence * 100)}%
@@ -312,12 +312,12 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
 
         {/* Insights and Recommendations */}
         {forecast.recommendations.length > 0 && (
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-blue-900 mb-3">Recommendations</h4>
+          <div className="bg-primary/5 backdrop-blur-sm rounded-lg p-4 border border-primary/10">
+            <h4 className="text-md font-semibold text-foreground mb-3">Recommendations</h4>
             <ul className="space-y-2">
               {forecast.recommendations.map((recommendation, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-blue-800">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                <li key={index} className="flex items-start gap-2 text-sm text-foreground-secondary">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                   <span>
                     {recommendation.title}: {recommendation.description}
                   </span>
@@ -328,32 +328,32 @@ export function CashFlowForecast({ className = '' }: CashFlowForecastProps) {
         )}
 
         {/* Additional Insights */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
           <div>
-            <span className="font-medium">Monthly Net Change:</span>{' '}
+            <span className="font-medium text-foreground-secondary">Monthly Net Change:</span>{' '}
             <span
               className={
-                forecast.insights.monthlyNetChange >= 0 ? 'text-green-600' : 'text-red-600'
+                forecast.insights.monthlyNetChange >= 0 ? 'text-success' : 'text-error'
               }
             >
               {formatCurrency(forecast.insights.monthlyNetChange)}
             </span>
           </div>
           <div>
-            <span className="font-medium">Recurring Transactions:</span>{' '}
+            <span className="font-medium text-foreground-secondary">Recurring Transactions:</span>{' '}
             {forecast.insights.recurringTransactions} detected
           </div>
           <div>
-            <span className="font-medium">Balance Range:</span> {formatCurrency(lowestBalance)} to{' '}
+            <span className="font-medium text-foreground-secondary">Balance Range:</span> {formatCurrency(lowestBalance)} to{' '}
             {formatCurrency(highestBalance)}
           </div>
           <div>
-            <span className="font-medium">Volatility:</span>{' '}
+            <span className="font-medium text-foreground-secondary">Volatility:</span>{' '}
             <span
               className={
                 forecast.insights.volatility > forecast.insights.avgMonthlyIncome * 0.3
-                  ? 'text-red-600'
-                  : 'text-green-600'
+                  ? 'text-error'
+                  : 'text-success'
               }
             >
               {formatCurrency(forecast.insights.volatility)}

@@ -10,6 +10,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+import { staggeredContainer, staggeredItem } from '@/lib/animations';
 import { formatCurrency } from '@/lib/utils';
 
 interface StatCardProps {
@@ -20,43 +21,65 @@ interface StatCardProps {
   index: number;
 }
 
-function StatCard({ title, value, change, icon: Icon, index }: StatCardProps) {
+function StatCard({ title, value, change, icon: Icon }: Omit<StatCardProps, 'index'>) {
   const isPositive = change >= 0;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-indigo-300 hover:shadow-xl"
+      variants={staggeredItem}
+      initial="hidden"
+      animate="visible"
+      whileHover={{ y: -6, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+      className="@container group relative overflow-hidden rounded-2xl glass-card-strong p-6 cursor-pointer card-hover"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <h3 className="mt-2 text-3xl font-bold text-gray-900">{value}</h3>
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
+          <h3 className="mt-3 text-3xl @lg:text-4xl font-bold gradient-text tabular-nums">{value}</h3>
 
-          <div className="mt-3 flex items-center gap-1">
-            {isPositive ? (
-              <ArrowUpRight className="h-4 w-4 text-green-600" />
-            ) : (
-              <ArrowDownRight className="h-4 w-4 text-red-600" />
-            )}
+          <div className="mt-3 flex items-center gap-1 flex-wrap">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 500 }}
+            >
+              {isPositive ? (
+                <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-500" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 text-red-600 dark:text-red-500" />
+              )}
+            </motion.div>
             <span
-              className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+              className={`text-sm font-medium tabular-nums ${isPositive ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}
             >
               {isPositive ? '+' : ''}
               {change.toFixed(1)}%
             </span>
-            <span className="text-sm text-gray-500">vs last month</span>
+            <span className="text-sm text-muted-foreground">vs last month</span>
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-3 transition-transform group-hover:scale-110">
-          <Icon className="h-7 w-7 text-indigo-600" />
-        </div>
+        <motion.div
+          className="rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-600/10 p-3 border border-blue-500/20"
+          whileHover={{ scale: 1.15, rotate: 10 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+        >
+          <Icon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+        </motion.div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 transition-opacity group-hover:opacity-100" />
+      <motion.div
+        className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 glow-md"
+        initial={{ scaleX: 0, opacity: 0 }}
+        whileHover={{ scaleX: 1, opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+        style={{ transformOrigin: 'left' }}
+      />
+
+      {/* Subtle particle effect on hover */}
+      <div className="absolute inset-0 particles-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </motion.div>
   );
 }
@@ -93,10 +116,15 @@ export function StatsGrid({ income, expenses, investments, savings, currency = '
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat, index) => (
-        <StatCard key={stat.title} {...stat} index={index} />
+    <motion.div
+      variants={staggeredContainer}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    >
+      {stats.map((stat) => (
+        <StatCard key={stat.title} {...stat} />
       ))}
-    </div>
+    </motion.div>
   );
 }

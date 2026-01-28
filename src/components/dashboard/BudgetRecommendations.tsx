@@ -148,15 +148,15 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
   const getSeverityColor = (severity: BudgetAlert['severity']) => {
     switch (severity) {
       case 'critical':
-        return 'bg-red-100 border-red-200 text-red-800';
+        return 'bg-red-500/10 dark:bg-red-500/20 border-red-500/20 dark:border-red-500/30 text-red-600 dark:text-red-400';
       case 'high':
-        return 'bg-orange-100 border-orange-200 text-orange-800';
+        return 'bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/20 dark:border-orange-500/30 text-orange-600 dark:text-orange-400';
       case 'medium':
-        return 'bg-yellow-100 border-yellow-200 text-yellow-800';
+        return 'bg-yellow-500/10 dark:bg-yellow-500/20 border-yellow-500/20 dark:border-yellow-500/30 text-yellow-600 dark:text-yellow-400';
       case 'low':
-        return 'bg-blue-100 border-blue-200 text-blue-800';
+        return 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400';
       default:
-        return 'bg-gray-100 border-gray-200 text-gray-800';
+        return 'bg-secondary border-border text-muted-foreground';
     }
   };
 
@@ -177,19 +177,19 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
   const getPriorityColor = (priority: BudgetRecommendation['priority']) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-50 border-red-200';
+        return 'bg-red-500/10 dark:bg-red-500/20 border-red-500/20 dark:border-red-500/30';
       case 'medium':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-yellow-500/10 dark:bg-yellow-500/20 border-yellow-500/20 dark:border-yellow-500/30';
       case 'low':
-        return 'bg-green-50 border-green-200';
+        return 'bg-green-500/10 dark:bg-green-500/20 border-green-500/20 dark:border-green-500/30';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-secondary border-border';
     }
   };
 
   if (loading) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`glass-card rounded-xl p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner />
         </div>
@@ -199,11 +199,11 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
 
   if (error) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`glass-card rounded-xl p-6 ${className}`}>
         <div className="text-center py-8">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Analysis Unavailable</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <AlertTriangle className="h-12 w-12 text-red-600 dark:text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Analysis Unavailable</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={fetchRecommendations}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
@@ -217,11 +217,11 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
 
   if (!analysis) {
     return (
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      <div className={`glass-card rounded-xl p-6 ${className}`}>
         <div className="text-center py-8">
-          <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Budget Data</h3>
-          <p className="text-gray-600">
+          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No Budget Data</h3>
+          <p className="text-muted-foreground">
             Add transactions to get personalized budget recommendations.
           </p>
         </div>
@@ -235,16 +235,16 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
     .slice(0, 5);
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+    <div className={`glass-card rounded-xl ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Target className="h-6 w-6 text-purple-600" />
+          <div className="p-2 bg-purple-500/10 dark:bg-purple-500/20 rounded-lg">
+            <Target className="h-6 w-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Budget Recommendations</h3>
-            <p className="text-sm text-gray-600">AI-powered budget optimization and alerts</p>
+            <h3 className="text-lg font-semibold text-foreground">Budget Recommendations</h3>
+            <p className="text-sm text-muted-foreground">AI-powered budget optimization and alerts</p>
           </div>
         </div>
       </div>
@@ -252,48 +252,48 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
       <div className="p-6">
         {/* Key Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-secondary rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-gray-700">Savings Rate</span>
+              <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-foreground">Savings Rate</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {analysis.insights.savingsRate.toFixed(1)}%
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Target: {analysis.insights.recommendedSavingsRate}%
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-secondary rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Budget Efficiency</span>
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-foreground">Budget Efficiency</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {analysis.insights.budgetEfficiency.toFixed(0)}%
             </p>
-            <p className="text-xs text-gray-500">How well budgets match spending</p>
+            <p className="text-xs text-muted-foreground">How well budgets match spending</p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-secondary rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-gray-700">Potential Savings</span>
+              <TrendingDown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-medium text-foreground">Potential Savings</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-foreground">
               {formatCurrency(
                 analysis.recommendedAllocations.reduce((sum, rec) => sum + rec.potentialSavings, 0)
               )}
             </p>
-            <p className="text-xs text-gray-500">From optimization</p>
+            <p className="text-xs text-muted-foreground">From optimization</p>
           </div>
         </div>
 
         {/* Alerts */}
         {visibleAlerts.length > 0 && (
           <div className="mb-6">
-            <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h4 className="text-md font-semibold text-foreground mb-4 flex items-center gap-2">
               <Bell className="h-4 w-4" />
               Budget Alerts ({visibleAlerts.length})
             </h4>
@@ -328,7 +328,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
         {/* Top Recommendations */}
         {topRecommendations.length > 0 && (
           <div className="mb-6">
-            <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h4 className="text-md font-semibold text-foreground mb-4 flex items-center gap-2">
               <Lightbulb className="h-4 w-4" />
               Top Recommendations
             </h4>
@@ -340,17 +340,17 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h5 className="font-medium text-gray-900">{recommendation.category}</h5>
-                      <p className="text-sm text-gray-600">{recommendation.reasoning}</p>
+                      <h5 className="font-medium text-foreground">{recommendation.category}</h5>
+                      <p className="text-sm text-muted-foreground">{recommendation.reasoning}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           recommendation.priority === 'high'
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
                             : recommendation.priority === 'medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-yellow-500/10 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
+                              : 'bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400'
                         }`}
                       >
                         {recommendation.priority} priority
@@ -360,20 +360,20 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
 
                   <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Current Spending:</span>
-                      <p className="font-medium">
+                      <span className="text-muted-foreground">Current Spending:</span>
+                      <p className="font-medium text-foreground">
                         {formatCurrency(recommendation.currentSpending)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Recommended Budget:</span>
-                      <p className="font-medium text-green-600">
+                      <span className="text-muted-foreground">Recommended Budget:</span>
+                      <p className="font-medium text-green-600 dark:text-green-400">
                         {formatCurrency(recommendation.recommendedBudget)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Potential Savings:</span>
-                      <p className="font-medium text-purple-600">
+                      <span className="text-muted-foreground">Potential Savings:</span>
+                      <p className="font-medium text-purple-600 dark:text-purple-400">
                         {formatCurrency(recommendation.potentialSavings)}
                       </p>
                     </div>
@@ -405,7 +405,7 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
                   )}
 
                   {acceptedRecommendations.has(recommendation.category) && (
-                    <div className="w-full py-2 px-4 bg-green-100 text-green-800 rounded-lg flex items-center justify-center gap-2">
+                    <div className="w-full py-2 px-4 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center gap-2">
                       <CheckCircle className="h-4 w-4" />
                       Budget Updated
                     </div>
@@ -418,12 +418,12 @@ export function BudgetRecommendations({ className = '' }: BudgetRecommendationsP
 
         {/* Action Items */}
         {analysis.actionItems.length > 0 && (
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-blue-900 mb-3">Next Steps</h4>
+          <div className="bg-blue-500/10 dark:bg-blue-500/20 rounded-lg p-4">
+            <h4 className="text-md font-semibold text-blue-600 dark:text-blue-400 mb-3">Next Steps</h4>
             <ul className="space-y-2">
               {analysis.actionItems.map((item, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-blue-800">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                <li key={index} className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <div className="w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0" />
                   <span>
                     {item.title}: {item.description}
                   </span>

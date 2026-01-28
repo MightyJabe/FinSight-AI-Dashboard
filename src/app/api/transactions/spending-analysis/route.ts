@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getCategoryHexColor } from '@/lib/constants';
 import { adminAuth as auth, adminDb as db } from '@/lib/firebase-admin';
 import logger from '@/lib/logger';
 
@@ -7,39 +8,6 @@ export const dynamic = 'force-dynamic';
 
 // Simple in-memory cache for spending analysis
 const cache = new Map<string, { data: unknown; timestamp: number }>();
-
-const CATEGORY_COLORS = {
-  Housing: '#3B82F6',
-  Utilities: '#8B5CF6',
-  Groceries: '#10B981',
-  Transportation: '#F59E0B',
-  Healthcare: '#EF4444',
-  Insurance: '#6366F1',
-  'Debt Payments': '#DC2626',
-  'Dining Out': '#F97316',
-  Entertainment: '#EC4899',
-  Shopping: '#8B5CF6',
-  Travel: '#06B6D4',
-  'Fitness & Health': '#84CC16',
-  Education: '#6366F1',
-  'Personal Care': '#F472B6',
-  Savings: '#059669',
-  Investments: '#0D9488',
-  Transfers: '#6B7280',
-  'Bank Fees': '#DC2626',
-  'Gifts & Donations': '#F59E0B',
-  'Business Expenses': '#7C3AED',
-  Taxes: '#EF4444',
-  Uncategorized: '#9CA3AF',
-  Salary: '#10B981',
-  'Freelance Income': '#06B6D4',
-  'Investment Returns': '#059669',
-  'Rental Income': '#0D9488',
-  'Business Income': '#7C3AED',
-  'Government Benefits': '#6366F1',
-  'Gifts Received': '#F59E0B',
-  'Other Income': '#8B5CF6',
-} as const;
 
 /**
  * Get spending analysis from categorized transactions
@@ -193,7 +161,7 @@ export async function GET(request: Request) {
             ? totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0
             : totalIncome > 0 ? (data.amount / totalIncome) * 100 : 0,
         transactionCount: data.count,
-        color: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || '#9CA3AF',
+        color: getCategoryHexColor(category),
       }))
       .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
 

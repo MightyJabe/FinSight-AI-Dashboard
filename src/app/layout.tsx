@@ -1,22 +1,42 @@
 import '@/app/globals.css';
 
-import { Inter } from 'next/font/google';
+import { DM_Serif_Display,Inter, Outfit } from 'next/font/google';
 
 import PerformanceMonitor from '@/components/common/PerformanceMonitor';
 import { WebVitals } from '@/components/common/WebVitals';
 import { ClientWrapper } from '@/components/layout/ClientWrapper';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
+});
+
+const dmSerif = DM_Serif_Display({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+});
 
 /** Root layout component that wraps the entire application */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${outfit.variable} ${dmSerif.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <title>FinSight AI Dashboard</title>
         <meta name="description" content="Track your net worth, manage finances, and get AI-powered insights - the #1 personal finance app for Israeli users" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#3b82f6" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
 
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
@@ -46,14 +66,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               // Update theme-color meta tag
               const metaThemeColor = document.querySelector('meta[name="theme-color"]');
               if (metaThemeColor) {
-                metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#1f2937' : '#ffffff');
+                metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#09090b' : '#ffffff');
               }
             })();
           `,
           }}
         />
       </head>
-      <body className={`${inter.className} overflow-x-hidden`}>
+      <body className={`${outfit.className} overflow-x-hidden`}>
         <ClientWrapper>{children}</ClientWrapper>
         <PerformanceMonitor />
         <WebVitals />

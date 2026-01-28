@@ -21,16 +21,16 @@ interface AssetAllocationChartProps {
   className?: string;
 }
 
-// Premium color palette for asset types
+// Premium color palette for asset types - Blue to Purple gradient theme
 const ASSET_COLORS: Record<string, { color: string; from: string; to: string }> = {
   'Cash & Checking': { color: '#3B82F6', from: '#60A5FA', to: '#2563EB' },
-  'Savings': { color: '#10B981', from: '#34D399', to: '#059669' },
+  'Savings': { color: '#6366F1', from: '#818CF8', to: '#4F46E5' },
   'Investments': { color: '#8B5CF6', from: '#A78BFA', to: '#7C3AED' },
-  'Crypto': { color: '#F59E0B', from: '#FBBF24', to: '#D97706' },
+  'Crypto': { color: '#A855F7', from: '#C084FC', to: '#9333EA' },
   'Real Estate': { color: '#EC4899', from: '#F472B6', to: '#DB2777' },
   'Pension': { color: '#06B6D4', from: '#22D3EE', to: '#0891B2' },
-  'Retirement': { color: '#14B8A6', from: '#2DD4BF', to: '#0D9488' },
-  'Other': { color: '#6B7280', from: '#9CA3AF', to: '#4B5563' },
+  'Retirement': { color: '#3B82F6', from: '#60A5FA', to: '#6366F1' },
+  'Other': { color: '#8B5CF6', from: '#A78BFA', to: '#7C3AED' },
 };
 
 function getAssetColor(name: string): { color: string; from: string; to: string } {
@@ -182,10 +182,10 @@ function AssetAllocationChartComponent({
           }}
         >
           <div className="text-center">
-            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-1">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-1">
               Total Assets
             </p>
-            <p className={cn('font-display font-semibold tracking-tight tabular-nums', config.fontSize)}>
+            <p className={cn('font-display font-bold tracking-tight tabular-nums gradient-text', config.fontSize)}>
               {formatCurrency(total, currency)}
             </p>
           </div>

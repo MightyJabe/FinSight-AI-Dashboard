@@ -182,21 +182,135 @@ export async function POST(req: Request) {
 
 ---
 
-## Accessibility (WCAG 2.1 AA)
+## Accessibility (WCAG 2.2 Level AA)
 
-### Requirements
-- Semantic HTML (`<nav>`, `<main>`, `<button>`, not `<div>` for interactive)
-- Keyboard navigation for all interactive elements
-- Visible focus indicators
+### Core Requirements
+
+#### Semantic HTML & ARIA
+- Use semantic HTML elements (`<nav>`, `<main>`, `<button>`, not `<div>` for interactive)
+- Keyboard navigation for all interactive elements (Tab, Enter, Space, Arrow keys)
+- Visible focus indicators with 2px ring and offset
 - ARIA labels where semantic HTML is insufficient
-- Color contrast 4.5:1 for normal text, 3:1 for large text
-- All form inputs must have associated labels
+- `aria-hidden="true"` for decorative icons
 
-### Example
+#### Color & Contrast
+- Text contrast: 4.5:1 for normal text, 3:1 for large text (18px+ or bold 14px+)
+- Interactive element contrast: 3:1 against adjacent colors
+- Don't rely solely on color to convey information
+
+#### Form Accessibility
+- All inputs must have associated `<label>` elements or `aria-label`
+- Error messages must be programmatically associated with inputs
+- Required fields indicated with visual and semantic markers (`required` attribute + `*`)
+- Password fields must support password managers (`autoComplete="current-password"`)
+
+### WCAG 2.2 Specific Requirements
+
+This application implements all WCAG 2.2 Level AA success criteria:
+
+#### 2.4.11 Focus Not Obscured (Minimum)
+- `scroll-padding-top: 5rem` in globals.css prevents sticky header from hiding focused elements
+- When an element receives keyboard focus, it's not fully hidden by sticky headers
+
+#### 2.5.8 Target Size (Minimum)
+- All interactive elements (buttons, inputs, links) have minimum 24×24px tap targets
+- Checkboxes: 20×20px (h-5 w-5)
+- Icon buttons: Minimum 20×20px icon + 4px padding = 28×28px total
+- Password toggle buttons: Proper padding for 24×24px minimum
+
+#### 3.3.7 Redundant Entry
+- Form data persists across navigation where appropriate
+- Autofill enabled for common fields (email, password, name)
+
+#### 3.3.8 Accessible Authentication
+- **No cognitive function tests**: No puzzles, CAPTCHAs, or memory tests for login
+- **Password visibility toggle**: Eye/EyeOff icons allow users to show/hide passwords
+- **Password manager support**: `autoComplete` attributes enable password manager integration
+- **Alternative authentication**: Social auth (Google, Apple) available
+
+### Focus Management
+
+#### Global Focus Styles (globals.css)
+```css
+/* Base focus for all interactive elements */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Stronger focus for buttons and links */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2;
+}
+
+/* Distinct focus for form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply ring-2 ring-ring ring-offset-2;
+}
+```
+
+#### Focus Trapping
+- Dialogs/Modals use Radix UI primitives with built-in focus trapping
+- Focus returns to trigger element when dialog closes
+- `DialogClose` button is keyboard accessible
+
+### Keyboard Navigation Patterns
+
+| Component | Keys | Behavior |
+|-----------|------|----------|
+| Button | Enter, Space | Activates button |
+| Link | Enter | Follows link |
+| Checkbox | Space | Toggles checked state |
+| Input | Tab | Moves to next field |
+| Dialog | Escape | Closes dialog |
+| Dialog | Tab | Cycles through interactive elements within dialog |
+
+### Motion & Animation
+- All animations respect `prefers-reduced-motion` via Framer Motion's `MotionConfig`
+- Animations are subtle (duration < 300ms) and enhance, not distract
+- No auto-playing videos or content that flashes more than 3 times per second
+
+### Screen Reader Testing
+- Test with NVDA (Windows), JAWS (Windows), VoiceOver (macOS/iOS), TalkBack (Android)
+- Ensure all interactive elements have accessible names
+- Form errors are announced when validation fails
+- Loading states are announced ("Loading...")
+
+### Example: Accessible Button
 ```tsx
-<button aria-label="Close dialog" aria-expanded={isOpen}>
-  <CloseIcon aria-hidden="true" />
+<button
+  aria-label="Close dialog"
+  aria-expanded={isOpen}
+  className="focus-visible:ring-2 focus-visible:ring-ring"
+>
+  <X className="h-5 w-5" aria-hidden="true" />
 </button>
+```
+
+### Example: Accessible Form Input
+```tsx
+<div>
+  <label htmlFor="email" className="block text-sm font-medium mb-1">
+    Email address
+    {required && <span className="ml-1 text-destructive">*</span>}
+  </label>
+  <input
+    id="email"
+    type="email"
+    autoComplete="email"
+    aria-invalid={!!error}
+    aria-describedby={error ? "email-error" : undefined}
+    className="form-input focus-visible:ring-2"
+  />
+  {error && (
+    <p id="email-error" className="mt-1 text-xs text-red-600">
+      {error}
+    </p>
+  )}
+</div>
 ```
 
 ---
@@ -205,10 +319,11 @@ export async function POST(req: Request) {
 
 ### Test Locations
 - **Unit/Integration**: `src/lib/__tests__/`, component co-location
+- **Accessibility Tests**: `src/components/ui/__tests__/` (co-located with components)
 
 ### Commands
 ```bash
-npm run test              # Run Jest tests
+npm run test              # Run Jest tests (includes a11y tests)
 npm run test:watch        # Watch mode
 npm run test:coverage     # With coverage
 npm run test:ci           # CI optimized (--runInBand)
@@ -218,6 +333,146 @@ npm run test:ci           # CI optimized (--runInBand)
 - Mock Firebase Admin SDK, Plaid API, and OpenAI in tests
 - Use `data-testid` attributes for test selectors
 - Coverage target: 80% minimum, 90% for financial calculations
+
+### Accessibility Testing with jest-axe
+
+This project uses **jest-axe** for automated accessibility testing. jest-axe integrates the **axe-core** accessibility engine into Jest tests.
+
+#### What jest-axe Detects (~30-40% of WCAG issues)
+
+✅ **Detectable Issues:**
+- Missing alt text on images
+- Form inputs without labels
+- Insufficient color contrast (text vs background)
+- Missing ARIA roles, states, and properties
+- Invalid HTML structure (e.g., duplicate IDs)
+- Keyboard accessibility issues (tabindex problems)
+- Missing focus indicators
+- Incorrect heading hierarchy (h1 → h3 without h2)
+- Links without accessible names
+- Buttons without accessible names
+
+❌ **Not Detectable (Requires Manual Testing):**
+- Keyboard navigation flow and logic
+- Screen reader announcement quality
+- Focus management in complex interactions
+- Content comprehensibility and clarity
+- Whether ARIA is used correctly in context
+- Motion/animation accessibility (prefers-reduced-motion)
+
+#### Setting Up Accessibility Tests
+
+jest-axe is configured globally in `jest.setup.js`:
+
+```javascript
+import { toHaveNoViolations } from 'jest-axe';
+expect.extend(toHaveNoViolations);
+```
+
+#### Writing Accessibility Tests
+
+**Basic Test Pattern:**
+```typescript
+import { render } from '@testing-library/react';
+import { axe } from 'jest-axe';
+import { Button } from '../button';
+
+describe('Button Accessibility', () => {
+  it('should not have accessibility violations', async () => {
+    const { container } = render(<Button>Click me</Button>);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+```
+
+**Testing Different States:**
+```typescript
+it('should not have violations when disabled', async () => {
+  const { container } = render(<Button disabled>Disabled</Button>);
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+
+it('should not have violations with error state', async () => {
+  const { container } = render(
+    <Input label="Email" error="Invalid email" />
+  );
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+```
+
+**Testing Icon Buttons (require aria-label):**
+```typescript
+it('should not have violations with icon button', async () => {
+  const { container } = render(
+    <Button size="icon" aria-label="Close dialog">
+      <X />
+    </Button>
+  );
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+```
+
+#### Component Testing Checklist
+
+When creating accessibility tests for a component, verify:
+
+- [ ] Default state has no violations
+- [ ] All variants (primary, secondary, destructive, etc.) have no violations
+- [ ] All sizes (sm, md, lg) have no violations
+- [ ] Disabled state has no violations
+- [ ] Error state has no violations (for form components)
+- [ ] Loading state has no violations
+- [ ] With icons/left icon/right icon has no violations
+- [ ] Icon-only buttons have `aria-label`
+- [ ] Form inputs have associated labels
+- [ ] Focus styles are present in className
+
+#### Complementary Manual Testing
+
+Automated tests catch only ~30-40% of accessibility issues. Always perform manual testing:
+
+1. **Keyboard Navigation**
+   - Tab through all interactive elements
+   - Verify focus order is logical
+   - Ensure focus is visible (2px ring)
+   - Test Enter/Space on buttons, Escape on dialogs
+
+2. **Screen Reader Testing**
+   - NVDA (Windows): Free, works with Chrome/Firefox
+   - JAWS (Windows): Enterprise standard
+   - VoiceOver (macOS): Cmd+F5 to enable
+   - Test form labels, error messages, loading states
+
+3. **Zoom & Text Scaling**
+   - Zoom to 200% (Ctrl/Cmd + "+")
+   - Increase text size in browser settings
+   - Verify no content is cut off or overlaps
+
+4. **Color Contrast**
+   - Use browser DevTools contrast checker
+   - Test in light and dark modes
+   - Verify 4.5:1 for normal text, 3:1 for large text
+
+5. **Motion Sensitivity**
+   - Enable "prefers-reduced-motion" in OS settings
+   - Verify animations are disabled/simplified
+
+#### Examples
+
+See comprehensive accessibility tests in:
+- `src/components/ui/__tests__/Button.test.tsx`
+- `src/components/ui/__tests__/Input.test.tsx`
+
+#### Resources
+
+- [axe-core Rules](https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md)
+- [jest-axe Documentation](https://github.com/nickcolley/jest-axe)
+- [WCAG 2.2 Guidelines](https://www.w3.org/WAI/WCAG22/quickref/)
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
 
 ---
 

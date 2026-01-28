@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion';
+
+import { staggeredContainer, staggeredItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
@@ -11,7 +14,7 @@ export function Skeleton({ className, ...props }: SkeletonProps & React.HTMLAttr
   return (
     <div
       className={cn(
-        'animate-pulse rounded-md bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] animate-shimmer',
+        'animate-pulse rounded-md bg-muted/50 bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:200%_100%] animate-shimmer',
         className
       )}
       {...props}
@@ -20,29 +23,43 @@ export function Skeleton({ className, ...props }: SkeletonProps & React.HTMLAttr
 }
 
 /**
- * Card skeleton for dashboard cards
+ * Card skeleton for dashboard cards with staggered animation
  */
 export function CardSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn('bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6', className)}>
+    <motion.div
+      variants={staggeredItem}
+      initial="hidden"
+      animate="visible"
+      className={cn('bg-card rounded-xl shadow-sm border border-border p-6', className)}
+    >
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-5 w-5 rounded-full" />
       </div>
       <Skeleton className="h-8 w-24 mb-2" />
       <Skeleton className="h-4 w-16" />
-    </div>
+    </motion.div>
   );
 }
 
 /**
- * Transaction list skeleton
+ * Transaction list skeleton with staggered animation
  */
 export function TransactionSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="space-y-3">
+    <motion.div
+      variants={staggeredContainer}
+      initial="hidden"
+      animate="visible"
+      className="space-y-3"
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <motion.div
+          key={i}
+          variants={staggeredItem}
+          className="flex items-center justify-between p-4 bg-card rounded-lg border border-border"
+        >
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="space-y-2">
@@ -54,9 +71,9 @@ export function TransactionSkeleton({ count = 5 }: { count?: number }) {
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-3 w-12" />
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -65,7 +82,7 @@ export function TransactionSkeleton({ count = 5 }: { count?: number }) {
  */
 export function ChartSkeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn('bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6', className)}>
+    <div className={cn('bg-card rounded-xl shadow-sm border border-border p-6', className)}>
       <div className="flex items-center justify-between mb-6">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-4 w-20" />
@@ -95,9 +112,9 @@ export function ChartSkeleton({ className }: SkeletonProps) {
  */
 export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
       {/* Table Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-b border-border p-4">
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
           {Array.from({ length: columns }).map((_, i) => (
             <Skeleton key={i} className="h-4 w-20" />
@@ -106,7 +123,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
       </div>
       
       {/* Table Rows */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="divide-y divide-border">
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div key={rowIndex} className="p-4">
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
@@ -166,7 +183,7 @@ export function AccountSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div key={i} className="flex items-center justify-between p-6 bg-card rounded-xl shadow-sm border border-border">
           <div className="flex items-center gap-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">

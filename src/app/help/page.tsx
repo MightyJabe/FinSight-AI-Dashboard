@@ -102,30 +102,30 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Help & Support</h1>
-          <p className="mt-2 text-lg text-gray-600">
+          <h1 className="text-4xl font-display gradient-text tracking-tight">Help & Support</h1>
+          <p className="mt-2 text-lg text-muted-foreground">
             Get help with using FinSight AI and find answers to common questions.
           </p>
         </div>
 
         {/* Getting Started */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6 hover:shadow-xl transition-shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Getting Started</h2>
+        <div className="glass-card-strong rounded-2xl border border-border mb-6 hover:border-blue-500/30 transition-all duration-300 group">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-semibold gradient-text">Getting Started</h2>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {gettingStartedSteps.map((step, index) => (
-                <div key={index} className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                <div key={index} className="flex items-start space-x-4 group/step">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center text-base font-bold shadow-lg glow-md group-hover/step:scale-110 transition-transform">
                     {step.icon}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{step.title}</h3>
-                    <p className="text-gray-600">{step.description}</p>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-foreground group-hover/step:gradient-text transition-all">{step.title}</h3>
+                    <p className="text-muted-foreground mt-1">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -134,28 +134,28 @@ export default function HelpPage() {
         </div>
 
         {/* FAQ */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6 hover:shadow-xl transition-shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
+        <div className="glass-card-strong rounded-2xl border border-border mb-6 hover:border-purple-500/30 transition-all duration-300">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-semibold gradient-text">Frequently Asked Questions</h2>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
+            <div className="space-y-3">
               {faqs.map((faq, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg">
+                <div key={index} className="glass-card rounded-xl overflow-hidden border border-border hover:border-blue-500/30 transition-all duration-200 group/faq">
                   <button
-                    className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    className="w-full px-5 py-4 text-left flex items-center justify-between hover:bg-secondary/30 transition-colors"
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
                   >
-                    <span className="font-medium text-gray-900">{faq.question}</span>
+                    <span className="font-semibold text-foreground group-hover/faq:text-blue-600 dark:group-hover/faq:text-blue-400 transition-colors">{faq.question}</span>
                     {openFaq === index ? (
-                      <ChevronDown className="h-5 w-5 text-gray-500" />
+                      <ChevronDown className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-3" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-500" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover/faq:text-blue-600 dark:group-hover/faq:text-blue-400 flex-shrink-0 ml-3 transition-colors" />
                     )}
                   </button>
                   {openFaq === index && (
-                    <div className="px-4 pb-3">
-                      <p className="text-gray-600">{faq.answer}</p>
+                    <div className="px-5 pb-4 border-t border-border pt-4 bg-secondary/20">
+                      <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
                     </div>
                   )}
                 </div>
@@ -165,27 +165,29 @@ export default function HelpPage() {
         </div>
 
         {/* Support Options */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Get Support</h2>
+        <div className="glass-card-strong rounded-2xl border border-border hover:border-pink-500/30 transition-all duration-300">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-semibold gradient-text">Get Support</h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {supportOptions.map((option, index) => (
                 <div
                   key={index}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-primary transition-colors"
+                  className="glass-card p-5 border border-border rounded-xl hover:border-blue-500/50 transition-all duration-300 group/support card-hover"
                 >
-                  <div className="flex items-start space-x-3">
-                    <option.icon className="h-6 w-6 text-primary mt-1" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{option.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{option.description}</p>
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 flex items-center justify-center group-hover/support:scale-110 group-hover/support:border-blue-500/40 transition-all">
+                      <option.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground">{option.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">{option.description}</p>
                       <a
                         href={option.href}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                        className="inline-flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline transition-all"
                       >
-                        {option.action}
+                        {option.action} →
                       </a>
                     </div>
                   </div>

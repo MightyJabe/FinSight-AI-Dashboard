@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { auth } from '@/lib/firebase';
 
 export default function SignupPage() {

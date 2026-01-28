@@ -87,7 +87,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in-0 duration-200"
         aria-hidden="true"
       />
 
@@ -95,24 +95,25 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={cn(
-          'relative z-10 w-full rounded-2xl bg-white dark:bg-gray-900 shadow-2xl',
-          'border border-gray-200 dark:border-gray-700',
+          'relative z-10 w-full rounded-2xl glass-card-strong shadow-2xl',
+          'border border-white/20 dark:border-white/10',
           sizeClasses[size],
-          'max-h-[85vh] overflow-hidden flex flex-col'
+          'max-h-[85vh] overflow-hidden flex flex-col',
+          'animate-in fade-in-0 zoom-in-95 duration-200'
         )}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {(title || description || showCloseButton) && (
-          <div className="flex items-start justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <div className="flex items-start justify-between border-b border-white/10 dark:border-white/5 px-6 py-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm">
             <div className="flex-1">
               {title && (
-                <h2 id="modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 id="modal-title" className="text-xl font-semibold text-foreground">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {description}
                 </p>
               )}
@@ -120,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="ml-4 p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="ml-4 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all hover:scale-105 active:scale-95"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -136,7 +137,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+          <div className="border-t border-white/10 dark:border-white/5 px-6 py-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm">
             {footer}
           </div>
         )}

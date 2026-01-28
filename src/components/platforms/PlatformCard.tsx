@@ -76,23 +76,25 @@ export default function PlatformCard({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+    <div className="glass-card-strong rounded-2xl overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start space-x-3">
-            <span className="text-2xl" role="img" aria-label={TYPE_LABELS[platform.type]}>
-              {TYPE_ICONS[platform.type]}
-            </span>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 backdrop-blur-sm">
+              <span className="text-2xl" role="img" aria-label={TYPE_LABELS[platform.type]}>
+                {TYPE_ICONS[platform.type]}
+              </span>
+            </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-bold gradient-text">
                 {platform.name}
               </h3>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
                   {TYPE_LABELS[platform.type]}
                 </span>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                <span className="text-muted-foreground">•</span>
+                <span className="text-xs font-bold text-blue-400">
                   {platform.currency}
                 </span>
               </div>
@@ -101,14 +103,14 @@ export default function PlatformCard({
           <div className="flex space-x-1">
             <button
               onClick={() => onEdit(platform)}
-              className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+              className="p-2 text-muted-foreground hover:text-blue-400 transition-all hover:scale-110 active:scale-95 rounded-lg hover:bg-blue-500/10"
               aria-label="Edit platform"
             >
               <FiEdit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(platform.id)}
-              className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+              className="p-2 text-muted-foreground hover:text-rose-400 transition-all hover:scale-110 active:scale-95 rounded-lg hover:bg-rose-500/10"
               aria-label="Delete platform"
             >
               <FiTrash2 className="w-4 h-4" />
@@ -116,29 +118,29 @@ export default function PlatformCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-5">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Current Balance</p>
-            <p className="text-xl font-semibold text-gray-900 dark:text-white">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Current Balance</p>
+            <p className="text-xl font-bold gradient-text tabular-nums">
               {formatCurrency(platform.currentBalance)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Net Profit/Loss</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Net Profit/Loss</p>
             <div className="flex items-center space-x-2">
               <p
-                className={`text-xl font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                className={`text-xl font-bold tabular-nums ${isPositive ? 'text-blue-400' : 'text-pink-400'}`}
               >
                 {isPositive ? '+' : '-'}
                 {formatCurrency(platform.netProfit)}
               </p>
               {isPositive ? (
-                <FiTrendingUp className="w-5 h-5 text-green-600" />
+                <FiTrendingUp className="w-5 h-5 text-blue-400" />
               ) : (
-                <FiTrendingDown className="w-5 h-5 text-red-600" />
+                <FiTrendingDown className="w-5 h-5 text-pink-400" />
               )}
             </div>
-            <p className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-xs font-semibold tabular-nums ${isPositive ? 'text-blue-400' : 'text-pink-400'}`}>
               {isPositive ? '+' : ''}
               {platform.netProfitPercent.toFixed(2)}%
             </p>
@@ -146,39 +148,39 @@ export default function PlatformCard({
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-5">
           <button
             onClick={() => onAddDeposit(platform.id)}
-            className="flex items-center justify-center space-x-2 px-4 py-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg border border-green-200 dark:border-green-800 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-400 hover:text-blue-300 rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold"
           >
             <FiPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">Add Deposit</span>
+            <span className="text-sm">Deposit</span>
           </button>
           <button
             onClick={() => onAddWithdrawal(platform.id)}
-            className="flex items-center justify-center space-x-2 px-4 py-3 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-200 dark:border-orange-800 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-br from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-400 hover:text-pink-300 rounded-xl border border-pink-500/30 hover:border-pink-400/50 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold"
           >
             <FiMinus className="w-4 h-4" />
-            <span className="text-sm font-medium">Add Withdrawal</span>
+            <span className="text-sm">Withdraw</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500 dark:text-gray-400 flex items-center">
-              <FiPlus className="w-4 h-4 mr-1" />
-              Total Deposited:
+        <div className="grid grid-cols-2 gap-4 mb-5 text-sm">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 flex items-center">
+              <FiPlus className="w-3 h-3 mr-1" />
+              Deposited
             </span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="font-bold text-foreground tabular-nums">
               {formatCurrency(platform.totalDeposited)}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500 dark:text-gray-400 flex items-center">
-              <FiMinus className="w-4 h-4 mr-1" />
-              Total Withdrawn:
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 flex items-center">
+              <FiMinus className="w-3 h-3 mr-1" />
+              Withdrawn
             </span>
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="font-bold text-foreground tabular-nums">
               {formatCurrency(platform.totalWithdrawn)}
             </span>
           </div>
@@ -186,23 +188,23 @@ export default function PlatformCard({
 
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+          className="text-sm text-blue-400 hover:text-blue-300 font-semibold transition-colors hover:underline"
         >
           {showDetails ? 'Hide Details' : 'Show Details'}
         </button>
 
         {showDetails && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Net Investment:</span>
-                <span className="ml-2 text-gray-900 dark:text-white font-medium">
+          <div className="mt-5 pt-5 border-t border-white/10 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Net Investment</span>
+                <span className="font-bold text-foreground tabular-nums">
                   {formatCurrency(platform.totalDeposited - platform.totalWithdrawn)}
                 </span>
               </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Transactions:</span>
-                <span className="ml-2 text-gray-900 dark:text-white font-medium">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5">Transactions</span>
+                <span className="font-bold text-foreground tabular-nums">
                   {platform.transactionCount}
                 </span>
               </div>
@@ -210,40 +212,40 @@ export default function PlatformCard({
 
             {platform.transactionCount > 0 && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  Recent Transactions ({platform.transactionCount} total):
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-3">
+                  Recent Transactions ({platform.transactionCount} total)
                 </p>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {platform.transactions.slice(0, 3).map(transaction => (
-                    <div key={transaction.id} className="bg-gray-50 dark:bg-gray-700 rounded p-3">
+                    <div key={transaction.id} className="glass-card rounded-xl p-3 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span
-                            className={`text-xs px-2 py-1 rounded font-medium ${
+                            className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
                               transaction.type === 'deposit'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                : 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
                             }`}
                           >
                             {transaction.type === 'deposit' ? '💰 Deposit' : '🏧 Withdrawal'}
                           </span>
-                          <span className="text-xs text-gray-600 dark:text-gray-300">
+                          <span className="text-xs text-muted-foreground font-medium">
                             {formatDate(transaction.date)}
                           </span>
                         </div>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        <span className="text-sm font-bold text-foreground tabular-nums">
                           {formatCurrency(transaction.amount)}
                         </span>
                       </div>
                       {transaction.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                           {transaction.description}
                         </p>
                       )}
                     </div>
                   ))}
                   {platform.transactionCount > 3 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-1">
+                    <p className="text-xs text-muted-foreground text-center py-2 font-medium">
                       ... and {platform.transactionCount - 3} more transactions
                     </p>
                   )}
@@ -253,8 +255,8 @@ export default function PlatformCard({
 
             {platform.notes && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Notes:</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{platform.notes}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Notes</p>
+                <p className="text-sm text-foreground leading-relaxed">{platform.notes}</p>
               </div>
             )}
           </div>

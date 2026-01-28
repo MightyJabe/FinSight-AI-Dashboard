@@ -76,30 +76,30 @@ export function FabModal({
 
       {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in-0 duration-200">
+          <div className="glass-card-strong border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative animate-in fade-in-0 zoom-in-95 duration-200">
             <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+              className="absolute top-4 right-4 p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all hover:scale-105 active:scale-95"
               onClick={onClose}
               aria-label="Close"
             >
               ×
             </button>
-            <div className="flex mb-6 border-b">
+            <div className="flex mb-6 border-b border-white/10 dark:border-white/5">
               <button
-                className={`flex-1 py-3 text-base font-semibold ${modalTab === 'transaction' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+                className={`flex-1 py-3 text-base font-semibold transition-all ${modalTab === 'transaction' ? 'border-b-2 border-gradient-to-r from-blue-500 to-purple-600 gradient-text' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
                 onClick={() => onTabChange('transaction')}
               >
                 Add Expense/Income
               </button>
               <button
-                className={`flex-1 py-3 text-base font-semibold ${modalTab === 'asset' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+                className={`flex-1 py-3 text-base font-semibold transition-all ${modalTab === 'asset' ? 'border-b-2 border-gradient-to-r from-blue-500 to-purple-600 gradient-text' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
                 onClick={() => onTabChange('asset')}
               >
                 Add Asset
               </button>
               <button
-                className={`flex-1 py-3 text-base font-semibold ${modalTab === 'liability' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+                className={`flex-1 py-3 text-base font-semibold transition-all ${modalTab === 'liability' ? 'border-b-2 border-gradient-to-r from-blue-500 to-purple-600 gradient-text' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
                 onClick={() => onTabChange('liability')}
               >
                 Add Liability
@@ -170,7 +170,7 @@ export function FabModal({
                 />
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-base disabled:opacity-50"
+                  className="w-full bg-gradient-to-br from-blue-500 to-purple-600 text-white px-4 py-3 rounded-xl text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={txnLoading}
                 >
                   {txnLoading ? 'Adding...' : 'Add Transaction'}
@@ -224,7 +224,7 @@ export function FabModal({
                 />
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-base disabled:opacity-50"
+                  className="w-full bg-gradient-to-br from-blue-500 to-purple-600 text-white px-4 py-3 rounded-xl text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={modalAssetLoading}
                 >
                   {modalAssetLoading ? 'Adding...' : 'Add Asset'}
@@ -269,7 +269,7 @@ export function FabModal({
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-base disabled:opacity-50"
+                  className="w-full bg-gradient-to-br from-blue-500 to-purple-600 text-white px-4 py-3 rounded-xl text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] glow-gradient transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={modalLiabilityLoading}
                 >
                   {modalLiabilityLoading ? 'Adding...' : 'Add Liability'}

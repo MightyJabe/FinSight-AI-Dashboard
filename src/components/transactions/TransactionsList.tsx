@@ -8,13 +8,13 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Filter,
-  Receipt,
   Search,
   X,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
+import { NoTransactionsIllustration } from '@/components/illustrations/EmptyStateIllustrations';
 import { useSession } from '@/components/providers/SessionProvider';
 import { Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -249,7 +249,7 @@ export function TransactionsList({
             type="text"
             placeholder="Search transactions..."
             value={searchQuery}
-            onChange={e => handleFilterChange(setSearchQuery, e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(setSearchQuery, e.target.value)}
             leftIcon={<Search className="w-4 h-4" />}
             className="bg-card border-border"
             data-testid="transaction-search-input"
@@ -342,10 +342,8 @@ export function TransactionsList({
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         {paginatedTransactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-4">
-              <Receipt className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No transactions found</h3>
+            <NoTransactionsIllustration width={180} height={180} />
+            <h3 className="text-lg font-semibold mb-2 mt-4">No transactions found</h3>
             <p className="text-muted-foreground text-center max-w-sm">
               {hasActiveFilters
                 ? 'Try adjusting your filters or search query to find transactions.'

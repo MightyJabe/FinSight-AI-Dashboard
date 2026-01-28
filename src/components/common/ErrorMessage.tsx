@@ -28,13 +28,13 @@ export function ErrorMessage({
 }: ErrorMessageProps) {
   const variantStyles = {
     default:
-      'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200',
+      'glass-card border-red-500/30 text-destructive-foreground bg-destructive/10',
     destructive:
-      'bg-red-100 border-red-300 text-red-900 dark:bg-red-900/30 dark:border-red-700 dark:text-red-100',
+      'glass-card border-red-500/40 text-destructive-foreground bg-destructive/20',
     warning:
-      'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200',
+      'glass-card border-amber-500/30 text-amber-900 dark:text-amber-100 bg-amber-500/10',
     network:
-      'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200',
+      'glass-card border-blue-500/30 text-blue-900 dark:text-blue-100 bg-blue-500/10',
   };
 
   const getIcon = () => {
@@ -48,7 +48,7 @@ export function ErrorMessage({
 
   return (
     <div
-      className={cn('border rounded-lg p-4 my-3', variantStyles[variant], className)}
+      className={cn('border rounded-2xl p-4 my-3 backdrop-blur-sm', variantStyles[variant], className)}
       role="alert"
     >
       <div className="flex items-start gap-3">
@@ -62,17 +62,18 @@ export function ErrorMessage({
                 onClick={onRetry}
                 disabled={isRetrying}
                 className={cn(
-                  'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-offset-2',
+                  'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-xl transition-all duration-300',
+                  'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                  'hover:scale-105 active:scale-95',
                   variant === 'default' &&
-                    'bg-red-100 text-red-800 hover:bg-red-200 focus:ring-red-500 dark:bg-red-800 dark:text-red-100 dark:hover:bg-red-700',
+                    'bg-destructive/20 text-destructive-foreground hover:bg-destructive/30',
                   variant === 'destructive' &&
-                    'bg-red-200 text-red-900 hover:bg-red-300 focus:ring-red-500 dark:bg-red-700 dark:text-red-100 dark:hover:bg-red-600',
+                    'bg-destructive/30 text-destructive-foreground hover:bg-destructive/40',
                   variant === 'warning' &&
-                    'bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700',
+                    'bg-amber-500/20 text-amber-900 dark:text-amber-100 hover:bg-amber-500/30',
                   variant === 'network' &&
-                    'bg-blue-100 text-blue-800 hover:bg-blue-200 focus:ring-blue-500 dark:bg-blue-800 dark:text-blue-100 dark:hover:bg-blue-700',
-                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                    'bg-blue-500/20 text-blue-900 dark:text-blue-100 hover:bg-blue-500/30',
+                  'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
                 )}
               >
                 <RefreshCw className={cn('h-3 w-3', isRetrying && 'animate-spin')} />
