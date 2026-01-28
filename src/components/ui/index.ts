@@ -1,4 +1,6 @@
 export { CardSkeleton, DashboardSkeleton, InvestmentsSkeleton, Skeleton, TableSkeleton } from '../common/SkeletonLoader';
+export type { BadgeProps } from './badge';
+export { Badge } from './badge';
 export type { ButtonProps } from './button';
 export { Button, buttonVariants } from './button';
 export type { CardProps } from './card';
@@ -9,3 +11,4 @@ export { Input, inputVariants } from './input';
 export { Modal } from './modal';
 export type { PresetGridProps, ResponsiveGridProps } from './responsiveGrid';
 export { gridPresets, PresetGrid, ResponsiveGrid } from './responsiveGrid';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';

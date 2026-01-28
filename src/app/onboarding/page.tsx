@@ -259,7 +259,7 @@ export default function OnboardingPage() {
                       <span className="text-sm text-neutral-400">Primary goal</span>
                       <Input
                         value={goalName}
-                        onChange={e => setGoalName(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalName(e.target.value)}
                         placeholder="Eg. Pay off credit card, build emergency fund"
                       />
                     </label>
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                       <span className="text-sm text-neutral-400">Target amount (optional)</span>
                       <Input
                         value={goalTarget}
-                        onChange={e => setGoalTarget(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalTarget(e.target.value)}
                         placeholder="5000"
                         type="number"
                         min="0"
