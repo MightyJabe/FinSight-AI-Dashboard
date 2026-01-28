@@ -22,7 +22,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui';
 import { useExpenseAnalysis } from '@/hooks/use-expense-analysis';
 import type {
   OptimizationOpportunity,

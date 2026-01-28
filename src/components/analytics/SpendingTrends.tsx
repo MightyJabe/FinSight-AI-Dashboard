@@ -15,11 +15,20 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Select,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui';
 import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/use-spending-trends';
 import { SPENDING_CHART_COLORS } from '@/lib/constants';
 

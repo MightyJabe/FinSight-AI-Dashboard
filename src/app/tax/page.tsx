@@ -3,8 +3,7 @@
 import { useState } from 'react';
 
 import { useSession } from '@/components/providers/SessionProvider';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui';
 
 export default function TaxPage() {
   const { firebaseUser: user } = useSession();

@@ -4,11 +4,38 @@ export { Badge } from './badge';
 export type { ButtonProps } from './button';
 export { Button, buttonVariants } from './button';
 export type { CardProps } from './card';
-export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+export { Card, CardContent, CardDescription, CardFooter, CardGroup, CardHeader, CardTitle } from './card';
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from './dialog';
+export {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerPortal,
+  DrawerTitle,
+  DrawerTrigger,
+} from './drawer';
 export { EmptyState } from './emptyState';
 export type { InputProps } from './input';
 export { Input, inputVariants } from './input';
 export { Modal } from './modal';
 export type { PresetGridProps, ResponsiveGridProps } from './responsiveGrid';
 export { gridPresets, PresetGrid, ResponsiveGrid } from './responsiveGrid';
+export type { SelectProps } from './select';
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';

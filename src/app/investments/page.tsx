@@ -18,8 +18,7 @@ import PlatformCard from '@/components/platforms/PlatformCard';
 import PlatformForm from '@/components/platforms/PlatformForm';
 import TransactionForm from '@/components/platforms/TransactionForm';
 import { useSession } from '@/components/providers/SessionProvider';
-import { Button } from '@/components/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui';
 import { CHART_COLORS, INVESTMENT_CHART_COLORS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type {

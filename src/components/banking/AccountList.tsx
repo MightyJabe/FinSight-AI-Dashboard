@@ -4,7 +4,7 @@ import React from 'react';
 import useSWR from 'swr';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { BankingAccount } from '@/lib/banking/types';
 import { formatCurrency } from '@/lib/utils';
