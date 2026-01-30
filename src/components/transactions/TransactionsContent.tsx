@@ -12,8 +12,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Button } from '@/components/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui';
 import { cn , formatCurrency } from '@/lib/utils';
 
 import { CategoryBreakdown } from './CategoryBreakdown';

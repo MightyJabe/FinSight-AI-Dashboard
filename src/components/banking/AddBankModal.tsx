@@ -5,10 +5,7 @@ import React, { useCallback,useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePlaidLink } from 'react-plaid-link';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { Select } from '@/components/ui/Select';
+import { Button, Input, Modal, Select } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 
 // Bank-specific login field configurations from israeli-bank-scrapers
@@ -291,7 +288,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                                     </label>
                                     <Select
                                         value={israelBank}
-                                        onChange={(e) => handleBankChange(e.target.value)}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleBankChange(e.target.value)}
                                         disabled={isProcessing}
                                     >
                                         {Object.entries(BANK_CONFIGS).map(([key, config]) => (
@@ -311,7 +308,7 @@ export function AddBankModal({ onSuccess }: AddBankModalProps) {
                                             type={field.type || 'text'}
                                             placeholder={field.placeholder}
                                             value={credentials[field.key] || ''}
-                                            onChange={(e) => setCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCredentials(prev => ({ ...prev, [field.key]: e.target.value }))}
                                             required
                                             disabled={isProcessing}
                                             className="w-full"

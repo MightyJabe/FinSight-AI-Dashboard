@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useCommandPalette } from '@/components/common/CommandPalette';
 import { useSession } from '@/components/providers/SessionProvider';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { useUserSettings } from '@/hooks/use-user-settings';
 
 export function Header() {

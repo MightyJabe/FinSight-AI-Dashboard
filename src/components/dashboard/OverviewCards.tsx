@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
+import { Card, CardGroup, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { Overview } from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
 
@@ -42,7 +42,7 @@ export const OverviewCards = memo(function OverviewCards({
         icon: <TrendingUp className="h-6 w-6 text-green-500" />,
         iconBg: 'bg-green-500/10',
         badge: (
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-medium shadow-sm">
             + Income
           </span>
         ),
@@ -57,7 +57,7 @@ export const OverviewCards = memo(function OverviewCards({
         icon: <TrendingDown className="h-6 w-6 text-rose-500" />,
         iconBg: 'bg-rose-500/10',
         badge: (
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-medium">
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-gradient-to-br from-red-500 to-rose-600 text-white text-xs font-medium shadow-sm">
             {expenseRatio.toFixed(1)}% of income
           </span>
         ),
@@ -73,12 +73,12 @@ export const OverviewCards = memo(function OverviewCards({
         iconBg: 'bg-blue-500/10',
         badge: (
           <span
-            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm text-white ${
               savingsRate >= 0.2
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
                 : savingsRate >= 0.1
-                  ? 'bg-yellow-100 text-yellow-700'
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                  : 'bg-gradient-to-br from-red-500 to-rose-600'
             }`}
           >
             {savingsRate >= 0.2 ? 'Excellent' : savingsRate >= 0.1 ? 'Good' : 'Needs Work'}
@@ -96,12 +96,12 @@ export const OverviewCards = memo(function OverviewCards({
         iconBg: 'bg-amber-500/10',
         badge: (
           <span
-            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm text-white ${
               emergencyFundStatus >= 1
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
                 : emergencyFundStatus >= 0.5
-                  ? 'bg-yellow-100 text-yellow-700'
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                  : 'bg-gradient-to-br from-red-500 to-rose-600'
             }`}
           >
             {emergencyFundStatus >= 1
@@ -125,8 +125,8 @@ export const OverviewCards = memo(function OverviewCards({
         iconBg: `${netFlow >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`,
         badge: (
           <span
-            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-              netFlow >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm text-white ${
+              netFlow >= 0 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-red-500 to-rose-600'
             }`}
           >
             {netFlow >= 0 ? 'Positive' : 'Negative'}
@@ -141,16 +141,19 @@ export const OverviewCards = memo(function OverviewCards({
 
   return (
     <TooltipProvider>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <CardGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" stagger={0.08}>
         {cards.map(card => (
-          <div
+          <Card
             key={card.label}
-            className={`rounded-xl border bg-card/80 backdrop-blur p-6 shadow-lg hover:shadow-xl transition-all duration-200 group focus-within:ring-2 focus-within:ring-primary ${
-              card.clickable ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''
-            }`}
+            variant="elevated"
+            padding="md"
+            interactive={card.clickable}
+            animate
+            depth
+            className="group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
             tabIndex={0}
             onClick={() => card.clickable && onCardClick?.(card.id)}
-            onKeyDown={e => {
+            onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
               if ((e.key === 'Enter' || e.key === ' ') && card.clickable) {
                 e.preventDefault();
                 onCardClick?.(card.id);
@@ -185,9 +188,9 @@ export const OverviewCards = memo(function OverviewCards({
               </h3>
               <div className="flex items-center justify-between">{card.badge}</div>
             </div>
-          </div>
+          </Card>
         ))}
-      </div>
+      </CardGroup>
     </TooltipProvider>
   );
 });

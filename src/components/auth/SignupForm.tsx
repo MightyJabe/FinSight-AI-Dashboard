@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -49,7 +50,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           suppressHydrationWarning
           {...register('email')}
         />
-        {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium mb-1">
@@ -67,15 +68,19 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           />
           <button
             type="button"
-            tabIndex={-1}
-            className="absolute inset-y-0 right-0 px-2 flex items-center text-sm text-muted-foreground"
+            className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
             onClick={() => setShowPassword(v => !v)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
           >
-            {showPassword ? '🙈' : '👁️'}
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <Eye className="h-5 w-5" aria-hidden="true" />
+            )}
           </button>
         </div>
-        {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
+        {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
       </div>
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
@@ -91,12 +96,12 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
           {...register('confirmPassword')}
         />
         {errors.confirmPassword && (
-          <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
+          <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>
         )}
       </div>
       <button
         type="submit"
-        className="w-full rounded-md bg-primary text-primary-foreground py-2 font-semibold hover:bg-primary/90 transition disabled:opacity-60"
+        className="w-full rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white py-2.5 font-semibold hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-60 disabled:hover:scale-100 glow-gradient"
         disabled={isSubmitting}
       >
         {isSubmitting ? 'Signing up...' : 'Sign Up'}

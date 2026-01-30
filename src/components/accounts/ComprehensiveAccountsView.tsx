@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { AddBankModal } from '@/components/banking/AddBankModal';
+import { NoAccountsIllustration } from '@/components/illustrations/EmptyStateIllustrations';
 import { PlaidLinkButton } from '@/components/plaid/PlaidLinkButton';
 import { useSession } from '@/components/providers/SessionProvider';
 import {
@@ -331,30 +332,36 @@ export function ComprehensiveAccountsView() {
       )}
 
       {/* Net Worth Summary */}
-      <Card variant="elevated" className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0">
-        <CardContent className="p-6 text-white">
+      <Card variant="elevated" className="glass-card-strong relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/4 w-[500px] h-[500px] bg-blue-500/20 dark:bg-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-1/2 -left-1/4 w-[500px] h-[500px] bg-purple-500/15 dark:bg-purple-500/10 rounded-full blur-3xl" />
+        </div>
+
+        <CardContent className="p-6 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Assets</p>
-              <p className="text-3xl font-bold">{formatCurrency(data.totalAssets)}</p>
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Total Assets</p>
+              <p className="text-3xl font-bold gradient-text">{formatCurrency(data.totalAssets)}</p>
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Liabilities</p>
-              <p className="text-3xl font-bold">{formatCurrency(data.totalLiabilities)}</p>
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Total Liabilities</p>
+              <p className="text-3xl font-bold gradient-text">{formatCurrency(data.totalLiabilities)}</p>
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Investment Profit</p>
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Investment Profit</p>
               <p
-                className={`text-3xl font-bold ${(data.totalPlatformProfit || 0) >= 0 ? 'text-green-200' : 'text-red-200'}`}
+                className={`text-3xl font-bold ${(data.totalPlatformProfit || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
               >
                 {(data.totalPlatformProfit || 0) >= 0 ? '+' : ''}
                 {formatCurrency(Math.abs(data.totalPlatformProfit || 0))}
               </p>
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Net Worth</p>
-              <p className="text-3xl font-bold">{formatCurrency(data.totalNetWorth)}</p>
-              <p className="text-xs text-blue-200 mt-1">
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Net Worth</p>
+              <p className="text-3xl font-bold gradient-text">{formatCurrency(data.totalNetWorth)}</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Last updated: {new Date(data.lastUpdated).toLocaleString()}
               </p>
             </div>
@@ -362,29 +369,29 @@ export function ComprehensiveAccountsView() {
 
           {/* Additional details */}
           {data.unifiedSummary && (
-            <div className="mt-4 pt-4 border-t border-blue-400/30">
+            <div className="mt-4 pt-4 border-t border-border">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-blue-200">Tracked Transfers</p>
-                  <p className="font-medium">{formatCurrency(data.netTrackedTransfers || 0)}</p>
-                  <p className="text-xs text-blue-300">Money moved between accounts</p>
+                  <p className="text-foreground font-medium">Tracked Transfers</p>
+                  <p className="font-semibold text-lg mt-1 gradient-text">{formatCurrency(data.netTrackedTransfers || 0)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Money moved between accounts</p>
                 </div>
                 <div>
-                  <p className="text-blue-200">Platform Deposits</p>
-                  <p className="font-medium">
+                  <p className="text-foreground font-medium">Platform Deposits</p>
+                  <p className="font-semibold text-lg mt-1 gradient-text">
                     {formatCurrency(
                       (data.unifiedSummary.totalTrackedDeposits || 0) +
                       (data.unifiedSummary.totalUntrackedDeposits || 0)
                     )}
                   </p>
-                  <p className="text-xs text-blue-300">Total money invested</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total money invested</p>
                 </div>
                 <div>
-                  <p className="text-blue-200">Platform Balance</p>
-                  <p className="font-medium">
+                  <p className="text-foreground font-medium">Platform Balance</p>
+                  <p className="font-semibold text-lg mt-1 gradient-text">
                     {formatCurrency(data.unifiedSummary.totalPlatformBalance)}
                   </p>
-                  <p className="text-xs text-blue-300">Current investment value</p>
+                  <p className="text-xs text-muted-foreground mt-1">Current investment value</p>
                 </div>
               </div>
             </div>
@@ -394,7 +401,7 @@ export function ComprehensiveAccountsView() {
 
       {/* Tabs */}
       <Card variant="flat" padding="none">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-border">
           <nav className="-mb-px flex space-x-8 overflow-x-auto px-6">
             {tabs.map(tab => {
               const Icon = tab.icon;
@@ -405,8 +412,8 @@ export function ComprehensiveAccountsView() {
                   className={`
                     flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
                     ${activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                     }
                   `}
                 >
@@ -430,8 +437,8 @@ export function ComprehensiveAccountsView() {
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Bank Accounts</span>
-                      <span className="font-medium">
+                      <span className="text-sm text-muted-foreground">Bank Accounts</span>
+                      <span className="font-medium text-foreground">
                         {formatCurrency(
                           data.bankAccounts.reduce((sum, acc) => sum + acc.balance, 0)
                         )}
@@ -439,8 +446,8 @@ export function ComprehensiveAccountsView() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Crypto</span>
-                      <span className="font-medium">
+                      <span className="text-sm text-muted-foreground">Crypto</span>
+                      <span className="font-medium text-foreground">
                         {formatCurrency(
                           data.cryptoAccounts.reduce(
                             (sum, acc) => sum + (acc.value || acc.balance || 0),
@@ -450,8 +457,8 @@ export function ComprehensiveAccountsView() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Real Estate</span>
-                      <span className="font-medium">
+                      <span className="text-sm text-muted-foreground">Real Estate</span>
+                      <span className="font-medium text-foreground">
                         {formatCurrency(
                           data.realEstate.reduce(
                             (sum, acc) => sum + (acc.value || acc.amount || 0),
@@ -474,24 +481,24 @@ export function ComprehensiveAccountsView() {
                     <div className="space-y-1">
                       <PlaidLinkButton
                         onSuccess={fetchFinancialData}
-                        className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2 bg-transparent border-0 text-sm font-normal shadow-none"
+                        className="w-full text-left px-3 py-2 rounded hover:bg-secondary/50 flex items-center gap-2 bg-transparent border-0 text-sm font-normal shadow-none"
                       />
                       <div className="w-full px-3 py-2">
                         <AddBankModal onSuccess={fetchFinancialData} />
                       </div>
                     </div>
                     <button
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 rounded hover:bg-secondary/50 flex items-center gap-2"
                       onClick={() => toast('Crypto integration coming soon!')}
                     >
-                      <PlusCircle className="h-5 w-5 text-green-600" />
+                      <PlusCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                       <span className="text-sm">Add Crypto Wallet</span>
                     </button>
                     <button
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 rounded hover:bg-secondary/50 flex items-center gap-2"
                       onClick={() => toast('Manual investment import coming soon!')}
                     >
-                      <PlusCircle className="h-5 w-5 text-purple-600" />
+                      <PlusCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       <span className="text-sm">Import Investment Statement</span>
                     </button>
                   </div>
@@ -506,7 +513,7 @@ export function ComprehensiveAccountsView() {
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total Accounts</span>
+                      <span className="text-muted-foreground">Total Accounts</span>
                       <span className="font-medium">
                         {data.bankAccounts.length +
                           data.cryptoAccounts.length +
@@ -514,13 +521,13 @@ export function ComprehensiveAccountsView() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Linked via Plaid</span>
+                      <span className="text-muted-foreground">Linked via Plaid</span>
                       <span className="font-medium">
                         {data.bankAccounts.filter(a => a.source === 'plaid').length}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Manual Entries</span>
+                      <span className="text-muted-foreground">Manual Entries</span>
                       <span className="font-medium">
                         {data.manualAssets.length + data.realEstate.length + data.vehicles.length}
                       </span>
@@ -542,7 +549,7 @@ export function ComprehensiveAccountsView() {
                     <button
                       onClick={clearIsraeliBankData}
                       disabled={isClearing}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
                     >
                       <Trash2 className="w-4 h-4" />
                       {isClearing ? 'Clearing...' : 'Clear & Reconnect'}
@@ -553,55 +560,58 @@ export function ComprehensiveAccountsView() {
 
               {data.bankAccounts.length === 0 ? (
                 <EmptyState
-                  icon={<Building2 className="w-8 h-8" />}
+                  variant="card"
+                  illustration={<NoAccountsIllustration width={180} height={180} />}
                   title="No bank accounts connected"
                   description="Connect your bank accounts via Plaid or Israeli bank connector to track your finances"
                 />
               ) : (
                 data.bankAccounts.map(account => (
-                  <Card key={account.id} variant="elevated" hover>
-                    <CardContent>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-gray-900">{account.name}</h4>
-                            {isAccountStale(account) && (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200"
-                                title="Account hasn't synced in 24+ hours"
-                              >
-                                <AlertTriangle className="w-3 h-3" />
-                                Stale
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500">
-                            {account.institutionName} • {account.type}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {account.source === 'israel' && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                🇮🇱 Israeli Bank
-                              </span>
-                            )}
-                            {(account.lastSyncAt || account.updatedAt) && (
-                              <span className="text-xs text-gray-400">
-                                Last sync: {new Date(account.lastSyncAt || account.updatedAt).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold">{formatCurrency(account.balance, account.currency)}</p>
-                          {account.availableBalance && (
-                            <p className="text-sm text-gray-500">
-                              Available: {formatCurrency(account.availableBalance, account.currency)}
+                  <div key={account.id} className="@container">
+                    <Card variant="elevated" hover>
+                      <CardContent>
+                        <div className="flex flex-col @md:flex-row justify-between @md:items-start gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-semibold text-foreground">{account.name}</h4>
+                              {isAccountStale(account) && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                                  title="Account hasn't synced in 24+ hours"
+                                >
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Stale
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {account.institutionName} • {account.type}
                             </p>
-                          )}
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              {account.source === 'israel' && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                  🇮🇱 Israeli Bank
+                                </span>
+                              )}
+                              {(account.lastSyncAt || account.updatedAt) && (
+                                <span className="text-xs text-muted-foreground">
+                                  Last sync: {new Date(account.lastSyncAt || account.updatedAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-left @md:text-right">
+                            <p className="text-xl @lg:text-2xl font-bold text-foreground">{formatCurrency(account.balance, account.currency)}</p>
+                            {account.availableBalance && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Available: {formatCurrency(account.availableBalance, account.currency)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 ))
               )}
             </div>
@@ -625,15 +635,15 @@ export function ComprehensiveAccountsView() {
                     <CardContent>
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{account.name}</h4>
-                          <p className="text-sm text-gray-500">{account.type}</p>
+                          <h4 className="font-semibold text-foreground">{account.name}</h4>
+                          <p className="text-sm text-muted-foreground">{account.type}</p>
                           {account.description && (
-                            <p className="text-sm text-gray-600 mt-1">{account.description}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{account.description}</p>
                           )}
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-bold">{formatCurrency(account.value)}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             Updated: {new Date(account.lastUpdated).toLocaleDateString()}
                           </p>
                         </div>
@@ -659,22 +669,22 @@ export function ComprehensiveAccountsView() {
                     <CardContent>
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{liability.name}</h4>
-                          <p className="text-sm text-gray-500 capitalize">
+                          <h4 className="font-semibold text-foreground">{liability.name}</h4>
+                          <p className="text-sm text-muted-foreground capitalize">
                             {liability.type.replace(/_/g, ' ')}
                           </p>
                           {liability.interestRate && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               Interest Rate: {liability.interestRate}%
                             </p>
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-red-600">
+                          <p className="text-xl font-bold text-red-600 dark:text-red-400">
                             -{formatCurrency(liability.balance || liability.amount || 0)}
                           </p>
                           {liability.minimumPayment && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                               Min Payment: {formatCurrency(liability.minimumPayment)}
                             </p>
                           )}
@@ -691,16 +701,16 @@ export function ComprehensiveAccountsView() {
             <div className="space-y-6">
               {/* Real Estate */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Home className="h-5 w-5" />
                   Real Estate ({data.realEstate.length})
                 </h3>
                 {data.realEstate.length === 0 ? (
-                  <p className="text-sm text-gray-500 ml-7">No properties added</p>
+                  <p className="text-sm text-muted-foreground ml-7">No properties added</p>
                 ) : (
                   <div className="space-y-2">
                     {data.realEstate.map(property => (
-                      <div key={property.id} className="bg-white rounded-lg border p-3 ml-7">
+                      <div key={property.id} className="glass-card rounded-lg border border-border p-3 ml-7">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">{property.name}</span>
                           <span className="text-sm font-bold">
@@ -715,16 +725,16 @@ export function ComprehensiveAccountsView() {
 
               {/* Vehicles */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Truck className="h-5 w-5" />
                   Vehicles ({data.vehicles.length})
                 </h3>
                 {data.vehicles.length === 0 ? (
-                  <p className="text-sm text-gray-500 ml-7">No vehicles added</p>
+                  <p className="text-sm text-muted-foreground ml-7">No vehicles added</p>
                 ) : (
                   <div className="space-y-2">
                     {data.vehicles.map(vehicle => (
-                      <div key={vehicle.id} className="bg-white rounded-lg border p-3 ml-7">
+                      <div key={vehicle.id} className="glass-card rounded-lg border border-border p-3 ml-7">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">{vehicle.name}</span>
                           <span className="text-sm font-bold">{formatCurrency(vehicle.value)}</span>
@@ -737,16 +747,16 @@ export function ComprehensiveAccountsView() {
 
               {/* Pensions */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Banknote className="h-5 w-5" />
                   Pensions & Retirement ({data.pensions.length})
                 </h3>
                 {data.pensions.length === 0 ? (
-                  <p className="text-sm text-gray-500 ml-7">No pension accounts added</p>
+                  <p className="text-sm text-muted-foreground ml-7">No pension accounts added</p>
                 ) : (
                   <div className="space-y-2">
                     {data.pensions.map(pension => (
-                      <div key={pension.id} className="bg-white rounded-lg border p-3 ml-7">
+                      <div key={pension.id} className="glass-card rounded-lg border border-border p-3 ml-7">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">{pension.name}</span>
                           <span className="text-sm font-bold">{formatCurrency(pension.value)}</span>
@@ -759,19 +769,19 @@ export function ComprehensiveAccountsView() {
 
               {/* Other Manual Assets */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">
+                <h3 className="font-semibold text-foreground mb-3">
                   Other Assets ({data.manualAssets.length})
                 </h3>
                 {data.manualAssets.length === 0 ? (
-                  <p className="text-sm text-gray-500">No other assets added</p>
+                  <p className="text-sm text-muted-foreground">No other assets added</p>
                 ) : (
                   <div className="space-y-2">
                     {data.manualAssets.map(asset => (
-                      <div key={asset.id} className="bg-white rounded-lg border p-3">
+                      <div key={asset.id} className="glass-card rounded-lg border border-border p-3">
                         <div className="flex justify-between">
                           <div>
                             <span className="text-sm font-medium">{asset.name}</span>
-                            <span className="text-xs text-gray-500 ml-2">({asset.type})</span>
+                            <span className="text-xs text-muted-foreground ml-2">({asset.type})</span>
                           </div>
                           <span className="text-sm font-bold">{formatCurrency(asset.value)}</span>
                         </div>

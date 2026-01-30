@@ -159,24 +159,24 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen bg-neutral-950 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Documents</h1>
-          <p className="mt-2 text-lg text-gray-600">Upload and manage your financial documents</p>
+          <h1 className="text-4xl font-display text-white tracking-tight">Documents</h1>
+          <p className="mt-2 text-lg text-neutral-400">Upload and manage your financial documents</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="glass-card rounded-2xl p-6 border border-neutral-800/50">
             <div className="mb-4">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-neutral-300 mb-2">
                 Document Category
               </label>
               <select
                 id="category"
                 value={category}
                 onChange={e => setCategory(e.target.value as DocumentCategory)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-3 bg-neutral-900/50 border border-neutral-700/50 rounded-xl text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50"
               >
                 <option value="tax-returns">Tax Returns</option>
                 <option value="pay-stubs">Pay Stubs</option>
@@ -192,8 +192,8 @@ export default function DocumentsPage() {
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
+                dragActive ? 'border-blue-500 bg-blue-500/10' : 'border-neutral-700/50 bg-neutral-900/30'
               }`}
             >
               <input
@@ -207,15 +207,15 @@ export default function DocumentsPage() {
               <div className="space-y-4">
                 <div className="text-6xl">📄</div>
                 <div>
-                  <p className="text-lg font-medium text-gray-900">
+                  <p className="text-lg font-medium text-white">
                     Drop your document here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">PDF, JPG, PNG up to 10MB</p>
+                  <p className="text-sm text-neutral-400 mt-1">PDF, JPG, PNG up to 10MB</p>
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium disabled:opacity-50"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-6 py-2.5 rounded-full font-medium disabled:opacity-50 transition-all duration-300 shadow-lg shadow-blue-900/30"
                 >
                   {uploading ? 'Uploading...' : 'Select File'}
                 </button>
@@ -223,36 +223,36 @@ export default function DocumentsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="glass-card rounded-2xl p-6 border border-neutral-800/50">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Uploaded Documents</h2>
+              <h2 className="text-2xl font-bold text-white">Uploaded Documents</h2>
               <input
                 type="text"
                 placeholder="Search documents..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md w-64"
+                className="px-4 py-2.5 bg-neutral-900/50 border border-neutral-700/50 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 w-64"
               />
             </div>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading...</div>
+              <div className="text-center py-8 text-neutral-500">Loading...</div>
             ) : documents.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No documents uploaded yet</div>
+              <div className="text-center py-8 text-neutral-500">No documents uploaded yet</div>
             ) : filteredDocuments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No documents match your search</div>
+              <div className="text-center py-8 text-neutral-500">No documents match your search</div>
             ) : (
               <div className="space-y-3">
                 {filteredDocuments.map(doc => (
                   <div
                     key={doc.id}
-                    className="w-full text-left p-4 rounded-lg border-2 transition-colors hover:border-blue-300 cursor-pointer"
+                    className="w-full text-left p-4 rounded-xl border border-neutral-800/50 transition-all duration-300 hover:border-neutral-700/50 hover:shadow-xl hover:shadow-black/20 cursor-pointer bg-neutral-900/30 backdrop-blur-sm"
                     onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="font-medium">{doc.fileName}</div>
-                        <div className="text-sm text-gray-500 mt-1">{doc.category}</div>
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="font-medium text-white">{doc.fileName}</div>
+                        <div className="text-sm text-neutral-400 mt-1">{doc.category}</div>
+                        <div className="text-xs text-neutral-500 mt-1">
                           {doc.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}
                         </div>
                       </div>
@@ -263,43 +263,43 @@ export default function DocumentsPage() {
                             handleDelete(doc);
                           }}
                           disabled={deleting === doc.id}
-                          className="text-red-600 hover:text-red-800 text-sm px-2 py-1 disabled:opacity-50"
+                          className="text-rose-400 hover:text-rose-300 text-sm px-2 py-1 disabled:opacity-50 transition-colors"
                         >
                           {deleting === doc.id ? '...' : '🗑️'}
                         </button>
-                        <div className="text-blue-600 text-sm">
+                        <div className="text-blue-400 text-sm">
                           {selectedDoc?.id === doc.id ? '▼' : '▶'}
                         </div>
                       </div>
                     </div>
 
                     {selectedDoc?.id === doc.id && (
-                      <div className="mt-4 pt-4 border-t">
+                      <div className="mt-4 pt-4 border-t border-neutral-800/50">
                         {doc.url && (
                           <div className="mb-4">
                             <a
                               href={doc.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all duration-300 shadow-lg shadow-blue-900/30"
                             >
                               📄 View/Download Document
                             </a>
                           </div>
                         )}
                         {doc.parsedData && (
-                          <div className="mb-4 p-3 bg-blue-50 rounded">
-                            <div className="font-semibold text-sm mb-2">Extracted Data</div>
-                            <pre className="text-xs whitespace-pre-wrap">
+                          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                            <div className="font-semibold text-sm text-blue-300 mb-2">Extracted Data</div>
+                            <pre className="text-xs text-neutral-300 whitespace-pre-wrap">
                               {JSON.stringify(doc.parsedData, null, 2)}
                             </pre>
                           </div>
                         )}
                         {doc.extractedText && (
                           <div>
-                            <div className="font-semibold text-sm mb-2">Document Content</div>
-                            <div className="p-3 bg-gray-50 rounded max-h-64 overflow-y-auto">
-                              <p className="whitespace-pre-wrap text-xs">{doc.extractedText}</p>
+                            <div className="font-semibold text-sm text-neutral-300 mb-2">Document Content</div>
+                            <div className="p-3 bg-neutral-900/50 border border-neutral-800/50 rounded-xl max-h-64 overflow-y-auto">
+                              <p className="whitespace-pre-wrap text-xs text-neutral-400">{doc.extractedText}</p>
                             </div>
                           </div>
                         )}

@@ -1,6 +1,6 @@
 import { HelpCircle, TrendingUp, Wallet } from 'lucide-react';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { Overview } from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
 

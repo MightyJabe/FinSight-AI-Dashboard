@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/Tooltip';
+} from '@/components/ui';
 import type { Overview } from '@/types/finance';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 import { getCssVarColor } from '@/utils/get-css-var-color';

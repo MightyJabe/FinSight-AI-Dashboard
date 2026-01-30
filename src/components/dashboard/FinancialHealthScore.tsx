@@ -1,6 +1,6 @@
 import { HelpCircle } from 'lucide-react';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { Overview } from '@/types/finance';
 import { formatPercentage } from '@/utils/format';
 

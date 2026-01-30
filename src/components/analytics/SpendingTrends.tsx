@@ -15,12 +15,22 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 
 import { Skeleton } from '@/components/common/SkeletonLoader';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select } from '@/components/ui/Select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Select,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui';
 import { TrendAnalysisType, TrendTimeframe, useSpendingTrends } from '@/hooks/use-spending-trends';
+import { SPENDING_CHART_COLORS } from '@/lib/constants';
 
 const CHART_COLORS = [
   '#8884d8',
@@ -77,7 +87,7 @@ export default function SpendingTrends() {
         label: 'Amount',
         data: data.map(d => d.amount),
         borderColor: '#8884d8',
-        backgroundColor: 'rgba(136,132,216,0.2)',
+        backgroundColor: SPENDING_CHART_COLORS.netSavings.background,
         tension: 0.3,
         pointRadius: 4,
         pointHoverRadius: 5,
@@ -91,7 +101,7 @@ export default function SpendingTrends() {
       {
         label: 'Amount',
         data: data.map(d => d.amount),
-        backgroundColor: 'rgba(136,132,216,0.5)',
+        backgroundColor: SPENDING_CHART_COLORS.netSavings.border,
         borderColor: '#8884d8',
         borderWidth: 1,
       },
@@ -307,7 +317,7 @@ export default function SpendingTrends() {
               <label className="block text-sm font-medium mb-2">Timeframe</label>
               <Select
                 value={timeframe}
-                onChange={e => setTimeframe(e.target.value as TrendTimeframe)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTimeframe(e.target.value as TrendTimeframe)}
               >
                 <option value="3months">Last 3 Months</option>
                 <option value="6months">Last 6 Months</option>
@@ -320,7 +330,7 @@ export default function SpendingTrends() {
               <label className="block text-sm font-medium mb-2">Analysis Type</label>
               <Select
                 value={analysisType}
-                onChange={e => setAnalysisType(e.target.value as TrendAnalysisType)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAnalysisType(e.target.value as TrendAnalysisType)}
               >
                 <option value="category">By Category</option>
                 <option value="monthly">Monthly Trends</option>
